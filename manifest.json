@@ -1,0 +1,27 @@
+{
+  "background_color": "#111826",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Cabeção Sorteios Pro",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "Sorteios_Pro",
+  "start_url": "/",
+  "theme_color": "#f59e0b",
+  "icons": [
+    {
+      "src": "https://carlosandre1514-prog.github.io/cabecao-sorteios-pro/icon.png",
+      "type": "image/png",
+      "isSquare": false,
+      "isPng": true,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 0,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
+    }
+  ],
+  "id": "cabecao.sorteios.pro",
+  "description": "Aplicativo oficial de gerenciamento e sorteios do Cabeção."
+}
