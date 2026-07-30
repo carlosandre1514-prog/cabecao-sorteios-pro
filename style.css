@@ -1,0 +1,434 @@
+/* =========================================================
+   CABEÇÃO SORTEIOS PRO - PALETA ESPORTS / LUXURY FOOTBALL
+   🟢 Verde Neon: #9DFF00
+   🟢 Verde Escuro: #0F5A2A
+   🟡 Dourado Metálico: #D4AF37
+   ⚫ Preto Jet: #000000
+   ⚫ Cinza Carvão: #121212
+   ⚪ Branco: #FFFFFF
+   ========================================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+    background-color: #000000;
+    background-image: radial-gradient(circle at 50% 0%, #0F5A2A 0%, #121212 65%, #000000 100%);
+    color: #FFFFFF;
+    display: flex;
+    justify-content: center;
+    padding: 12px;
+    min-height: 100vh;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* =========================================================
+   CABEÇALHO COM GLOW NEON
+   ========================================================= */
+.app-header {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.app-logo {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    border-radius: 12px;
+    border: 2px solid #D4AF37;
+    box-shadow: 0 0 12px rgba(157, 255, 0, 0.4);
+}
+
+.app-header h1 {
+    font-size: 1.5rem;
+    color: #9DFF00;
+    font-weight: 900;
+    line-height: 1.1;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 10px rgba(157, 255, 0, 0.3);
+}
+
+.app-header p {
+    font-size: 0.8rem;
+    color: #D4AF37;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-align: left;
+}
+
+/* =========================================================
+   MENU POR ABAS (ESPORTS STYLED)
+   ========================================================= */
+.nav-tabs {
+    display: flex;
+    background: #121212;
+    border-radius: 10px;
+    padding: 4px;
+    gap: 4px;
+    border: 1px solid #0F5A2A;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px 2px;
+    background: transparent;
+    border: none;
+    color: #A0A0A0;
+    font-weight: 800;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #9DFF00 0%, #0F5A2A 100%);
+    color: #000000;
+    box-shadow: 0 0 10px rgba(157, 255, 0, 0.5);
+}
+
+.tab-content {
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.tab-content.active {
+    display: flex;
+}
+
+/* =========================================================
+   CARDS DE CONTEÚDO (CARVÃO E DETALHES DOURADOS/NEON)
+   ========================================================= */
+.card {
+    background: linear-gradient(145deg, #181818 0%, #121212 100%);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #282828;
+    border-top: 1px solid #383838;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7), 0 0 2px rgba(212, 175, 55, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #9DFF00, #D4AF37);
+    opacity: 0.7;
+}
+
+.card h2 {
+    font-size: 1.05rem;
+    margin-bottom: 8px;
+    color: #D4AF37;
+    font-weight: 800;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.subtext {
+    font-size: 0.8rem;
+    color: #B0B0B0;
+    margin-bottom: 12px;
+}
+
+/* =========================================================
+   CAMPOS DE ENTRADA E FORMULÁRIOS
+   ========================================================= */
+.form-group-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-group-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+input[type="text"], input[type="number"], select, textarea {
+    background-color: #000000;
+    border: 1px solid #0F5A2A;
+    border-radius: 8px;
+    color: #FFFFFF;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+    border-color: #9DFF00;
+    box-shadow: 0 0 8px rgba(157, 255, 0, 0.4);
+}
+
+input[type="text"], textarea {
+    width: 100%;
+}
+
+.type-selector {
+    display: flex;
+    gap: 16px;
+    font-size: 0.9rem;
+    color: #FFFFFF;
+}
+
+.star-rating-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.estrelas-selector {
+    display: flex;
+    gap: 4px;
+}
+
+.star-cad {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0.3;
+    transition: transform 0.1s;
+}
+
+.star-cad.active {
+    opacity: 1;
+    filter: drop-shadow(0 0 5px #D4AF37);
+}
+
+/* =========================================================
+   LISTAS E ITENS
+   ========================================================= */
+.item-jogador {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #000000;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border-left: 4px solid #9DFF00;
+    border-right: 1px solid #222;
+    border-top: 1px solid #222;
+    border-bottom: 1px solid #222;
+}
+
+.acoes-item {
+    display: flex;
+    gap: 6px;
+}
+
+.item-presenca {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #000000;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    border: 1px solid #222;
+}
+
+.item-presenca input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #9DFF00;
+}
+
+/* =========================================================
+   BOTÕES COM EFEITO METÁLICO E GLOW
+   ========================================================= */
+.btn {
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #9DFF00 0%, #0F5A2A 100%);
+    color: #000000;
+    box-shadow: 0 4px 12px rgba(157, 255, 0, 0.3);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #282828 0%, #121212 100%);
+    color: #FFFFFF;
+    border: 1px solid #444;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #D4AF37 0%, #8A6D1C 100%);
+    color: #000000;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #FF3333 0%, #8B0000 100%);
+    color: #FFFFFF;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+}
+
+.btn-edit {
+    background: linear-gradient(135deg, #D4AF37 0%, #A68019 100%);
+    color: #000;
+    padding: 5px 10px;
+    font-size: 0.75rem;
+    border: none;
+    border-radius: 4px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.hidden { display: none !important; }
+
+/* =========================================================
+   CRONÔMETRO DE IMPACTO NEON
+   ========================================================= */
+.cronometro-card {
+    text-align: center;
+    background: #000000;
+    border: 2px solid #9DFF00;
+    box-shadow: 0 0 20px rgba(157, 255, 0, 0.2);
+}
+
+.timer-display {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #9DFF00;
+    font-family: monospace;
+    letter-spacing: 3px;
+    margin: 10px 0;
+    text-shadow: 0 0 15px rgba(157, 255, 0, 0.6);
+}
+
+.timer-config {
+    background-color: #121212;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    border: 1px solid #222;
+}
+
+.timer-controls {
+    display: flex;
+    gap: 8px;
+}
+
+/* =========================================================
+   TABELA DE CLASSIFICAÇÃO LUXO DOURADA
+   ========================================================= */
+.table-responsive {
+    overflow-x: auto;
+}
+
+.tabela-classificacao {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.tabela-classificacao th {
+    background-color: #000000;
+    color: #D4AF37;
+    padding: 8px 6px;
+    border-bottom: 2px solid #0F5A2A;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.tabela-classificacao td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #222;
+    color: #FFF;
+}
+
+/* =========================================================
+   PLACAR E MODAIS
+   ========================================================= */
+.placar-box {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: #000000;
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #0F5A2A;
+}
+
+.time-placar input {
+    width: 55px;
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: bold;
+    border-color: #D4AF37;
+}
+
+.modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    z-index: 999;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 400px;
+}
+
+.card-historico {
+    background-color: #000000;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+    border: 1px solid #0F5A2A;
+}

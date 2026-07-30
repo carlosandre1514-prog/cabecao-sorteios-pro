@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cabeção Sorteios Pro</title>
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Cabeçalho com Logo e Nome do App -->
+        <header class="app-header">
+            <div class="header-content">
+                <img src="logo.png" alt="Logo" class="app-logo">
+                <div>
+                    <h1>Cabeção Sorteios Pro</h1>
+                    <p>Gerenciador Completo de Pelada</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Menu de Navegação por Abas -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="tab-jogadores">👥 Jogadores</button>
+            <button class="tab-btn" data-tab="tab-sorteio">🎲 Sorteio</button>
+            <button class="tab-btn" data-tab="tab-campeonato">🏆 Campeonato</button>
+            <button class="tab-btn" data-tab="tab-historico">📜 Histórico</button>
+        </nav>
+
+        <!-- ABA 1: JOGADORES -->
+        <section id="tab-jogadores" class="tab-content active">
+            <div class="card">
+                <h2>📋 Importar Lista em Lote (WhatsApp)</h2>
+                <p class="subtext">Cole a lista do grupo. Cada linha será um jogador cadastrado:</p>
+                <textarea id="lista-lote" rows="4" placeholder="1. Carlos&#10;2. Andre&#10;3. Joao Goleiro&#10;4. Mateus"></textarea>
+                <button id="btn-importar-lote" class="btn btn-primary" style="margin-top:8px;">🚀 Adicionar Todos da Lista</button>
+            </div>
+
+            <div class="card">
+                <h2>➕ Cadastro Individual</h2>
+                <div class="form-group-col">
+                    <input type="text" id="novo-nome" placeholder="Nome do Jogador">
+                    <div class="type-selector">
+                        <label><input type="radio" name="tipo-jogador" value="linha" checked> Linha</label>
+                        <label><input type="radio" name="tipo-jogador" value="goleiro"> Goleiro 🧤</label>
+                    </div>
+                    <div class="star-rating-input">
+                        <span>Nível:</span>
+                        <div id="stars-cadastro" class="estrelas-selector">
+                            <button class="star-cad" data-star="1">⭐</button>
+                            <button class="star-cad" data-star="2">⭐</button>
+                            <button class="star-cad active" data-star="3">⭐</button>
+                            <button class="star-cad" data-star="4">⭐</button>
+                            <button class="star-cad" data-star="5">⭐</button>
+                        </div>
+                    </div>
+                    <button id="btn-add-jogador" class="btn btn-secondary">Adicionar Único</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Elenco Cadastrado</h2>
+                <div id="lista-jogadores-cadastrados"></div>
+            </div>
+        </section>
+
+        <!-- ABA 2: SORTEIO -->
+        <section id="tab-sorteio" class="tab-content">
+            <div class="card">
+                <h2>1. Quem veio jogar hoje?</h2>
+                <p class="subtext">Marque quem está presente no racha do dia:</p>
+                <div id="lista-presenca"></div>
+            </div>
+
+            <div class="card">
+                <h2>2. Configurar Times</h2>
+                <div class="form-group-row">
+                    <label>Quantidade de Times:</label>
+                    <input type="number" id="qtd-times" value="3" min="2" max="8">
+                </div>
+                <div class="form-group-row">
+                    <label>Jogadores por Time:</label>
+                    <input type="number" id="qtd-por-time" value="6" min="3" max="12">
+                </div>
+                <button id="btn-sortear" class="btn btn-primary">⚡ Realizar Sorteio Equilibrado</button>
+            </div>
+
+            <div id="resultado-sorteio" class="card hidden">
+                <h2>Times Definidos</h2>
+                <div id="times-sorteados-container"></div>
+                <button id="btn-iniciar-campeonato" class="btn btn-success" style="margin-top:10px;">🚀 Iniciar Campeonato</button>
+            </div>
+        </section>
+
+        <!-- ABA 3: CAMPEONATO -->
+        <section id="tab-campeonato" class="tab-content">
+            <!-- CRONÔMETRO -->
+            <div class="card cronometro-card">
+                <h2>⏱️ Cronômetro da Partida</h2>
+                <div class="timer-display" id="timer-display">10:00</div>
+                
+                <div class="timer-config">
+                    <div class="form-group-row">
+                        <label>Opções de Tempo:</label>
+                        <select id="select-tempo-predefinido">
+                            <option value="5">5 Minutos</option>
+                            <option value="6">6 Minutos</option>
+                            <option value="7">7 Minutos</option>
+                            <option value="8">8 Minutos</option>
+                            <option value="9">9 Minutos</option>
+                            <option value="10" selected>10 Minutos</option>
+                            <option value="11">11 Minutos</option>
+                            <option value="12">12 Minutos</option>
+                            <option value="13">13 Minutos</option>
+                            <option value="14">14 Minutos</option>
+                            <option value="15">15 Minutos</option>
+                        </select>
+                    </div>
+                    <div class="form-group-row">
+                        <label>Ou digite os minutos:</label>
+                        <input type="number" id="input-tempo-custom" min="1" max="60" placeholder="Ex: 10" style="width: 80px; text-align: center;">
+                    </div>
+                </div>
+
+                <div class="timer-controls">
+                    <button id="btn-timer-start" class="btn btn-primary">▶️ Iniciar</button>
+                    <button id="btn-timer-pause" class="btn btn-secondary">⏸️ Pausar</button>
+                    <button id="btn-timer-reset" class="btn btn-danger" style="padding:10px;">🔄 Resetar</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>⚔️ Partida em Andamento</h2>
+                <div id="painel-partida-atual">
+                    <p class="subtext">Inicie um campeonato no menu Sorteio!</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🏆 Tabela de Classificação</h2>
+                <div class="table-responsive">
+                    <table class="tabela-classificacao">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>P</th>
+                                <th>J</th>
+                                <th>V</th>
+                                <th>E</th>
+                                <th>D</th>
+                                <th>GP</th>
+                                <th>SG</th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-classificacao"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📋 Confrontos Realizados</h2>
+                <div id="lista-confrontos-encerrados">
+                    <p class="subtext">Nenhum confronto finalizado ainda.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🎯 Artilharia do Campeonato</h2>
+                <div id="lista-artilharia">
+                    <p class="subtext">Nenhum gol marcado ainda.</p>
+                </div>
+            </div>
+
+            <!-- Botão Encerrar e Enviar para o Histórico -->
+            <div class="card" id="card-finalizar-camp" style="text-align: center;">
+                <button id="btn-finalizar-campeonato" class="btn btn-danger" style="padding: 12px; font-size: 1rem;">🏁 Finalizar Campeonato e Enviar pro Histórico</button>
+            </div>
+        </section>
+
+        <!-- ABA 4: HISTÓRICO -->
+        <section id="tab-historico" class="tab-content">
+            <div class="card">
+                <h2>📜 Campeonatos Salvos</h2>
+                <p class="subtext">Histórico permanente das edições encerradas:</p>
+                <div id="container-historico"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div id="modal-edicao" class="modal hidden">
+        <div class="modal-content card">
+            <h2>✏️ Editar Jogador</h2>
+            <input type="hidden" id="edit-id">
+            <div class="form-group-col">
+                <input type="text" id="edit-nome" placeholder="Nome">
+                <div class="type-selector">
+                    <label><input type="radio" name="edit-tipo" value="linha" id="edit-linha"> Linha</label>
+                    <label><input type="radio" name="edit-tipo" value="goleiro" id="edit-goleiro"> Goleiro 🧤</label>
+                </div>
+                <div class="form-group-row">
+                    <label>Estrelas (1 a 5):</label>
+                    <input type="number" id="edit-estrelas" min="1" max="5" style="width:60px;">
+                </div>
+                <button id="btn-salvar-edicao" class="btn btn-primary">Salvar Alterações</button>
+                <button id="btn-fechar-modal" class="btn btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
