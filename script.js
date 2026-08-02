@@ -1,7 +1,189 @@
+// Variáveis globais para controle de autenticação e dados
+let isLoginMode = true; // Controla se o form é de Login (true) ou Cadastro (false)
+
+// --- FUNÇÕES DE AUTENTICAÇÃO DO FIREBASE ---
+function toggleAuthMode() {
+    isLoginMode = !isLoginMode;
+    const title = document.getElementById("auth-subtitle");
+    const btnAction = document.getElementById("btn-auth-action");
+    const btnSwitch = document.getElementById("btn-auth-switch");
+
+    if (!title || !btnAction || !btnSwitch) return;
+
+    if (isLoginMode) {
+        title.innerText = "Faça login para continuar";
+        btnAction.innerText = "Entrar";
+        btnSwitch.innerText = "Não tem conta? Cadastre-se";
+    } else {
+        title.innerText = "Crie sua nova conta gratuita";
+        btnAction.innerText = "Cadastrar";
+        btnSwitch.innerText = "Já tem conta? Faça login";
+    }
+}
+
+async function handleAuthAction() {
+    const emailInput = document.getElementById("auth-email");
+    const passwordInput = document.getElementById("auth-password");
+    
+    if (!emailInput || !passwordInput) return;
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!email || !password) {
+        alert("Preencha o e-mail e a senha!");
+        return;
+    }
+
+    try {
+        if (isLoginMode) {
+            await window.firebaseFns.signInWithEmailAndPassword(window.firebaseAuth, email, password);
+            alert("Login realizado com sucesso!");
+        } else {
+            await window.firebaseFns.createUserWithEmailAndPassword(window.firebaseAuth, email, password);
+            alert("Conta criada com sucesso!");
+        }
+    } catch (error) {
+        if (error.code === 'auth/email-already-in-use') {
+            alert("Este e-mail já está cadastrado! Use outro ou faça login.");
+        } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+            alert("E-mail ou senha incorretos.");
+        } else if (error.code === 'auth/weak-password') {
+            alert("A senha precisa ter pelo menos 6 caracteres.");
+        } else {
+            alert("Erro: " + error.message);
+        }
+    }
+}
+
+// --- FUNÇÃO DE LOGIN COM O GOOGLE CORRIGIDA (Redirecionamento Mobile/Acode) ---
+async function handleGoogleLogin() {
+    if (!window.firebaseAuth || !window.firebaseFns) {
+        alert("Erro: O sistema de autenticação do Firebase não foi carregado.");
+        return;
+    }
+
+    try {
+        const provider = new window.firebaseFns.GoogleAuthProvider();
+        // Força o uso estrito de redirect para evitar bloqueios de popup no mobile/Acode
+        await window.firebaseFns.signInWithRedirect(window.firebaseAuth, provider);
+    } catch (error) {
+        console.error("Erro detalhado no login com o Google:", error);
+        
+        if (error.code === 'auth/unauthorized-domain') {
+            alert("❌ Erro: Este domínio não está autorizado no painel do Firebase (Authentication > Settings > Authorized domains).");
+        } else {
+            alert("❌ Erro ao entrar com o Google: " + error.message);
+        }
+    }
+}
+
+// --- FUNÇÕES DE CONTROLE DO MENU LATERAL (DRAWER) ---
+function toggleDrawer() {
+    const drawer = document.getElementById('side-drawer');
+    const overlay = document.getElementById('drawer-overlay');
+    if (drawer && overlay) {
+        drawer.classList.toggle('open');
+        overlay.classList.toggle('hidden');
+    }
+}
+
+function navegarParaAba(targetTabId) {
+    const btnTarget = document.querySelector(`.tab-btn[data-tab="${targetTabId}"]`);
+    if (btnTarget) {
+        btnTarget.click(); // Simula o clique na aba para acionar toda a lógica nativa
+    }
+    toggleDrawer(); // Fecha o menu após selecionar a aba
+}
+
+async function fazerLogout() {
+    try {
+        if (window.firebaseAuth && window.firebaseFns) {
+            await window.firebaseFns.signOut(window.firebaseAuth);
+            toggleDrawer();
+            console.log("Usuário deslogado com sucesso.");
+        } else {
+            console.warn("Módulo de autenticação do Firebase não encontrado.");
+        }
+    } catch (error) {
+        console.error("Erro ao fazer logout:", error);
+        alert("Erro ao sair da conta. Tente novamente.");
+    }
+}
+
+// --- FERRAMENTA DE MUDAR SENHA ---
+function abrirModalSenha() {
+    const modal = document.getElementById('modal-mudar-senha');
+    if (modal) {
+        modal.classList.remove('hidden');
+        toggleDrawer(); // Fecha o menu lateral se estiver aberto
+    }
+}
+
+function fecharModalSenha() {
+    const modal = document.getElementById('modal-mudar-senha');
+    if (modal) {
+        modal.classList.add('hidden');
+        const novaSenha = document.getElementById('nova-senha');
+        const confirmaSenha = document.getElementById('confirma-nova-senha');
+        if (novaSenha) novaSenha.value = '';
+        if (confirmaSenha) confirmaSenha.value = '';
+    }
+}
+
+async function salvarNovaSenha() {
+    if (!window.firebaseAuth || !window.firebaseFns) {
+        alert("Erro: O sistema de autenticação do Firebase não foi carregado.");
+        return;
+    }
+
+    const user = window.firebaseAuth.currentUser;
+    if (!user) {
+        alert("⚠️ Nenhum usuário logado detectado.");
+        return;
+    }
+
+    const inputNova = document.getElementById('nova-senha');
+    const inputConfirma = document.getElementById('confirma-nova-senha');
+
+    if (!inputNova || !inputConfirma) return;
+
+    const senhaNova = inputNova.value.trim();
+    const senhaConfirma = inputConfirma.value.trim();
+
+    if (!senhaNova || !senhaConfirma) {
+        alert("Preencha todos os campos de senha!");
+        return;
+    }
+
+    if (senhaNova.length < 6) {
+        alert("A nova senha precisa ter pelo menos 6 dígitos.");
+        return;
+    }
+
+    if (senhaNova !== senhaConfirma) {
+        alert("As senhas não coincidem!");
+        return;
+    }
+
+    try {
+        await window.firebaseFns.updatePassword(user, senhaNova);
+        alert("✅ Senha alterada com sucesso!");
+        fecharModalSenha();
+    } catch (error) {
+        console.error("Erro ao alterar senha:", error);
+        if (error.code === 'auth/requires-recent-login') {
+            alert("❌ Por segurança, esta operação exige um login recente. Faça logout e entre novamente para alterar a senha.");
+        } else {
+            alert("❌ Erro ao alterar senha: " + error.message);
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Memória Local Permanente (localStorage)
-    let jogadores = JSON.parse(localStorage.getItem('racha_jogadores')) || [];
-    let historico = JSON.parse(localStorage.getItem('racha_historico')) || [];
+    let currentUserUid = null;
+    let jogadores = [];
+    let historico = [];
     
     let timesSorteados = [];
     let partidas = [];
@@ -15,7 +197,164 @@ document.addEventListener('DOMContentLoaded', () => {
     let tempoTotalSegundos = 600; // Default 10 min
     let tempoRestante = 600;
 
-    // Função de segurança para evitar que caracteres especiais quebrem o HTML
+    // Vincular evento ao botão do Google do HTML
+    const btnGoogle = document.getElementById('btn-google-auth');
+    if (btnGoogle) {
+        btnGoogle.addEventListener('click', handleGoogleLogin);
+    }
+
+    // --- MONITOR DE SESSÃO DO FIREBASE ---
+    setTimeout(async () => {
+        if (window.firebaseAuth && window.firebaseFns) {
+            // Processa o retorno do redirecionamento do Google caso tenha ocorrido
+            try {
+                await window.firebaseFns.getRedirectResult(window.firebaseAuth);
+            } catch (redirError) {
+                console.error("Erro no resultado do redirecionamento:", redirError);
+            }
+
+            window.firebaseFns.onAuthStateChanged(window.firebaseAuth, (user) => {
+                const authScreen = document.getElementById("auth-screen");
+                const drawerEmail = document.getElementById("drawer-user-email");
+                
+                if (user) {
+                    currentUserUid = user.uid;
+                    if (authScreen) authScreen.classList.add("hidden");
+                    if (drawerEmail) drawerEmail.textContent = user.email || "Usuário Google"; // Preenche o e-mail no menu lateral
+                    console.log("Usuário logado:", user.email);
+                    carregarDadosDoFirebase();
+                } else {
+                    currentUserUid = null;
+                    if (authScreen) authScreen.classList.remove("hidden");
+                    if (drawerEmail) drawerEmail.textContent = "Carregando...";
+                }
+            });
+        }
+    }, 500);
+
+    // --- SINCRONIZAÇÃO COM O FIREBASE ---
+    function salvarJogadores() {
+        if (!currentUserUid || !window.firebaseDb) return;
+        const dbRef = window.firebaseFns.ref(window.firebaseDb, `usuarios/${currentUserUid}/jogadores`);
+        window.firebaseFns.set(dbRef, jogadores);
+    }
+
+    function salvarHistoricoFirebase() {
+        if (!currentUserUid || !window.firebaseDb) return;
+        const dbRef = window.firebaseFns.ref(window.firebaseDb, `usuarios/${currentUserUid}/historico`);
+        window.firebaseFns.set(dbRef, historico);
+    }
+
+    function carregarDadosDoFirebase() {
+        if (!currentUserUid || !window.firebaseDb) return;
+        const userRef = window.firebaseFns.ref(window.firebaseDb, `usuarios/${currentUserUid}`);
+        
+        window.firebaseFns.get(userRef).then((snapshot) => {
+            if (snapshot.exists()) {
+                const dados = snapshot.val();
+                jogadores = dados.jogadores || [];
+                historico = dados.historico || [];
+            } else {
+                jogadores = [];
+                historico = [];
+            }
+            renderizarElenco();
+            renderizarHistorico();
+        }).catch((error) => {
+            console.error("Erro ao carregar dados do Firebase:", error);
+        });
+    }
+
+    // --- SISTEMA DE DIÁLOGOS E ALERTAS CUSTOMIZADOS ---
+    function criarContainerAlertas() {
+        if (document.getElementById('modal-alerta-custom')) return;
+
+        const modalDiv = document.createElement('div');
+        modalDiv.id = 'modal-alerta-custom';
+        modalDiv.className = 'modal hidden';
+        modalDiv.style.zIndex = '99999';
+
+        modalDiv.innerHTML = `
+            <div class="modal-content card" style="text-align: center; max-width: 360px;">
+                <h2 id="alerta-titulo" style="margin-bottom: 10px;">⚠️ AVISO</h2>
+                <p id="alerta-mensagem" class="subtext" style="font-size: 0.95rem; margin-bottom: 20px; line-height: 1.4;"></p>
+                <div id="alerta-botoes" class="modal-actions" style="display: flex; gap: 10px; justify-content: center;">
+                    <button id="btn-alerta-ok" class="btn btn-primary">OK</button>
+                    <button id="btn-alerta-cancelar" class="btn btn-secondary hidden">Cancelar</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalDiv);
+    }
+
+    criarContainerAlertas();
+
+    function mostrarAlerta(mensagem, titulo = '⚠️ AVISO') {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('modal-alerta-custom');
+            const elTitulo = document.getElementById('alerta-titulo');
+            const elMensagem = document.getElementById('alerta-mensagem');
+            const btnOk = document.getElementById('btn-alerta-ok');
+            const btnCancelar = document.getElementById('btn-alerta-cancelar');
+
+            elTitulo.textContent = titulo;
+            elMensagem.textContent = mensagem;
+
+            btnCancelar.classList.add('hidden');
+            btnOk.textContent = 'OK';
+
+            const fechar = () => {
+                modal.classList.add('hidden');
+                btnOk.removeEventListener('click', okHandler);
+            };
+
+            const okHandler = () => {
+                fechar();
+                resolve(true);
+            };
+
+            btnOk.addEventListener('click', okHandler);
+            modal.classList.remove('hidden');
+        });
+    }
+
+    function mostrarConfirmacao(mensagem, titulo = '❓ CONFIRMAÇÃO') {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('modal-alerta-custom');
+            const elTitulo = document.getElementById('alerta-titulo');
+            const elMensagem = document.getElementById('alerta-mensagem');
+            const btnOk = document.getElementById('btn-alerta-ok');
+            const btnCancelar = document.getElementById('btn-alerta-cancelar');
+
+            elTitulo.textContent = titulo;
+            elMensagem.textContent = mensagem;
+
+            btnCancelar.classList.remove('hidden');
+            btnOk.textContent = 'Sim';
+            btnCancelar.textContent = 'Cancelar';
+
+            const fechar = () => {
+                modal.classList.add('hidden');
+                btnOk.removeEventListener('click', okHandler);
+                btnCancelar.removeEventListener('click', cancelHandler);
+            };
+
+            const okHandler = () => {
+                fechar();
+                resolve(true);
+            };
+
+            const cancelHandler = () => {
+                fechar();
+                resolve(false);
+            };
+
+            btnOk.addEventListener('click', okHandler);
+            btnCancelar.addEventListener('click', cancelHandler);
+            modal.classList.remove('hidden');
+        });
+    }
+
     function escapeHtml(texto) {
         return String(texto)
             .replace(/&/g, "&amp;")
@@ -83,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnStart = document.getElementById('btn-timer-start');
     if (btnStart) {
         btnStart.addEventListener('click', () => {
-            if (timerInterval) return; // Já rodando
+            if (timerInterval) return;
 
             timerInterval = setInterval(() => {
                 if (tempoRestante > 0) {
@@ -93,7 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     clearInterval(timerInterval);
                     timerInterval = null;
                     tocarApitoJuiz();
-                    alert('⏰ Fim de jogo! Tempo esgotado.');
+                    mostrarAlerta('⏰ Fim de jogo! Tempo esgotado.', '⏱️ CRONÔMETRO');
                 }
             }, 1000);
         });
@@ -117,7 +456,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Gerador de Som Sintético de Apito de Juiz (Web Audio API)
     function tocarApitoJuiz() {
         try {
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -167,11 +505,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 3. ABA JOGADORES & IMPORTAÇÃO EM LOTE ---
     const btnImportarLote = document.getElementById('btn-importar-lote');
     if (btnImportarLote) {
-        btnImportarLote.addEventListener('click', () => {
+        btnImportarLote.addEventListener('click', async () => {
             const inputLote = document.getElementById('lista-lote');
             if (!inputLote) return;
             const textoLote = inputLote.value;
-            if (!textoLote.trim()) return alert('Cole uma lista de nomes!');
+            if (!textoLote.trim()) return mostrarAlerta('Cole uma lista de nomes!');
 
             const linhas = textoLote.split('\n');
             let adicionados = 0;
@@ -196,11 +534,10 @@ document.addEventListener('DOMContentLoaded', () => {
             salvarJogadores();
             renderizarElenco();
             inputLote.value = '';
-            alert(`${adicionados} jogadores válidos adicionados com sucesso!`);
+            await mostrarAlerta(`${adicionados} jogadores válidos adicionados com sucesso!`, '🚀 SUCESSO');
         });
     }
 
-    // Cadastro Individual
     const starsCadastro = document.querySelectorAll('#stars-cadastro .star-cad');
     starsCadastro.forEach(star => {
         star.addEventListener('click', (e) => {
@@ -215,14 +552,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btnAddJogador = document.getElementById('btn-add-jogador');
     if (btnAddJogador) {
-        btnAddJogador.addEventListener('click', () => {
+        btnAddJogador.addEventListener('click', async () => {
             const nomeInput = document.getElementById('novo-nome');
             if (!nomeInput) return;
             const nome = nomeInput.value.trim();
             const tipoEl = document.querySelector('input[name="tipo-jogador"]:checked');
             const tipo = tipoEl ? tipoEl.value : 'linha';
 
-            if (!nome) return alert('Digite o nome!');
+            if (!nome) return mostrarAlerta('Digite o nome do jogador!');
 
             jogadores.push({
                 id: Date.now() + Math.random(),
@@ -236,10 +573,6 @@ document.addEventListener('DOMContentLoaded', () => {
             nomeInput.value = '';
             renderizarElenco();
         });
-    }
-
-    function salvarJogadores() {
-        localStorage.setItem('racha_jogadores', JSON.stringify(jogadores));
     }
 
     function renderizarElenco() {
@@ -273,15 +606,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    window.excluirJogador = function(id) {
-        if (confirm("Tem certeza que deseja excluir este item?")) {
+    window.excluirJogador = async function(id) {
+        const confirmou = await mostrarConfirmacao("Tem certeza que deseja excluir este jogador?", "🗑️ EXCLUIR JOGADOR");
+        if (confirmou) {
             jogadores = jogadores.filter(j => j.id != id);
             salvarJogadores();
             renderizarElenco();
         }
     };
 
-    // --- MODAL DE EDIÇÃO DE JOGADOR ---
     window.abrirEdicao = function(id) {
         const j = jogadores.find(item => item.id == id);
         if (!j) return;
@@ -367,7 +700,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Função auxiliar para embaralhar arrays (Algoritmo Fisher-Yates)
     function embaralharArray(array) {
         let copia = [...array];
         for (let i = copia.length - 1; i > 0; i--) {
@@ -377,7 +709,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return copia;
     }
 
-    // Algoritmo de Sorteio Aleatório Balanceado (Monte Carlo)
     function sortearTimesAleatorioBalanceado(jogadoresPresentes, qtdTimes, limiteDiferencaEstrelas = 2) {
         const goleiros = jogadoresPresentes.filter(j => j.isGoleiro);
         const linha = jogadoresPresentes.filter(j => !j.isGoleiro);
@@ -405,21 +736,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 somaEstrelas: 0
             }));
 
-            // Distribuição dos goleiros
             goleirosParaTimes.forEach((g, index) => {
                 timesTemp[index].jogadores.push(g);
                 timesTemp[index].somaEstrelas += g.estrelas;
                 timesTemp[index].temGoleiro = true;
             });
 
-            // Distribuição sequencial dos jogadores de linha
             linhaCompleta.forEach((j, index) => {
                 const timeIndex = index % qtdTimes;
                 timesTemp[timeIndex].jogadores.push(j);
                 timesTemp[timeIndex].somaEstrelas += j.estrelas;
             });
 
-            // Cálculo da diferença de nível entre o time mais forte e o mais fraco
             const somas = timesTemp.map(t => t.somaEstrelas);
             const diferenca = Math.max(...somas) - Math.min(...somas);
 
@@ -428,7 +756,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 melhorSorteio = timesTemp;
             }
 
-            // Filtro de aceitação baseado na tolerância
             if (diferenca <= limiteDiferencaEstrelas) {
                 return timesTemp;
             }
@@ -439,18 +766,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btnSortear = document.getElementById('btn-sortear');
     if (btnSortear) {
-        btnSortear.addEventListener('click', () => {
+        btnSortear.addEventListener('click', async () => {
             const presentes = jogadores.filter(j => j.presente);
             const qtdTimesEl = document.getElementById('qtd-times');
             const qtdTimes = qtdTimesEl ? parseInt(qtdTimesEl.value) : 2;
 
             if (presentes.length < qtdTimes * 2) {
-                return alert('Poucos jogadores presentes para a quantidade de times!');
+                return mostrarAlerta('Poucos jogadores presentes para a quantidade de times!', '🎲 SORTEIO');
             }
 
-            // Tolerância máxima de diferença de estrelas entre o time mais forte e o mais fraco
             const limiteDiferencaEstrelas = 2;
-
             timesSorteados = sortearTimesAleatorioBalanceado(presentes, qtdTimes, limiteDiferencaEstrelas);
             exibirTimesSorteados();
         });
@@ -459,26 +784,112 @@ document.addEventListener('DOMContentLoaded', () => {
     function exibirTimesSorteados() {
         const container = document.getElementById('times-sorteados-container');
         if (!container) return;
+        
+        container.className = 'grid-times-container';
         container.innerHTML = '';
 
         timesSorteados.forEach(t => {
-            const div = document.createElement('div');
-            div.style.marginBottom = '8px';
-            const avisoGoleiro = t.temGoleiro ? '' : ' <small style="color:#ef4444;">(Sem goleiro fixo)</small>';
-            div.innerHTML = `<strong>🟢 ${t.nome}</strong>${avisoGoleiro}: ${t.jogadores.map(j => `${escapeHtml(j.nome)}${j.isGoleiro ? ' 🧤' : ''}`).join(', ')}`;
-            container.appendChild(div);
+            const card = document.createElement('div');
+            card.className = 'card-time';
+
+            const avisoGoleiro = t.temGoleiro ? '' : ' <span class="badge-sem-goleiro">(Sem goleiro fixo)</span>';
+            
+            const listaJogadoresHtml = t.jogadores.map(j => `
+                <li class="item-jogador-time">
+                    <span>${escapeHtml(j.nome)} ${j.isGoleiro ? '🧤' : ''}</span>
+                    <small class="estrelas-jogador">${'⭐'.repeat(j.estrelas)}</small>
+                </li>
+            `).join('');
+
+            card.innerHTML = `
+                <div class="card-time-header">
+                    <h3>🟢 ${t.nome}</h3>
+                    <span class="badge-estrelas">⭐ ${t.somaEstrelas} Nível</span>
+                </div>
+                ${avisoGoleiro}
+                <ul class="lista-jogadores-card">
+                    ${listaJogadoresHtml}
+                </ul>
+            `;
+
+            container.appendChild(card);
         });
+
+        let btnCopiar = document.getElementById('btn-copiar-lista');
+        if (!btnCopiar) {
+            btnCopiar = document.createElement('button');
+            btnCopiar.id = 'btn-copiar-lista';
+            btnCopiar.className = 'btn btn-primary';
+            btnCopiar.style.width = '100%';
+            btnCopiar.style.marginTop = '12px';
+            btnCopiar.innerHTML = '📋 Copiar Lista de Times';
+            
+            btnCopiar.addEventListener('click', copiarListaTimes);
+            
+            if (container.parentNode) {
+                container.parentNode.appendChild(btnCopiar);
+            }
+        }
 
         const resDiv = document.getElementById('resultado-sorteio');
         if (resDiv) resDiv.classList.remove('hidden');
     }
 
+    async function copiarListaTimes() {
+        if (!timesSorteados || timesSorteados.length === 0) {
+            return mostrarAlerta('Nenhum sorteio realizado ainda!');
+        }
+
+        let textoFormatado = `*SORTEIO DE TIMES*\n\n`;
+
+        timesSorteados.forEach((t, i) => {
+            textoFormatado += `*${t.nome.toUpperCase()}*\n`;
+            t.jogadores.forEach((j, index) => {
+                const tagGoleiro = j.isGoleiro ? ' (Goleiro)' : '';
+                textoFormatado += `${index + 1}. ${j.nome}${tagGoleiro}\n`;
+            });
+
+            if (i < timesSorteados.length - 1) {
+                textoFormatado += `\n\n`;
+            }
+        });
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(textoFormatado).then(async () => {
+                await mostrarAlerta('✅ Lista copiada com sucesso! Agora é só colar no WhatsApp.', '📋 COPIAR LISTA');
+            }).catch(err => {
+                fallbackCopiarTexto(textoFormatado);
+            });
+        } else {
+            fallbackCopiarTexto(textoFormatado);
+        }
+    }
+
+    async function fallbackCopiarTexto(texto) {
+        const textArea = document.createElement('textarea');
+        textArea.value = texto;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            document.execCommand('copy');
+            await mostrarAlerta('✅ Lista copiada com sucesso! Agora é só colar no WhatsApp.', '📋 COPIAR LISTA');
+        } catch (err) {
+            await mostrarAlerta('❌ Erro ao copiar automaticamente. Tente novamente.', 'ERRO');
+        }
+
+        document.body.removeChild(textArea);
+    }
+
     // --- 5. ABA CAMPEONATO ---
     const btnIniciarCamp = document.getElementById('btn-iniciar-campeonato');
     if (btnIniciarCamp) {
-        btnIniciarCamp.addEventListener('click', () => {
+        btnIniciarCamp.addEventListener('click', async () => {
             if (timesSorteados.length < 2) {
-                return alert('Realize o sorteio dos times primeiro!');
+                return mostrarAlerta('Realize o sorteio dos times primeiro!', '🏆 CAMPEONATO');
             }
             gerarTabelaTodosContraTodos();
             inicializarClassificacao();
@@ -491,7 +902,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ALGORITMO ROUND-ROBIN PERFEITO (TODOS CONTRA TODOS)
     function gerarTabelaTodosContraTodos() {
         partidas = [];
         let list = [...timesSorteados];
@@ -499,7 +909,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let tempTimes = [...list];
         if (n % 2 !== 0) {
-            tempTimes.push(null); // time nulo representa Folga
+            tempTimes.push(null);
             n++;
         }
 
@@ -525,7 +935,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
             }
-            // Rotação Round-Robin
             tempTimes.splice(1, 0, tempTimes.pop());
         }
     }
@@ -581,23 +990,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (partidaAtualIndex >= partidas.length) {
-            container.innerHTML = '<h3 style="color:#22c55e; text-align:center;">✅ Todos os jogos da tabela foram realizados!</h3><p class="subtext" style="text-align:center; margin-top:4px;">Clique em "Finalizar Campeonato" abaixo para salvar no histórico.</p>';
+            container.innerHTML = '<h3 style="text-align:center;">✅ Todos os jogos da tabela foram realizados!</h3><p class="subtext" style="text-align:center; margin-top:4px;">Clique em "Finalizar Campeonato" abaixo para salvar no histórico.</p>';
             return;
         }
 
         const p = partidas[partidaAtualIndex];
 
-        // Monta a lista com TODOS os times sorteados para o usuário selecionar livremente
         const opcoesTimesA = timesSorteados.map(t => `<option value="${t.id}" ${t.id === p.timeA.id ? 'selected' : ''}>${escapeHtml(t.nome)}</option>`).join('');
         const opcoesTimesB = timesSorteados.map(t => `<option value="${t.id}" ${t.id === p.timeB.id ? 'selected' : ''}>${escapeHtml(t.nome)}</option>`).join('');
 
         container.innerHTML = `
-            <p class="subtext" style="text-align:center; margin-bottom: 6px; font-size: 0.8rem; color:#a5b4fc;">
+            <p class="subtext" style="text-align:center; margin-bottom: 6px; font-size: 0.8rem;">
                <strong>Rodada ${p.rodada}</strong> - Escolha os times que vão jogar abaixo:
             </p>
             <div class="placar-box" style="gap:10px;">
                 <div class="time-placar" style="flex:1;">
-                    <select id="select-mudar-time-a" style="width:100%; padding:6px; background:#0f172a; color:#38bdf8; font-weight:bold; border-radius:4px; border:1px solid #38bdf8; text-align:center; margin-bottom:6px;">
+                    <select id="select-mudar-time-a" style="width:100%; padding:6px; font-weight:bold; border-radius:4px; text-align:center; margin-bottom:6px;">
                         ${opcoesTimesA}
                     </select>
                     <input type="number" id="gols-a" value="0" min="0">
@@ -606,7 +1014,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span style="font-size:1.2rem; font-weight:bold; align-self:center;">X</span>
                 
                 <div class="time-placar" style="flex:1;">
-                    <select id="select-mudar-time-b" style="width:100%; padding:6px; background:#0f172a; color:#38bdf8; font-weight:bold; border-radius:4px; border:1px solid #38bdf8; text-align:center; margin-bottom:6px;">
+                    <select id="select-mudar-time-b" style="width:100%; padding:6px; font-weight:bold; border-radius:4px; text-align:center; margin-bottom:6px;">
                         ${opcoesTimesB}
                     </select>
                     <input type="number" id="gols-b" value="0" min="0">
@@ -614,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
 
             <div id="box-penaltis" class="penaltis-box hidden">
-                <p class="subtext" style="color:#a5b4fc; text-align:center;">Empate! Decisão nos Pênaltis:</p>
+                <p class="subtext" style="text-align:center;">Empate! Decisão nos Pênaltis:</p>
                 <div class="form-group-row">
                     <label id="lbl-pen-a">${escapeHtml(p.timeA.nome)}:</label>
                     <input type="number" id="pen-a" value="0" min="0">
@@ -628,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="margin-bottom:10px;">
                 <label class="subtext">Registrar Gol Individual:</label>
                 <div class="form-group-row">
-                    <select id="select-artilheiro" style="width:70%; padding:6px; background:#0f172a; color:#fff; border-radius:4px;"></select>
+                    <select id="select-artilheiro" style="width:70%; padding:6px; border-radius:4px;"></select>
                     <button id="btn-add-gol" class="btn btn-secondary" style="width:25%;">+ Gol</button>
                 </div>
             </div>
@@ -636,7 +1044,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <button id="btn-finalizar-partida" class="btn btn-primary">Finalizar Partida</button>
         `;
 
-        // Função para recarregar a lista de jogadores da artilharia quando mudar os times
         const atualizarListaArtilheiros = () => {
             const selectArt = document.getElementById('select-artilheiro');
             if (!selectArt) return;
@@ -649,7 +1056,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (lblPenB) lblPenB.textContent = `${p.timeB.nome}:`;
         };
 
-        // Eventos para mudar o Time A ou o Time B em tempo real
         const selectA = document.getElementById('select-mudar-time-a');
         const selectB = document.getElementById('select-mudar-time-b');
 
@@ -707,9 +1113,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const btnFinPartida = document.getElementById('btn-finalizar-partida');
         if (btnFinPartida) {
-            btnFinPartida.addEventListener('click', () => {
+            btnFinPartida.addEventListener('click', async () => {
                 if (p.timeA.id === p.timeB.id) {
-                    return alert('Um time não pode jogar contra ele mesmo! Escolha times diferentes.');
+                    return mostrarAlerta('Um time não pode jogar contra ele mesmo! Escolha times diferentes.', '⚠️ AVISO');
                 }
 
                 const gA = parseInt(inputA.value) || 0;
@@ -721,7 +1127,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const elPenB = document.getElementById('pen-b');
                     pA = elPenA ? (parseInt(elPenA.value) || 0) : 0;
                     pB = elPenB ? (parseInt(elPenB.value) || 0) : 0;
-                    if (pA === pB) return alert('Defina o vencedor nos pênaltis!');
+                    if (pA === pB) return mostrarAlerta('Defina o vencedor nos pênaltis!', '⚽ PÊNALTIS');
                 }
 
                 p.golsA = gA;
@@ -767,11 +1173,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const div = document.createElement('div');
             div.className = 'item-confronto-encerrado';
 
-            let txtPen = (p.golsA === p.golsB) ? `<small style="color:#a5b4fc;">(Pen: ${p.penaltisA}x${p.penaltisB})</small>` : '';
+            let txtPen = (p.golsA === p.golsB) ? `<small>(Pen: ${p.penaltisA}x${p.penaltisB})</small>` : '';
 
             div.innerHTML = `
                 <span><strong>${escapeHtml(p.timeA.nome)}</strong> ${p.golsA} x ${p.golsB} <strong>${escapeHtml(p.timeB.nome)}</strong> ${txtPen}</span>
-                <span style="color:#22c55e; font-weight:bold;">✓ Finalizado</span>
+                <span style="font-weight:bold;">✓ Finalizado</span>
             `;
             container.appendChild(div);
         });
@@ -800,12 +1206,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 6. HISTÓRICO ---
     const btnFinalizarCamp = document.getElementById('btn-finalizar-campeonato');
     if (btnFinalizarCamp) {
-        btnFinalizarCamp.addEventListener('click', () => {
+        btnFinalizarCamp.addEventListener('click', async () => {
             if (partidas.length === 0) {
-                return alert('Nenhum campeonato ativo no momento!');
+                return mostrarAlerta('Nenhum campeonato ativo no momento!', '🏆 CAMPEONATO');
             }
 
-            const confirmacao = confirm('Deseja realmente finalizar o campeonato atual e salvar os dados no Histórico?');
+            const confirmacao = await mostrarConfirmacao('Deseja realmente finalizar o campeonato atual e salvar os dados no Histórico?', '🏁 FINALIZAR CAMPEONATO');
             if (!confirmacao) return;
 
             let listaClass = Object.values(classificacao);
@@ -827,7 +1233,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             historico.unshift(novoCamp);
-            localStorage.setItem('racha_historico', JSON.stringify(historico));
+            salvarHistoricoFirebase();
 
             partidas = [];
             timesSorteados = [];
@@ -835,7 +1241,7 @@ document.addEventListener('DOMContentLoaded', () => {
             artilharia = {};
             partidaAtualIndex = 0;
 
-            alert('🏆 Campeonato finalizado e salvo com sucesso no Histórico!');
+            await mostrarAlerta('🏆 Campeonato finalizado e salvo com sucesso no Histórico!', '🏆 SUCESSO');
             const tabHist = document.querySelector('[data-tab="tab-historico"]');
             if (tabHist) tabHist.click();
         });
@@ -861,14 +1267,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             div.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <strong style="color:#22c55e;">📅 ${h.data}</strong>
+                    <strong>📅 ${h.data}</strong>
                     <button class="btn btn-danger" onclick="excluirHistorico(${h.id})">Excluir</button>
                 </div>
                 <p style="font-size:0.85rem; margin-bottom:4px;">🏆 <strong>Campeão:</strong> ${escapeHtml(h.campeao)}</p>
                 <p style="font-size:0.85rem; margin-bottom:8px;">🎯 <strong>Artilheiro:</strong> ${txtArtilheiro}</p>
                 
-                <details style="font-size:0.8rem; color:#94a3b8; background:#0f172a; padding:6px; border-radius:4px;">
-                    <summary style="cursor:pointer; color:#38bdf8;"><strong>Ver Confrontos Realizados</strong></summary>
+                <details style="font-size:0.8rem; padding:6px; border-radius:4px;">
+                    <summary style="cursor:pointer;"><strong>Ver Confrontos Realizados</strong></summary>
                     <div style="margin-top:6px; line-height:1.4;">
                         • ${txtConfrontos}
                     </div>
@@ -878,13 +1284,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    window.excluirHistorico = function(id) {
-        if (confirm("Deseja realmente excluir este histórico?")) {
+    window.excluirHistorico = async function(id) {
+        const confirmou = await mostrarConfirmacao("Deseja realmente excluir este histórico?", "🗑️ EXCLUIR HISTÓRICO");
+        if (confirmou) {
             historico = historico.filter(h => h.id != id);
-            localStorage.setItem('racha_historico', JSON.stringify(historico));
+            salvarHistoricoFirebase();
             renderizarHistorico();
         }
     };
-
-    renderizarElenco();
 });
