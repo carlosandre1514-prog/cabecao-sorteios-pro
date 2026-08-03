@@ -91,7 +91,7 @@ async function handleForgotPassword() {
     }
 }
 
-// --- FUNÇÃO DE LOGIN COM O GOOGLE CORRIGIDA (Popup Estável) ---
+// --- FUNÇÃO DE LOGIN COM O GOOGLE CORRIGIDA (Sem alertas indesejados) ---
 async function handleGoogleLogin() {
     if (!window.firebaseAuth || !window.firebaseFns) {
         await mostrarAlerta("❌ Erro: O sistema de autenticação do Firebase não foi carregado.", "❌ ERRO");
@@ -105,10 +105,14 @@ async function handleGoogleLogin() {
     } catch (error) {
         console.error("Erro detalhado no login com o Google:", error);
         
+        // Ignora silenciosamente se o popup foi cancelado por cliques múltiplos ou fechado pelo usuário
+        if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+            console.log("Ação de login com o Google cancelada ou fechada pelo usuário.");
+            return;
+        }
+
         if (error.code === 'auth/unauthorized-domain') {
             await mostrarAlerta("❌ Erro: Este domínio não está autorizado no painel do Firebase (Authentication > Settings > Authorized domains).", "❌ ERRO");
-        } else if (error.code === 'auth/popup-closed-by-user') {
-            console.log("O usuário fechou a janela de login.");
         } else {
             await mostrarAlerta("❌ Erro ao entrar com o Google: " + error.message, "❌ ERRO");
         }
@@ -747,7 +751,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function sortearTimesEstrelasEGoleiros(jogadoresPresentes, qtdTimes) {
-        // Inicializa a estrutura de times
         let timesTemp = Array.from({ length: qtdTimes }, (_, i) => ({
             id: i + 1,
             nome: `Time ${i + 1}`,
@@ -756,7 +759,6 @@ document.addEventListener('DOMContentLoaded', () => {
             somaEstrelas: 0
         }));
 
-        // 1. Goleiros participam de forma independente: embaralha e distribui entre os times
         const goleiros = jogadoresPresentes.filter(j => j.isGoleiro);
         const linha = jogadoresPresentes.filter(j => !j.isGoleiro);
 
@@ -768,17 +770,14 @@ document.addEventListener('DOMContentLoaded', () => {
             timesTemp[tIndex].temGoleiro = true;
         });
 
-        // 2. Separa jogadores de linha por nível de estrelas (de 5.0 até 0.5)
         const niveisPossiveis = [5.0, 4.5, 4.0, 3.5, 3.0, 2.5, 2.0, 1.5, 1.0, 0.5];
         
         niveisPossiveis.forEach(nivel => {
             const grupoJogadores = linha.filter(j => Number(j.estrelas || 3.0) === nivel);
             if (grupoJogadores.length === 0) return;
 
-            // Embaralha de forma totalmente aleatória dentro do grupo
             const grupoEmbaralhado = embaralharArray(grupoJogadores);
 
-            // Distribui os jogadores de forma equilibrada entre os times
             grupoEmbaralhado.forEach((j, index) => {
                 const tIndex = index % qtdTimes;
                 timesTemp[tIndex].jogadores.push(j);
@@ -786,18 +785,16 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // 3. Ajuste fino automático (simulação de trocas entre níveis semelhantes se houver desequilíbrio expressivo)
         for (let iteracao = 0; iteracao < 50; iteracao++) {
             let somas = timesTemp.map(t => t.somaEstrelas);
             let maxSoma = Math.max(...somas);
             let minSoma = Math.min(...somas);
 
-            if (maxSoma - minSoma <= 1.0) break; // Diferença aceitável
+            if (maxSoma - minSoma <= 1.0) break;
 
             let idxMaisForte = somas.indexOf(maxSoma);
             let idxMaisFraco = somas.indexOf(minSoma);
 
-            // Tenta encontrar um jogador de linha no time mais forte que possa ser trocado por um do time mais fraco de nível semelhante
             let timeForte = timesTemp[idxMaisForte];
             let timeFraco = timesTemp[idxMaisFraco];
 
@@ -810,13 +807,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     let jForte = timeForte.jogadores[i];
                     let jFraco = timeFraco.jogadores[k];
 
-                    // Verifica se são de níveis semelhantes (diferença máxima de 1.0 estrela)
                     if (Math.abs(jForte.estrelas - jFraco.estrelas) <= 1.0 && jForte.estrelas > jFraco.estrelas) {
-                        // Realiza a troca simulada
                         timeForte.jogadores[i] = jFraco;
                         timeFraco.jogadores[k] = jForte;
 
-                        // Recalcula somas
                         timeForte.somaEstrelas = timeForte.jogadores.reduce((acc, curr) => acc + Number(curr.estrelas || 3.0), 0);
                         timeFraco.somaEstrelas = timeFraco.jogadores.reduce((acc, curr) => acc + Number(curr.estrelas || 3.0), 0);
                         
