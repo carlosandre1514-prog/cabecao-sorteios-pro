@@ -10,6 +10,14 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- 
+      ==================================================
+      Projeto: Cabeção Sorteios Pro
+      Desenvolvedor: Carlos Andre
+      Ano: 2026
+      ==================================================
+    -->
+
     <!-- TELA DE LOGIN / CADASTRO (EXCLUSIVA DO FIREBASE) -->
     <div id="auth-screen" class="auth-screen">
         <div class="auth-card">
@@ -20,6 +28,9 @@
             <div class="form-group-col">
                 <input type="email" id="auth-email" placeholder="Seu e-mail" required />
                 <input type="password" id="auth-password" placeholder="Sua senha (mínimo 6 dígitos)" required />
+                
+                <!-- Link Esqueci Minha Senha na Cor Branca -->
+                <a href="#" id="btn-esqueci-senha" style="display: block; text-align: right; font-size: 0.85rem; margin-top: -6px; margin-bottom: 8px; color: #ffffff; text-decoration: none;">Esqueci minha senha</a>
                 
                 <button id="btn-auth-action" class="btn btn-primary" onclick="handleAuthAction()">Entrar</button>
                 
@@ -61,10 +72,18 @@
                 </p>
                 <p class="about-version">Versão 1.0.0 Pro</p>
             </div>
+
+            <!-- Seção de Desenvolvedor / Autoria -->
+            <div class="drawer-section" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 15px; padding-top: 15px;">
+                <h4>👨‍💻 Desenvolvido por</h4>
+                <p class="about-text" style="margin-bottom: 4px;">
+                    <strong>Carlos Andre</strong>
+                </p>
+                <p class="about-version" style="margin: 0; opacity: 0.8;">Ano: 2026</p>
+            </div>
         </div>
 
         <div class="drawer-footer" style="display: flex; flex-direction: column; gap: 8px;">
-            <button id="btn-mudar-senha" class="btn btn-secondary" onclick="abrirModalSenha()">🔑 Mudar Senha</button>
             <button id="btn-logout" class="btn btn-danger" onclick="fazerLogout()">🚪 Sair da Conta</button>
         </div>
     </aside>
@@ -111,17 +130,18 @@
                         <label><input type="radio" name="tipo-jogador" value="linha" checked> Linha</label>
                         <label><input type="radio" name="tipo-jogador" value="goleiro"> Goleiro 🧤</label>
                     </div>
+                    
+                    <!-- SELETOR DE ESTRELAS DE 0.5 A 5.0 (CADASTRO) -->
                     <div class="star-rating-input">
-                        <span>Nível:</span>
-                        <div id="stars-cadastro" class="estrelas-selector">
-                            <button class="star-cad" data-star="1">⭐</button>
-                            <button class="star-cad" data-star="2">⭐</button>
-                            <button class="star-cad active" data-star="3">⭐</button>
-                            <button class="star-cad" data-star="4">⭐</button>
-                            <button class="star-cad" data-star="5">⭐</button>
+                        <span>Nível do Jogador:</span>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 6px;">
+                            <button type="button" id="btn-cad-menos" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">−</button>
+                            <span id="display-estrelas-cad" style="font-size: 1.2rem; font-weight: bold; color: #D4AF37;">⭐ 3,0</span>
+                            <button type="button" id="btn-cad-mais" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">+</button>
                         </div>
                     </div>
-                    <button id="btn-add-jogador" class="btn btn-secondary">Adicionar Único</button>
+
+                    <button id="btn-add-jogador" class="btn btn-secondary" style="margin-top: 8px;">Adicionar Único</button>
                 </div>
             </div>
 
@@ -265,26 +285,19 @@
                     <label><input type="radio" name="edit-tipo" value="linha" id="edit-linha"> Linha</label>
                     <label><input type="radio" name="edit-tipo" value="goleiro" id="edit-goleiro"> Goleiro 🧤</label>
                 </div>
-                <div class="form-group-row">
-                    <label>Estrelas (1 a 5):</label>
-                    <input type="number" id="edit-estrelas" min="1" max="5" style="width:60px;">
+                
+                <!-- SELETOR DE ESTRELAS DE 0.5 A 5.0 (EDIÇÃO) -->
+                <div class="form-group-col" style="margin-top: 10px;">
+                    <label class="subtext">Nível do Jogador:</label>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 4px;">
+                        <button type="button" id="btn-edit-menos" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">−</button>
+                        <span id="display-estrelas-edit" style="font-size: 1.2rem; font-weight: bold; color: #D4AF37;">⭐ 3,0</span>
+                        <button type="button" id="btn-edit-mais" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">+</button>
+                    </div>
                 </div>
-                <button id="btn-salvar-edicao" class="btn btn-primary">Salvar Alterações</button>
-                <button id="btn-fechar-modal" class="btn btn-secondary">Cancelar</button>
-            </div>
-        </div>
-    </div>
 
-    <!-- MODAL: ALTERAR SENHA -->
-    <div id="modal-mudar-senha" class="modal hidden">
-        <div class="modal-content card">
-            <h2>🔑 Alterar Senha</h2>
-            <p class="subtext">Digite a sua nova senha abaixo:</p>
-            <div class="form-group-col">
-                <input type="password" id="nova-senha" placeholder="Nova Senha (mín. 6 dígitos)">
-                <input type="password" id="confirma-nova-senha" placeholder="Confirme a Nova Senha">
-                <button id="btn-salvar-senha" class="btn btn-primary" onclick="salvarNovaSenha()">Atualizar Senha</button>
-                <button id="btn-fechar-modal-senha" class="btn btn-secondary" onclick="fecharModalSenha()">Cancelar</button>
+                <button id="btn-salvar-edicao" class="btn btn-primary" style="margin-top: 10px;">Salvar Alterações</button>
+                <button id="btn-fechar-modal" class="btn btn-secondary">Cancelar</button>
             </div>
         </div>
     </div>

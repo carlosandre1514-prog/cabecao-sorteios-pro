@@ -7,6 +7,7 @@ function toggleAuthMode() {
     const title = document.getElementById("auth-subtitle");
     const btnAction = document.getElementById("btn-auth-action");
     const btnSwitch = document.getElementById("btn-auth-switch");
+    const linkEsqueciSenha = document.getElementById("btn-esqueci-senha");
 
     if (!title || !btnAction || !btnSwitch) return;
 
@@ -14,10 +15,12 @@ function toggleAuthMode() {
         title.innerText = "Faça login para continuar";
         btnAction.innerText = "Entrar";
         btnSwitch.innerText = "Não tem conta? Cadastre-se";
+        if (linkEsqueciSenha) linkEsqueciSenha.style.display = "block";
     } else {
         title.innerText = "Crie sua nova conta gratuita";
         btnAction.innerText = "Cadastrar";
         btnSwitch.innerText = "Já tem conta? Faça login";
+        if (linkEsqueciSenha) linkEsqueciSenha.style.display = "none";
     }
 }
 
@@ -31,27 +34,59 @@ async function handleAuthAction() {
     const password = passwordInput.value.trim();
 
     if (!email || !password) {
-        alert("Preencha o e-mail e a senha!");
+        await mostrarAlerta("Preencha o e-mail e a senha!", "⚠️ AVISO");
         return;
     }
 
     try {
         if (isLoginMode) {
             await window.firebaseFns.signInWithEmailAndPassword(window.firebaseAuth, email, password);
-            alert("Login realizado com sucesso!");
+            await mostrarAlerta("Login realizado com sucesso!", "🚀 SUCESSO");
         } else {
             await window.firebaseFns.createUserWithEmailAndPassword(window.firebaseAuth, email, password);
-            alert("Conta criada com sucesso!");
+            await mostrarAlerta("Conta criada com sucesso!", "🚀 SUCESSO");
         }
     } catch (error) {
         if (error.code === 'auth/email-already-in-use') {
-            alert("Este e-mail já está cadastrado! Use outro ou faça login.");
+            await mostrarAlerta("Este e-mail já está cadastrado! Use outro ou faça login.", "⚠️ ERRO");
         } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
-            alert("E-mail ou senha incorretos.");
+            await mostrarAlerta("E-mail ou senha incorretos.", "⚠️ ERRO");
         } else if (error.code === 'auth/weak-password') {
-            alert("A senha precisa ter pelo menos 6 caracteres.");
+            await mostrarAlerta("A senha precisa ter pelo menos 6 caracteres.", "⚠️ AVISO");
         } else {
-            alert("Erro: " + error.message);
+            await mostrarAlerta("Erro: " + error.message, "❌ ERRO");
+        }
+    }
+}
+
+// --- FUNÇÃO DE RECUPERAÇÃO DE SENHA (ESQUECI MINHA SENHA) ---
+async function handleForgotPassword() {
+    const emailInput = document.getElementById("auth-email");
+    if (!emailInput) return;
+
+    const email = emailInput.value.trim();
+    if (!email) {
+        await mostrarAlerta("Digite o seu e-mail no campo acima para recuperar a senha.", "⚠️ AVISO");
+        emailInput.focus();
+        return;
+    }
+
+    if (!window.firebaseAuth || !window.firebaseFns) {
+        await mostrarAlerta("❌ Erro: O sistema de autenticação do Firebase não foi carregado.", "❌ ERRO");
+        return;
+    }
+
+    try {
+        await window.firebaseFns.sendPasswordResetEmail(window.firebaseAuth, email);
+        await mostrarAlerta("✅ E-mail de recuperação de senha enviado! Verifique sua caixa de entrada e spam.", "📧 RECUPERAÇÃO");
+    } catch (error) {
+        console.error("Erro ao enviar e-mail de recuperação:", error);
+        if (error.code === 'auth/user-not-found') {
+            await mostrarAlerta("❌ Não há usuário cadastrado com este e-mail.", "❌ ERRO");
+        } else if (error.code === 'auth/invalid-email') {
+            await mostrarAlerta("❌ O formato do e-mail é inválido.", "❌ ERRO");
+        } else {
+            await mostrarAlerta("❌ Erro ao enviar e-mail de recuperação: " + error.message, "❌ ERRO");
         }
     }
 }
@@ -59,24 +94,23 @@ async function handleAuthAction() {
 // --- FUNÇÃO DE LOGIN COM O GOOGLE CORRIGIDA (Popup Estável) ---
 async function handleGoogleLogin() {
     if (!window.firebaseAuth || !window.firebaseFns) {
-        alert("❌ Erro: O sistema de autenticação do Firebase não foi carregado.");
+        await mostrarAlerta("❌ Erro: O sistema de autenticação do Firebase não foi carregado.", "❌ ERRO");
         return;
     }
 
     try {
         const provider = new window.firebaseFns.GoogleAuthProvider();
-        // Utiliza popup para estabilidade em navegadores mobile e web apps
         await window.firebaseFns.signInWithPopup(window.firebaseAuth, provider);
         console.log("Login com o Google realizado com sucesso!");
     } catch (error) {
         console.error("Erro detalhado no login com o Google:", error);
         
         if (error.code === 'auth/unauthorized-domain') {
-            alert("❌ Erro: Este domínio não está autorizado no painel do Firebase (Authentication > Settings > Authorized domains).");
+            await mostrarAlerta("❌ Erro: Este domínio não está autorizado no painel do Firebase (Authentication > Settings > Authorized domains).", "❌ ERRO");
         } else if (error.code === 'auth/popup-closed-by-user') {
             console.log("O usuário fechou a janela de login.");
         } else {
-            alert("❌ Erro ao entrar com o Google: " + error.message);
+            await mostrarAlerta("❌ Erro ao entrar com o Google: " + error.message, "❌ ERRO");
         }
     }
 }
@@ -94,9 +128,9 @@ function toggleDrawer() {
 function navegarParaAba(targetTabId) {
     const btnTarget = document.querySelector(`.tab-btn[data-tab="${targetTabId}"]`);
     if (btnTarget) {
-        btnTarget.click(); // Simula o clique na aba para acionar toda a lógica nativa
+        btnTarget.click();
     }
-    toggleDrawer(); // Fecha o menu após selecionar a aba
+    toggleDrawer();
 }
 
 async function fazerLogout() {
@@ -110,76 +144,7 @@ async function fazerLogout() {
         }
     } catch (error) {
         console.error("Erro ao fazer logout:", error);
-        alert("Erro ao sair da conta. Tente novamente.");
-    }
-}
-
-// --- FERRAMENTA DE MUDAR SENHA ---
-function abrirModalSenha() {
-    const modal = document.getElementById('modal-mudar-senha');
-    if (modal) {
-        modal.classList.remove('hidden');
-        toggleDrawer(); // Fecha o menu lateral se estiver aberto
-    }
-}
-
-function fecharModalSenha() {
-    const modal = document.getElementById('modal-mudar-senha');
-    if (modal) {
-        modal.classList.add('hidden');
-        const novaSenha = document.getElementById('nova-senha');
-        const confirmaSenha = document.getElementById('confirma-nova-senha');
-        if (novaSenha) novaSenha.value = '';
-        if (confirmaSenha) confirmaSenha.value = '';
-    }
-}
-
-async function salvarNovaSenha() {
-    if (!window.firebaseAuth || !window.firebaseFns) {
-        alert("Erro: O sistema de autenticação do Firebase não foi carregado.");
-        return;
-    }
-
-    const user = window.firebaseAuth.currentUser;
-    if (!user) {
-        alert("⚠️ Nenhum usuário logado detectado.");
-        return;
-    }
-
-    const inputNova = document.getElementById('nova-senha');
-    const inputConfirma = document.getElementById('confirma-nova-senha');
-
-    if (!inputNova || !inputConfirma) return;
-
-    const senhaNova = inputNova.value.trim();
-    const senhaConfirma = inputConfirma.value.trim();
-
-    if (!senhaNova || !senhaConfirma) {
-        alert("Preencha todos os campos de senha!");
-        return;
-    }
-
-    if (senhaNova.length < 6) {
-        alert("A nova senha precisa ter pelo menos 6 dígitos.");
-        return;
-    }
-
-    if (senhaNova !== senhaConfirma) {
-        alert("As senhas não coincidem!");
-        return;
-    }
-
-    try {
-        await window.firebaseFns.updatePassword(user, senhaNova);
-        alert("✅ Senha alterada com sucesso!");
-        fecharModalSenha();
-    } catch (error) {
-        console.error("Erro ao alterar senha:", error);
-        if (error.code === 'auth/requires-recent-login') {
-            alert("❌ Por segurança, esta operação exige um login recente. Faça logout e entre novamente para alterar a senha.");
-        } else {
-            alert("❌ Erro ao alterar senha: " + error.message);
-        }
+        await mostrarAlerta("Erro ao sair da conta. Tente novamente.", "❌ ERRO");
     }
 }
 
@@ -193,17 +158,82 @@ document.addEventListener('DOMContentLoaded', () => {
     let partidaAtualIndex = 0;
     let classificacao = {};
     let artilharia = {};
-    let nivelCadastroTemp = 3;
+    let nivelCadastroTemp = 3.0;
+    let nivelEdicaoTemp = 3.0;
 
     // --- VARIÁVEIS DO CRONÔMETRO ---
     let timerInterval = null;
-    let tempoTotalSegundos = 600; // Default 10 min
+    let tempoTotalSegundos = 600;
     let tempoRestante = 600;
 
     // Vincular evento ao botão do Google do HTML
     const btnGoogle = document.getElementById('btn-google-auth');
     if (btnGoogle) {
         btnGoogle.addEventListener('click', handleGoogleLogin);
+    }
+
+    // Vincular evento ao botão "Esqueci minha senha"
+    const btnEsqueciSenha = document.getElementById('btn-esqueci-senha');
+    if (btnEsqueciSenha) {
+        btnEsqueciSenha.addEventListener('click', handleForgotPassword);
+    }
+
+    // --- CONTROLE DOS BOTÕES DE INCREMENTO/DECREMENTO DE ESTRELAS (CADASTRO) ---
+    const btnCadMenos = document.getElementById('btn-cad-menos');
+    const btnCadMais = document.getElementById('btn-cad-mais');
+    const displayEstrelasCad = document.getElementById('display-estrelas-cad');
+
+    function atualizarDisplayCad() {
+        if (displayEstrelasCad) {
+            displayEstrelasCad.textContent = `⭐ ${nivelCadastroTemp.toFixed(1).replace('.', ',')}`;
+        }
+    }
+
+    if (btnCadMenos) {
+        btnCadMenos.addEventListener('click', () => {
+            if (nivelCadastroTemp > 0.5) {
+                nivelCadastroTemp -= 0.5;
+                atualizarDisplayCad();
+            }
+        });
+    }
+
+    if (btnCadMais) {
+        btnCadMais.addEventListener('click', () => {
+            if (nivelCadastroTemp < 5.0) {
+                nivelCadastroTemp += 0.5;
+                atualizarDisplayCad();
+            }
+        });
+    }
+
+    // --- CONTROLE DOS BOTÕES DE INCREMENTO/DECREMENTO DE ESTRELAS (EDIÇÃO) ---
+    const btnEditMenos = document.getElementById('btn-edit-menos');
+    const btnEditMais = document.getElementById('btn-edit-mais');
+    const displayEstrelasEdit = document.getElementById('display-estrelas-edit');
+
+    function atualizarDisplayEdit() {
+        if (displayEstrelasEdit) {
+            displayEstrelasEdit.textContent = `⭐ ${nivelEdicaoTemp.toFixed(1).replace('.', ',')}`;
+        }
+    }
+
+    if (btnEditMenos) {
+        btnEditMenos.addEventListener('click', () => {
+            if (nivelEdicaoTemp > 0.5) {
+                nivelEdicaoTemp -= 0.5;
+                atualizarDisplayEdit();
+            }
+        });
+    }
+
+    if (btnEditMais) {
+        btnEditMais.addEventListener('click', () => {
+            if (nivelEdicaoTemp < 5.0) {
+                nivelEdicaoTemp += 0.5;
+                atualizarDisplayEdit();
+            }
+        });
     }
 
     // --- MONITOR DE SESSÃO DO FIREBASE ---
@@ -216,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (user) {
                     currentUserUid = user.uid;
                     if (authScreen) authScreen.classList.add("hidden");
-                    if (drawerEmail) drawerEmail.textContent = user.email || "Usuário Google"; // Preenche o e-mail no menu lateral
+                    if (drawerEmail) drawerEmail.textContent = user.email || "Usuário Google";
                     console.log("Usuário logado:", user.email);
                     carregarDadosDoFirebase();
                 } else {
@@ -285,13 +315,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     criarContainerAlertas();
 
-    function mostrarAlerta(mensagem, titulo = '⚠️ AVISO') {
+    window.mostrarAlerta = function(mensagem, titulo = '⚠️ AVISO') {
         return new Promise((resolve) => {
             const modal = document.getElementById('modal-alerta-custom');
             const elTitulo = document.getElementById('alerta-titulo');
             const elMensagem = document.getElementById('alerta-mensagem');
             const btnOk = document.getElementById('btn-alerta-ok');
             const btnCancelar = document.getElementById('btn-alerta-cancelar');
+
+            if (!modal) {
+                alert(mensagem);
+                resolve(true);
+                return;
+            }
 
             elTitulo.textContent = titulo;
             elMensagem.textContent = mensagem;
@@ -312,7 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btnOk.addEventListener('click', okHandler);
             modal.classList.remove('hidden');
         });
-    }
+    };
 
     function mostrarConfirmacao(mensagem, titulo = '❓ CONFIRMAÇÃO') {
         return new Promise((resolve) => {
@@ -321,6 +357,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const elMensagem = document.getElementById('alerta-mensagem');
             const btnOk = document.getElementById('btn-alerta-ok');
             const btnCancelar = document.getElementById('btn-alerta-cancelar');
+
+            if (!modal) {
+                const res = confirm(mensagem);
+                resolve(res);
+                return;
+            }
 
             elTitulo.textContent = titulo;
             elMensagem.textContent = mensagem;
@@ -505,7 +547,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const inputLote = document.getElementById('lista-lote');
             if (!inputLote) return;
             const textoLote = inputLote.value;
-            if (!textoLote.trim()) return mostrarAlerta('Cole uma lista de nomes!');
+            if (!textoLote.trim()) {
+                await mostrarAlerta('Cole uma lista de nomes!', '⚠️ AVISO');
+                return;
+            }
 
             const linhas = textoLote.split('\n');
             let adicionados = 0;
@@ -520,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         id: Date.now() + Math.random(),
                         nome: nomeLimpo,
                         isGoleiro: false,
-                        estrelas: 3,
+                        estrelas: 3.0,
                         presente: true
                     });
                     adicionados++;
@@ -534,18 +579,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const starsCadastro = document.querySelectorAll('#stars-cadastro .star-cad');
-    starsCadastro.forEach(star => {
-        star.addEventListener('click', (e) => {
-            const target = e.currentTarget || e.target;
-            nivelCadastroTemp = parseInt(target.getAttribute('data-star')) || 3;
-            starsCadastro.forEach((s, idx) => {
-                if (idx < nivelCadastroTemp) s.classList.add('active');
-                else s.classList.remove('active');
-            });
-        });
-    });
-
     const btnAddJogador = document.getElementById('btn-add-jogador');
     if (btnAddJogador) {
         btnAddJogador.addEventListener('click', async () => {
@@ -555,7 +588,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const tipoEl = document.querySelector('input[name="tipo-jogador"]:checked');
             const tipo = tipoEl ? tipoEl.value : 'linha';
 
-            if (!nome) return mostrarAlerta('Digite o nome do jogador!');
+            if (!nome) {
+                await mostrarAlerta('Digite o nome do jogador!', '⚠️ AVISO');
+                return;
+            }
 
             jogadores.push({
                 id: Date.now() + Math.random(),
@@ -567,6 +603,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             salvarJogadores();
             nomeInput.value = '';
+            nivelCadastroTemp = 3.0;
+            atualizarDisplayCad();
             renderizarElenco();
         });
     }
@@ -587,11 +625,12 @@ document.addEventListener('DOMContentLoaded', () => {
             div.className = 'item-jogador';
             
             const nomeTratado = escapeHtml(j.nome);
+            const estrelasFormatadas = Number(j.estrelas || 3.0).toFixed(1).replace('.', ',');
 
             div.innerHTML = `
                 <div>
                     <strong>${nomeTratado}</strong> ${j.isGoleiro ? '🧤' : ''}
-                    <small style="color:#94a3b8">(${'⭐'.repeat(j.estrelas)})</small>
+                    <small style="color:#D4AF37; font-weight: bold;">(⭐ ${estrelasFormatadas})</small>
                 </div>
                 <div class="acoes-item">
                     <button class="btn-edit" onclick="abrirEdicao(${j.id})">✏️ Editar</button>
@@ -617,14 +656,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const editId = document.getElementById('edit-id');
         const editNome = document.getElementById('edit-nome');
-        const editEstrelas = document.getElementById('edit-estrelas');
         const editGoleiro = document.getElementById('edit-goleiro');
         const editLinha = document.getElementById('edit-linha');
         const modal = document.getElementById('modal-edicao');
 
         if (editId) editId.value = j.id;
         if (editNome) editNome.value = j.nome;
-        if (editEstrelas) editEstrelas.value = j.estrelas;
+        
+        nivelEdicaoTemp = Number(j.estrelas || 3.0);
+        atualizarDisplayEdit();
+
         if (j.isGoleiro) {
             if (editGoleiro) editGoleiro.checked = true;
         } else {
@@ -650,11 +691,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (j) {
                 const editNome = document.getElementById('edit-nome');
-                const editEstrelas = document.getElementById('edit-estrelas');
                 const editGoleiro = document.getElementById('edit-goleiro');
 
                 j.nome = (editNome && editNome.value.trim()) ? editNome.value.trim() : j.nome;
-                j.estrelas = editEstrelas ? (parseInt(editEstrelas.value) || 3) : j.estrelas;
+                j.estrelas = nivelEdicaoTemp;
                 j.isGoleiro = editGoleiro ? editGoleiro.checked : false;
 
                 salvarJogadores();
@@ -666,7 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 4. ABA SORTEIO & ALGORITMO MONTE CARLO ---
+    // --- 4. ABA SORTEIO & ALGORITMO EXATO POR ESTRELAS E GOLEIROS ---
     function renderizarPresenca() {
         const container = document.getElementById('lista-presenca');
         if (!container) return;
@@ -680,9 +720,10 @@ document.addEventListener('DOMContentLoaded', () => {
         jogadores.forEach(j => {
             const div = document.createElement('div');
             div.className = 'item-presenca';
+            const estrelasFmt = Number(j.estrelas || 3.0).toFixed(1).replace('.', ',');
             div.innerHTML = `
                 <input type="checkbox" id="p-${j.id}" ${j.presente ? 'checked' : ''}>
-                <label for="p-${j.id}">${escapeHtml(j.nome)} ${j.isGoleiro ? '🧤' : ''} (${'⭐'.repeat(j.estrelas)})</label>
+                <label for="p-${j.id}">${escapeHtml(j.nome)} ${j.isGoleiro ? '🧤' : ''} (⭐ ${estrelasFmt})</label>
             `;
             container.appendChild(div);
 
@@ -705,59 +746,90 @@ document.addEventListener('DOMContentLoaded', () => {
         return copia;
     }
 
-    function sortearTimesAleatorioBalanceado(jogadoresPresentes, qtdTimes, limiteDiferencaEstrelas = 2) {
+    function sortearTimesEstrelasEGoleiros(jogadoresPresentes, qtdTimes) {
+        // Inicializa a estrutura de times
+        let timesTemp = Array.from({ length: qtdTimes }, (_, i) => ({
+            id: i + 1,
+            nome: `Time ${i + 1}`,
+            jogadores: [],
+            temGoleiro: false,
+            somaEstrelas: 0
+        }));
+
+        // 1. Goleiros participam de forma independente: embaralha e distribui entre os times
         const goleiros = jogadoresPresentes.filter(j => j.isGoleiro);
         const linha = jogadoresPresentes.filter(j => !j.isGoleiro);
 
-        let tentativa = 0;
-        const maxTentativas = 2000;
-        let melhorSorteio = null;
-        let menorDiferencaEncontrada = Infinity;
+        const goleirosEmbaralhados = embaralharArray(goleiros);
+        goleirosEmbaralhados.forEach((g, index) => {
+            const tIndex = index % qtdTimes;
+            timesTemp[tIndex].jogadores.push(g);
+            timesTemp[tIndex].somaEstrelas += Number(g.estrelas || 3.0);
+            timesTemp[tIndex].temGoleiro = true;
+        });
 
-        while (tentativa < maxTentativas) {
-            tentativa++;
+        // 2. Separa jogadores de linha por nível de estrelas (de 5.0 até 0.5)
+        const niveisPossiveis = [5.0, 4.5, 4.0, 3.5, 3.0, 2.5, 2.0, 1.5, 1.0, 0.5];
+        
+        niveisPossiveis.forEach(nivel => {
+            const grupoJogadores = linha.filter(j => Number(j.estrelas || 3.0) === nivel);
+            if (grupoJogadores.length === 0) return;
 
-            const goleirosEmbaralhados = embaralharArray(goleiros);
-            const linhaEmbaralhada = embaralharArray(linha);
+            // Embaralha de forma totalmente aleatória dentro do grupo
+            const grupoEmbaralhado = embaralharArray(grupoJogadores);
 
-            const goleirosParaTimes = goleirosEmbaralhados.slice(0, qtdTimes);
-            const goleirosSobrando = goleirosEmbaralhados.slice(qtdTimes);
-            const linhaCompleta = embaralharArray([...linhaEmbaralhada, ...goleirosSobrando]);
-
-            let timesTemp = Array.from({ length: qtdTimes }, (_, i) => ({
-                id: i + 1,
-                nome: `Time ${i + 1}`,
-                jogadores: [],
-                temGoleiro: false,
-                somaEstrelas: 0
-            }));
-
-            goleirosParaTimes.forEach((g, index) => {
-                timesTemp[index].jogadores.push(g);
-                timesTemp[index].somaEstrelas += g.estrelas;
-                timesTemp[index].temGoleiro = true;
+            // Distribui os jogadores de forma equilibrada entre os times
+            grupoEmbaralhado.forEach((j, index) => {
+                const tIndex = index % qtdTimes;
+                timesTemp[tIndex].jogadores.push(j);
+                timesTemp[tIndex].somaEstrelas += Number(j.estrelas || 3.0);
             });
+        });
 
-            linhaCompleta.forEach((j, index) => {
-                const timeIndex = index % qtdTimes;
-                timesTemp[timeIndex].jogadores.push(j);
-                timesTemp[timeIndex].somaEstrelas += j.estrelas;
-            });
+        // 3. Ajuste fino automático (simulação de trocas entre níveis semelhantes se houver desequilíbrio expressivo)
+        for (let iteracao = 0; iteracao < 50; iteracao++) {
+            let somas = timesTemp.map(t => t.somaEstrelas);
+            let maxSoma = Math.max(...somas);
+            let minSoma = Math.min(...somas);
 
-            const somas = timesTemp.map(t => t.somaEstrelas);
-            const diferenca = Math.max(...somas) - Math.min(...somas);
+            if (maxSoma - minSoma <= 1.0) break; // Diferença aceitável
 
-            if (diferenca < menorDiferencaEncontrada) {
-                menorDiferencaEncontrada = diferenca;
-                melhorSorteio = timesTemp;
+            let idxMaisForte = somas.indexOf(maxSoma);
+            let idxMaisFraco = somas.indexOf(minSoma);
+
+            // Tenta encontrar um jogador de linha no time mais forte que possa ser trocado por um do time mais fraco de nível semelhante
+            let timeForte = timesTemp[idxMaisForte];
+            let timeFraco = timesTemp[idxMaisFraco];
+
+            let trocou = false;
+            for (let i = 0; i < timeForte.jogadores.length; i++) {
+                if (timeForte.jogadores[i].isGoleiro) continue;
+                for (let k = 0; k < timeFraco.jogadores.length; k++) {
+                    if (timeFraco.jogadores[k].isGoleiro) continue;
+
+                    let jForte = timeForte.jogadores[i];
+                    let jFraco = timeFraco.jogadores[k];
+
+                    // Verifica se são de níveis semelhantes (diferença máxima de 1.0 estrela)
+                    if (Math.abs(jForte.estrelas - jFraco.estrelas) <= 1.0 && jForte.estrelas > jFraco.estrelas) {
+                        // Realiza a troca simulada
+                        timeForte.jogadores[i] = jFraco;
+                        timeFraco.jogadores[k] = jForte;
+
+                        // Recalcula somas
+                        timeForte.somaEstrelas = timeForte.jogadores.reduce((acc, curr) => acc + Number(curr.estrelas || 3.0), 0);
+                        timeFraco.somaEstrelas = timeFraco.jogadores.reduce((acc, curr) => acc + Number(curr.estrelas || 3.0), 0);
+                        
+                        trocou = true;
+                        break;
+                    }
+                }
+                if (trocou) break;
             }
-
-            if (diferenca <= limiteDiferencaEstrelas) {
-                return timesTemp;
-            }
+            if (!trocou) break;
         }
 
-        return melhorSorteio;
+        return timesTemp;
     }
 
     const btnSortear = document.getElementById('btn-sortear');
@@ -768,11 +840,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const qtdTimes = qtdTimesEl ? parseInt(qtdTimesEl.value) : 2;
 
             if (presentes.length < qtdTimes * 2) {
-                return mostrarAlerta('Poucos jogadores presentes para a quantidade de times!', '🎲 SORTEIO');
+                await mostrarAlerta('Poucos jogadores presentes para a quantidade de times!', '🎲 SORTEIO');
+                return;
             }
 
-            const limiteDiferencaEstrelas = 2;
-            timesSorteados = sortearTimesAleatorioBalanceado(presentes, qtdTimes, limiteDiferencaEstrelas);
+            timesSorteados = sortearTimesEstrelasEGoleiros(presentes, qtdTimes);
             exibirTimesSorteados();
         });
     }
@@ -789,18 +861,22 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = 'card-time';
 
             const avisoGoleiro = t.temGoleiro ? '' : ' <span class="badge-sem-goleiro">(Sem goleiro fixo)</span>';
+            const mediaEstrelas = (t.jogadores.length > 0 ? (t.somaEstrelas / t.jogadores.length) : 0).toFixed(1).replace('.', ',');
             
-            const listaJogadoresHtml = t.jogadores.map(j => `
-                <li class="item-jogador-time">
-                    <span>${escapeHtml(j.nome)} ${j.isGoleiro ? '🧤' : ''}</span>
-                    <small class="estrelas-jogador">${'⭐'.repeat(j.estrelas)}</small>
-                </li>
-            `).join('');
+            const listaJogadoresHtml = t.jogadores.map(j => {
+                const estFmt = Number(j.estrelas || 3.0).toFixed(1).replace('.', ',');
+                return `
+                    <li class="item-jogador-time">
+                        <span>${escapeHtml(j.nome)} ${j.isGoleiro ? '🧤' : ''}</span>
+                        <small class="estrelas-jogador">⭐ ${estFmt}</small>
+                    </li>
+                `;
+            }).join('');
 
             card.innerHTML = `
                 <div class="card-time-header">
                     <h3>🟢 ${t.nome}</h3>
-                    <span class="badge-estrelas">⭐ ${t.somaEstrelas} Nível</span>
+                    <span class="badge-estrelas">⭐ Média: ${mediaEstrelas}</span>
                 </div>
                 ${avisoGoleiro}
                 <ul class="lista-jogadores-card">
@@ -833,16 +909,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function copiarListaTimes() {
         if (!timesSorteados || timesSorteados.length === 0) {
-            return mostrarAlerta('Nenhum sorteio realizado ainda!');
+            await mostrarAlerta('Nenhum sorteio realizado ainda!', '⚠️ AVISO');
+            return;
         }
 
-        let textoFormatado = `*SORTEIO DE TIMES*\n\n`;
+        let textoFormatado = `*SORTEIO DE TIMES (EQUILIBRADO)*\n\n`;
 
         timesSorteados.forEach((t, i) => {
-            textoFormatado += `*${t.nome.toUpperCase()}*\n`;
+            const mediaEstrelas = (t.jogadores.length > 0 ? (t.somaEstrelas / t.jogadores.length) : 0).toFixed(1).replace('.', ',');
+            textoFormatado += `*${t.nome.toUpperCase()}* (Média: ⭐ ${mediaEstrelas})\n`;
             t.jogadores.forEach((j, index) => {
-                const tagGoleiro = j.isGoleiro ? ' (Goleiro)' : '';
-                textoFormatado += `${index + 1}. ${j.nome}${tagGoleiro}\n`;
+                const tagGoleiro = j.isGoleiro ? ' 🧤' : '';
+                const estFmt = Number(j.estrelas || 3.0).toFixed(1).replace('.', ',');
+                textoFormatado += `${index + 1}. ${j.nome}${tagGoleiro} (⭐ ${estFmt})\n`;
             });
 
             if (i < timesSorteados.length - 1) {
@@ -885,7 +964,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnIniciarCamp) {
         btnIniciarCamp.addEventListener('click', async () => {
             if (timesSorteados.length < 2) {
-                return mostrarAlerta('Realize o sorteio dos times primeiro!', '🏆 CAMPEONATO');
+                await mostrarAlerta('Realize o sorteio dos times primeiro!', '🏆 CAMPEONATO');
+                return;
             }
             gerarTabelaTodosContraTodos();
             inicializarClassificacao();
@@ -1111,7 +1191,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnFinPartida) {
             btnFinPartida.addEventListener('click', async () => {
                 if (p.timeA.id === p.timeB.id) {
-                    return mostrarAlerta('Um time não pode jogar contra ele mesmo! Escolha times diferentes.', '⚠️ AVISO');
+                    await mostrarAlerta('Um time não pode jogar contra ele mesmo! Escolha times diferentes.', '⚠️ AVISO');
+                    return;
                 }
 
                 const gA = parseInt(inputA.value) || 0;
@@ -1123,7 +1204,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const elPenB = document.getElementById('pen-b');
                     pA = elPenA ? (parseInt(elPenA.value) || 0) : 0;
                     pB = elPenB ? (parseInt(elPenB.value) || 0) : 0;
-                    if (pA === pB) return mostrarAlerta('Defina o vencedor nos pênaltis!', '⚽ PÊNALTIS');
+                    if (pA === pB) {
+                        await mostrarAlerta('Defina o vencedor nos pênaltis!', '⚽ PÊNALTIS');
+                        return;
+                    }
                 }
 
                 p.golsA = gA;
@@ -1204,7 +1288,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnFinalizarCamp) {
         btnFinalizarCamp.addEventListener('click', async () => {
             if (partidas.length === 0) {
-                return mostrarAlerta('Nenhum campeonato ativo no momento!', '🏆 CAMPEONATO');
+                await mostrarAlerta('Nenhum campeonato ativo no momento!', '🏆 CAMPEONATO');
+                return;
             }
 
             const confirmacao = await mostrarConfirmacao('Deseja realmente finalizar o campeonato atual e salvar os dados no Histórico?', '🏁 FINALIZAR CAMPEONATO');
