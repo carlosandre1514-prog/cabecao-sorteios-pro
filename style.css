@@ -13,12 +13,13 @@
     padding: 0;
     box-sizing: border-box;
     font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+    color-scheme: dark; /* Força o Android a manter o padrão escuro sem alterar as cores */
 }
 
 body {
     background-color: #000000;
     background-image: 
-        radial-gradient(circle at 50% 0%, rgba(15, 90, 42, 0.6) 0%, rgba(18, 18, 18, 0.75) 65%, rgba(0, 0, 0, 0.85) 100%),
+        radial-gradient(circle at 50% 0%, rgba(15, 90, 42, 0.75) 0%, rgba(18, 18, 18, 0.85) 65%, rgba(0, 0, 0, 0.95) 100%),
         url('brasao.png');
     background-repeat: no-repeat;
     background-position: center center;
@@ -66,7 +67,7 @@ body {
     object-fit: contain;
     border-radius: 12px;
     border: 2px solid #D4AF37;
-    box-shadow: 0 0 12px rgba(157, 255, 0, 0.4);
+    box-shadow: 0 0 16px rgba(157, 255, 0, 0.7), 0 0 6px rgba(212, 175, 55, 0.6);
 }
 
 .app-header h1 {
@@ -76,7 +77,7 @@ body {
     line-height: 1.1;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    text-shadow: 0 0 10px rgba(157, 255, 0, 0.3);
+    text-shadow: 0 0 12px rgba(157, 255, 0, 0.8), 0 0 22px rgba(157, 255, 0, 0.4);
     text-align: left;
 }
 
@@ -86,11 +87,12 @@ body {
     font-weight: 600;
     letter-spacing: 0.5px;
     text-align: left;
+    text-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
 }
 
 .btn-menu-hamburguer {
     background: #121212;
-    border: 1px solid #0F5A2A;
+    border: 1px solid #9DFF00;
     color: #9DFF00;
     font-size: 1.4rem;
     width: 44px;
@@ -100,7 +102,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 8px rgba(157, 255, 0, 0.2);
+    box-shadow: 0 0 12px rgba(157, 255, 0, 0.4);
     transition: all 0.2s ease;
 }
 
@@ -119,7 +121,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
     z-index: 9998;
     backdrop-filter: blur(4px);
     transition: opacity 0.3s ease;
@@ -132,8 +134,8 @@ body {
     width: 280px;
     height: 100%;
     background: linear-gradient(160deg, #181818 0%, #0c0c0c 100%);
-    border-right: 2px solid #0F5A2A;
-    box-shadow: 5px 0 25px rgba(0, 0, 0, 0.9);
+    border-right: 2px solid #9DFF00;
+    box-shadow: 5px 0 30px rgba(157, 255, 0, 0.3);
     z-index: 9999;
     display: flex;
     flex-direction: column;
@@ -183,7 +185,7 @@ body {
     border-radius: 50%;
     background: linear-gradient(135deg, #181818 0%, #0c0c0c 100%);
     border: 2px solid #9DFF00;
-    box-shadow: 0 0 12px rgba(157, 255, 0, 0.4);
+    box-shadow: 0 0 15px rgba(157, 255, 0, 0.6);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -196,7 +198,7 @@ body {
     width: 38px;
     height: 38px;
     fill: #9DFF00;
-    filter: drop-shadow(0 0 4px rgba(157, 255, 0, 0.5));
+    filter: drop-shadow(0 0 6px rgba(157, 255, 0, 0.8));
 }
 
 .drawer-user-info {
@@ -204,7 +206,7 @@ body {
     color: #D4AF37;
     word-break: break-all;
     font-weight: 600;
-    text-shadow: 0 0 5px rgba(212, 175, 55, 0.2);
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
 }
 
 .drawer-section {
@@ -218,6 +220,7 @@ body {
     text-transform: uppercase;
     margin-bottom: 8px;
     font-weight: 800;
+    text-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
 }
 
 .about-text {
@@ -232,6 +235,7 @@ body {
     color: #9DFF00;
     margin-top: 6px;
     font-weight: bold;
+    text-shadow: 0 0 6px rgba(157, 255, 0, 0.5);
 }
 
 .drawer-footer {
@@ -261,10 +265,10 @@ body {
     width: 100%;
     max-width: 380px;
     background: linear-gradient(145deg, rgba(24, 24, 24, 0.95) 0%, rgba(12, 12, 12, 0.95) 100%);
-    border: 2px solid #0F5A2A;
+    border: 2px solid #9DFF00;
     border-radius: 14px;
     padding: 24px;
-    box-shadow: 0 0 30px rgba(157, 255, 0, 0.25);
+    box-shadow: 0 0 35px rgba(157, 255, 0, 0.4);
     text-align: center;
 }
 
@@ -275,7 +279,7 @@ body {
     border-radius: 14px;
     border: 2px solid #D4AF37;
     margin-bottom: 12px;
-    box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 0 18px rgba(212, 175, 55, 0.6);
 }
 
 .auth-card h2 {
@@ -284,6 +288,7 @@ body {
     text-transform: uppercase;
     font-weight: 900;
     margin-bottom: 4px;
+    text-shadow: 0 0 10px rgba(157, 255, 0, 0.6);
 }
 
 /* =========================================================
@@ -295,8 +300,8 @@ body {
     border-radius: 10px;
     padding: 4px;
     gap: 4px;
-    border: 1px solid #0F5A2A;
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+    border: 1px solid #9DFF00;
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.9), 0 0 10px rgba(157, 255, 0, 0.2);
 }
 
 .tab-btn {
@@ -316,7 +321,8 @@ body {
 .tab-btn.active {
     background: linear-gradient(135deg, #9DFF00 0%, #0F5A2A 100%);
     color: #000000;
-    box-shadow: 0 0 10px rgba(157, 255, 0, 0.5);
+    box-shadow: 0 0 15px rgba(157, 255, 0, 0.7);
+    text-shadow: none;
 }
 
 .tab-content {
@@ -337,8 +343,8 @@ body {
     border-radius: 12px;
     padding: 16px;
     border: 1px solid #282828;
-    border-top: 1px solid #383838;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7), 0 0 2px rgba(212, 175, 55, 0.2);
+    border-top: 1px solid #9DFF00;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7), 0 0 8px rgba(157, 255, 0, 0.15);
     position: relative;
     overflow: hidden;
 }
@@ -351,7 +357,8 @@ body {
     width: 100%;
     height: 3px;
     background: linear-gradient(90deg, #9DFF00, #D4AF37);
-    opacity: 0.7;
+    opacity: 0.9;
+    box-shadow: 0 0 10px rgba(157, 255, 0, 0.8);
 }
 
 .card h2 {
@@ -363,6 +370,7 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
+    text-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
 }
 
 .subtext {
@@ -400,7 +408,7 @@ input[type="text"], input[type="number"], input[type="password"], input[type="em
 
 input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus, input[type="email"]:focus, select:focus, textarea:focus {
     border-color: #9DFF00;
-    box-shadow: 0 0 8px rgba(157, 255, 0, 0.4);
+    box-shadow: 0 0 12px rgba(157, 255, 0, 0.6);
 }
 
 input[type="text"], input[type="password"], input[type="email"], textarea {
@@ -436,7 +444,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
 
 .star-cad.active {
     opacity: 1;
-    filter: drop-shadow(0 0 5px #D4AF37);
+    filter: drop-shadow(0 0 8px #D4AF37);
 }
 
 /* =========================================================
@@ -454,6 +462,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
     border-right: 1px solid #222;
     border-top: 1px solid #222;
     border-bottom: 1px solid #222;
+    box-shadow: 0 0 8px rgba(157, 255, 0, 0.1);
 }
 
 .acoes-item {
@@ -496,7 +505,8 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
 .btn-primary {
     background: linear-gradient(135deg, #9DFF00 0%, #0F5A2A 100%);
     color: #000000;
-    box-shadow: 0 4px 12px rgba(157, 255, 0, 0.3);
+    box-shadow: 0 4px 15px rgba(157, 255, 0, 0.5);
+    text-shadow: none;
 }
 
 .btn-primary:active {
@@ -512,7 +522,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
 .btn-success {
     background: linear-gradient(135deg, #D4AF37 0%, #8A6D1C 100%);
     color: #000000;
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
 }
 
 .btn-danger {
@@ -520,6 +530,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
     color: #FFFFFF;
     padding: 8px 12px;
     font-size: 0.8rem;
+    box-shadow: 0 0 10px rgba(255, 51, 51, 0.4);
 }
 
 .btn-edit {
@@ -542,7 +553,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
     text-align: center;
     background: rgba(0, 0, 0, 0.9);
     border: 2px solid #9DFF00;
-    box-shadow: 0 0 20px rgba(157, 255, 0, 0.2);
+    box-shadow: 0 0 25px rgba(157, 255, 0, 0.35);
 }
 
 .timer-display {
@@ -552,7 +563,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
     font-family: monospace;
     letter-spacing: 3px;
     margin: 10px 0;
-    text-shadow: 0 0 15px rgba(157, 255, 0, 0.6);
+    text-shadow: 0 0 20px rgba(157, 255, 0, 0.8), 0 0 35px rgba(157, 255, 0, 0.4);
 }
 
 .timer-config {
@@ -589,6 +600,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
     border-bottom: 2px solid #0F5A2A;
     font-weight: 800;
     text-transform: uppercase;
+    text-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
 }
 
 .tabela-classificacao td {
@@ -608,7 +620,8 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
     padding: 14px;
     border-radius: 10px;
     margin-bottom: 10px;
-    border: 1px solid #0F5A2A;
+    border: 1px solid #9DFF00;
+    box-shadow: 0 0 10px rgba(157, 255, 0, 0.15);
 }
 
 .time-placar input {
@@ -656,10 +669,10 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
 
 .card-time {
     background-color: rgba(0, 0, 0, 0.85);
-    border: 1px solid #0F5A2A;
+    border: 1px solid #9DFF00;
     border-radius: 10px;
     padding: 14px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 4px 15px rgba(157, 255, 0, 0.2);
     display: flex;
     flex-direction: column;
 }
@@ -679,6 +692,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
     color: #9DFF00;
     font-weight: 800;
     text-transform: uppercase;
+    text-shadow: 0 0 8px rgba(157, 255, 0, 0.5);
 }
 
 .badge-estrelas {
@@ -689,6 +703,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
     padding: 3px 8px;
     border-radius: 12px;
     border: 1px solid #D4AF37;
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
 }
 
 .badge-sem-goleiro {
@@ -697,6 +712,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
     font-weight: bold;
     margin-bottom: 8px;
     display: inline-block;
+    text-shadow: 0 0 6px rgba(255, 51, 51, 0.5);
 }
 
 .lista-jogadores-card {

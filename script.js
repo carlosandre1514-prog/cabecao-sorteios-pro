@@ -1,5 +1,83 @@
-// Variáveis globais para controle de autenticação e dados
+// --- VARIÁVEIS GLOBAIS DE CONTROLE DE MODO E AUTENTICAÇÃO ---
 let isLoginMode = true; // Controla se o form é de Login (true) ou Cadastro (false)
+let modoJogoAtual = 'todos-contra-todos'; // 'todos-contra-todos' ou 'racha-livre'
+
+// Variáveis de controle do modo racha livre
+let filaTimes = [];
+let timeEmCampoA = null;
+let timeEmCampoB = null;
+let partidasRachaHistorico = [];
+let tipoDesempateRacha = null; // Controla o tipo de desempate escolhido em caso de empate
+
+// --- VERSÃO ATUAL DO APLICATIVO ---
+// Lembre-se de atualizar este número toda vez que lançar um novo APK/versão do app!
+const VERSAO_ATUAL_APP = "1.0.0";
+
+// --- INTERRUPTOR REMOTO (KILL SWITCH GLOBAL E POR VERSÕES) VIA FIREBASE ---
+function verificarStatusAppRemoto() {
+    const checar = setInterval(() => {
+        if (window.firebaseDb && window.firebaseFns) {
+            clearInterval(checar);
+            
+            // Referência para a pasta de configurações no Realtime Database
+            const configRef = window.firebaseFns.ref(window.firebaseDb, 'configuracoes');
+            
+            window.firebaseFns.get(configRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const config = snapshot.val();
+                    
+                    // 1. CHECAGEM GLOBAL (Se o app inteiro foi desligado no painel)
+                    const globalAtivo = config.global?.app_ativo;
+                    if (globalAtivo === false) {
+                        const mensagemPersonalizada = config.global?.mensagem_desativacao || "Este aplicativo foi descontinuado permanentemente.";
+                        bloquearTelaApp("⚠️ Aplicativo Desativado", mensagemPersonalizada);
+                        return;
+                    }
+                    
+                    // 2. CHECAGEM POR VERSÃO (Se a versão atual é inferior à mínima permitida)
+                    const versaoMinima = config.versoes?.versao_minima_permitida;
+                    if (versaoMinima && compararversoes(VERSAO_ATUAL_APP, versaoMinima) < 0) {
+                        bloquearTelaApp(
+                            "⚠️ Atualização Obrigatória", 
+                            `Esta versão (${VERSAO_ATUAL_APP}) do aplicativo está desatualizada. Por favor, baixe a nova versão (mínima: ${versaoMinima}) para continuar jogando!`
+                        );
+                        return;
+                    }
+                }
+            }).catch((err) => {
+                console.log("Erro ao checar status remoto:", err);
+            });
+        }
+    }, 300);
+}
+
+// Função auxiliar para comparar números de versão (Ex: "1.0.0" vs "1.1.0")
+function compararversoes(v1, v2) {
+    const p1 = v1.split('.').map(Number);
+    const p2 = v2.split('.').map(Number);
+    for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+        const num1 = p1[i] || 0;
+        const num2 = p2[i] || 0;
+        if (num1 > num2) return 1;
+        if (num1 < num2) return -1;
+    }
+    return 0;
+}
+
+// Função para injetar a tela de bloqueio se alguma regra for acionada
+function bloquearTelaApp(titulo, mensagem) {
+    document.body.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#121212; color:#fff; text-align:center; padding:20px; font-family:sans-serif;">
+            <h2 style="color:#ff5252; margin-bottom:10px;">${titulo}</h2>
+            <p style="color:#aaa; font-size:0.95rem; max-width:320px; line-height:1.5;">
+                ${mensagem}
+            </p>
+        </div>
+    `;
+}
+
+// Inicia a verificação de segurança/atualização assim que o script carrega
+verificarStatusAppRemoto();
 
 // --- FUNÇÕES DE AUTENTICAÇÃO DO FIREBASE ---
 function toggleAuthMode() {
@@ -105,7 +183,6 @@ async function handleGoogleLogin() {
     } catch (error) {
         console.error("Erro detalhado no login com o Google:", error);
         
-        // Ignora silenciosamente se o popup foi cancelado por cliques múltiplos ou fechado pelo usuário
         if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
             console.log("Ação de login com o Google cancelada ou fechada pelo usuário.");
             return;
@@ -170,13 +247,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let tempoTotalSegundos = 600;
     let tempoRestante = 600;
 
-    // Vincular evento ao botão do Google do HTML
     const btnGoogle = document.getElementById('btn-google-auth');
     if (btnGoogle) {
         btnGoogle.addEventListener('click', handleGoogleLogin);
     }
 
-    // Vincular evento ao botão "Esqueci minha senha"
     const btnEsqueciSenha = document.getElementById('btn-esqueci-senha');
     if (btnEsqueciSenha) {
         btnEsqueciSenha.addEventListener('click', handleForgotPassword);
@@ -422,6 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (target === 'tab-sorteio') renderizarPresenca();
             if (target === 'tab-historico') renderizarHistorico();
+            if (target === 'tab-campeonato') renderizarCampeonato();
         });
     });
 
@@ -759,38 +835,30 @@ document.addEventListener('DOMContentLoaded', () => {
             somaEstrelas: 0
         }));
 
-        // Separamos goleiros e jogadores de linha para garantir a distribuição correta
         let goleiros = jogadoresPresentes.filter(j => j.isGoleiro);
         let linhas = jogadoresPresentes.filter(j => !j.isGoleiro);
 
         goleiros = embaralharArray(goleiros);
         linhas = embaralharArray(linhas);
 
-        // Define o limite padrão por time (ex: 4 jogadores de linha por time)
         let limitePorTime = 4;
-
-        // Distribui os jogadores de linha preenchendo os times do primeiro até onde der de forma completa
-        // O último time recebe apenas a sobra
         let indiceTime = 0;
+        
         linhas.forEach(j => {
-            // Se o time atual já atingiu o limite e não é o último time, avança para o próximo
             while (indiceTime < qtdTimes - 1 && timesTemp[indiceTime].jogadores.filter(x => !x.isGoleiro).length >= limitePorTime) {
                 indiceTime++;
             }
             timesTemp[indiceTime].jogadores.push(j);
         });
 
-        // Distribui os goleiros para os times (um por time na ordem, se houver goleiros suficientes)
         goleiros.forEach((g, idx) => {
             if (idx < qtdTimes) {
-                timesTemp[idx].jogadores.unshift(g); // Coloca o goleiro como primeiro do time
+                timesTemp[idx].jogadores.unshift(g);
             } else {
-                // Se houver mais goleiros que times, joga no último
                 timesTemp[qtdTimes - 1].jogadores.push(g);
             }
         });
 
-        // Atualiza soma de estrelas e status de goleiro de cada time
         timesTemp.forEach(t => {
             t.somaEstrelas = t.jogadores.reduce((acc, curr) => acc + Number(curr.estrelas || 3.0), 0);
             t.temGoleiro = t.jogadores.some(j => j.isGoleiro);
@@ -926,7 +994,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(textArea);
     }
 
-    // --- 5. ABA CAMPEONATO ---
+    // --- 5. ABA CAMPEONATO & SELETOR DE MODOS ---
     const btnIniciarCamp = document.getElementById('btn-iniciar-campeonato');
     if (btnIniciarCamp) {
         btnIniciarCamp.addEventListener('click', async () => {
@@ -934,8 +1002,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 await mostrarAlerta('Realize o sorteio dos times primeiro!', '🏆 CAMPEONATO');
                 return;
             }
-            gerarTabelaTodosContraTodos();
+            
             inicializarClassificacao();
+            if (modoJogoAtual === 'todos-contra-todos') {
+                gerarTabelaTodosContraTodos();
+            } else {
+                iniciarModoRachaLivre(true);
+            }
+            
             artilharia = {};
             partidaAtualIndex = 0;
 
@@ -993,10 +1067,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderizarCampeonato() {
-        renderizarTabela();
-        renderizarPartidaAtual();
-        renderizarConfrontosEncerrados();
+        // Renderiza o seletor de modos no topo do painel atual
+        renderizarSeletorModoDisputa();
+
+        renderizarTabela(); // A tabela agora funciona e é atualizada nos dois modos!
+
+        if (modoJogoAtual === 'todos-contra-todos') {
+            renderizarPartidaAtualTodosContraTodos();
+            renderizarConfrontosEncerrados();
+        } else {
+            renderizarPartidaAtualRachaLivre();
+            renderizarConfrontosEncerradosRacha();
+        }
         renderizarArtilharia();
+    }
+
+    function renderizarSeletorModoDisputa() {
+        const container = document.getElementById('painel-partida-atual');
+        if (!container) return;
+
+        let seletorDiv = document.getElementById('box-seletor-modo');
+        if (!seletorDiv) {
+            seletorDiv = document.createElement('div');
+            seletorDiv.id = 'box-seletor-modo';
+            seletorDiv.style.cssText = 'background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; margin-bottom: 12px;';
+            seletorDiv.innerHTML = `
+                <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 4px;">🎯 Modo de Disputa:</label>
+                <select id="select-modo-disputa" style="width: 100%; padding: 6px; border-radius: 4px; font-weight: bold;">
+                    <option value="todos-contra-todos">Tabela (Todos contra Todos)</option>
+                    <option value="racha-livre">Racha Livre (Vencedor Fica)</option>
+                </select>
+            `;
+            container.parentNode.insertBefore(seletorDiv, container);
+
+            const sel = document.getElementById('select-modo-disputa');
+            if (sel) {
+                sel.value = modoJogoAtual;
+                sel.addEventListener('change', (e) => {
+                    modoJogoAtual = e.target.value;
+                    inicializarClassificacao();
+                    if (modoJogoAtual === 'racha-livre') {
+                        iniciarModoRachaLivre(true);
+                    } else {
+                        if (timesSorteados.length >= 2) {
+                            gerarTabelaTodosContraTodos();
+                        }
+                    }
+                    renderizarCampeonato();
+                });
+            }
+        } else {
+            const sel = document.getElementById('select-modo-disputa');
+            if (sel) sel.value = modoJogoAtual;
+        }
     }
 
     function renderizarTabela() {
@@ -1023,12 +1146,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function renderizarPartidaAtual() {
+    // --- MODO 1: TODOS CONTRA TODOS ---
+    function renderizarPartidaAtualTodosContraTodos() {
         const container = document.getElementById('painel-partida-atual');
         if (!container) return;
 
+        if (timesSorteados.length < 2) {
+            container.innerHTML = '<p class="subtext">Realize o sorteio dos times primeiro no menu Sorteio!</p>';
+            return;
+        }
+
         if (partidas.length === 0) {
-            container.innerHTML = '<p class="subtext">Inicie um campeonato no menu Sorteio!</p>';
+            container.innerHTML = `
+                <p class="subtext" style="text-align:center;">Nenhuma tabela gerada para este campeonato.</p>
+                <button id="btn-gerar-tabela-direto" class="btn btn-primary" style="margin-top:10px; width:100%;">Gerar Tabela de Confrontos</button>
+            `;
+            document.getElementById('btn-gerar-tabela-direto')?.addEventListener('click', () => {
+                gerarTabelaTodosContraTodos();
+                inicializarClassificacao();
+                partidaAtualIndex = 0;
+                renderizarCampeonato();
+            });
             return;
         }
 
@@ -1192,7 +1330,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (gA > gB || (gA === gB && pA > pB)) {
                     tA.p += 3; tA.v++; tB.d++;
                     if(gA === gB) { tA.e++; tB.e++; }
-                } else {
+                } else if (gB > gA || (gA === gB && pB > pA)) {
                     tB.p += 3; tB.v++; tA.d++;
                     if(gA === gB) { tA.e++; tB.e++; }
                 }
@@ -1230,6 +1368,274 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- MODO 2: RACHA LIVRE (VENCEDOR FICA) ---
+    function iniciarModoRachaLivre(forcar = false) {
+        if (!timesSorteados || timesSorteados.length < 2) {
+            return;
+        }
+        if (forcar || !timeEmCampoA || !timeEmCampoB) {
+            filaTimes = [...timesSorteados];
+            timeEmCampoA = filaTimes.shift();
+            timeEmCampoB = filaTimes.shift();
+            partidasRachaHistorico = [];
+        }
+    }
+
+    function renderizarPartidaAtualRachaLivre() {
+        const container = document.getElementById('painel-partida-atual');
+        if (!container) return;
+
+        if (timesSorteados.length < 2) {
+            container.innerHTML = '<p class="subtext">Realize o sorteio dos times primeiro no menu Sorteio!</p>';
+            return;
+        }
+
+        if (!timeEmCampoA || !timeEmCampoB) {
+            iniciarModoRachaLivre(true);
+        }
+
+        const opcoesA = timesSorteados.map(t => `<option value="${t.id}" ${t.id === timeEmCampoA.id ? 'selected' : ''}>${escapeHtml(t.nome)}</option>`).join('');
+        const opcoesB = timesSorteados.map(t => `<option value="${t.id}" ${t.id === timeEmCampoB.id ? 'selected' : ''}>${escapeHtml(t.nome)}</option>`).join('');
+        const filaTexto = filaTimes.length > 0 ? filaTimes.map((t, i) => `${i + 1}º - ${escapeHtml(t.nome)}`).join('<br>') : 'Nenhum time na fila de espera.';
+
+        container.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 style="font-size:1rem; margin:0;">🔥 Partida Atual (Racha Livre)</h3>
+                <button id="btn-reiniciar-fila" class="btn btn-secondary" style="font-size:0.75rem; padding:2px 6px;">🔄 Reiniciar Fila</button>
+            </div>
+            <div class="placar-box" style="gap:10px;">
+                <div class="time-placar" style="flex:1;">
+                    <select id="select-racha-a" style="width:100%; padding:6px; font-weight:bold; border-radius:4px; text-align:center; margin-bottom:6px;">${opcoesA}</select>
+                    <input type="number" id="gols-racha-a" value="0" min="0">
+                </div>
+                <span style="font-size:1.2rem; font-weight:bold; align-self:center;">X</span>
+                <div class="time-placar" style="flex:1;">
+                    <select id="select-racha-b" style="width:100%; padding:6px; font-weight:bold; border-radius:4px; text-align:center; margin-bottom:6px;">${opcoesB}</select>
+                    <input type="number" id="gols-racha-b" value="0" min="0">
+                </div>
+            </div>
+
+            <!-- Caixa de Escolha de Desempate (Pênaltis ou Ímpar/Par) -->
+            <div id="box-desempate-racha" class="hidden" style="background: rgba(255,165,0,0.1); border: 1px solid rgba(255,165,0,0.3); padding: 10px; border-radius: 6px; margin-top: 10px; margin-bottom: 10px; text-align: center;">
+                <p style="font-size: 0.85rem; font-weight: bold; color: #ffb74d; margin-bottom: 8px;">⚖️ Empate no tempo normal! Escolha como decidir:</p>
+                <div style="display: flex; gap: 8px; justify-content: center;">
+                    <button id="btn-modo-penaltis" class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 10px;">⚽ Pênaltis</button>
+                    <button id="btn-modo-impar-par" class="btn btn-primary" style="font-size: 0.8rem; padding: 6px 10px;">✌️ Ímpar ou Par</button>
+                </div>
+                
+                <!-- Subpainel Pênaltis -->
+                <div id="sub-penaltis-racha" class="hidden" style="margin-top: 10px; text-align: left;">
+                    <div class="form-group-row">
+                        <label id="lbl-racha-pen-a">${escapeHtml(timeEmCampoA.nome)}:</label>
+                        <input type="number" id="racha-pen-a" value="0" min="0">
+                    </div>
+                    <div class="form-group-row" style="margin-top: 6px;">
+                        <label id="lbl-racha-pen-b">${escapeHtml(timeEmCampoB.nome)}:</label>
+                        <input type="number" id="racha-pen-b" value="0" min="0">
+                    </div>
+                </div>
+
+                <!-- Subpainel Ímpar ou Par -->
+                <div id="sub-impar-par-racha" class="hidden" style="margin-top: 10px;">
+                    <p style="font-size: 0.8rem; margin-bottom: 6px;">Quem venceu no Ímpar ou Par?</p>
+                    <div style="display: flex; gap: 8px; justify-content: center;">
+                        <button id="btn-vencedor-ip-a" class="btn btn-secondary" style="font-size: 0.8rem; flex: 1;">${escapeHtml(timeEmCampoA.nome)}</button>
+                        <button id="btn-vencedor-ip-b" class="btn btn-secondary" style="font-size: 0.8rem; flex: 1;">${escapeHtml(timeEmCampoB.nome)}</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom:10px; margin-top:10px;">
+                <label class="subtext">Registrar Gol Individual:</label>
+                <div class="form-group-row">
+                    <select id="select-artilheiro-racha" style="width:70%; padding:6px; border-radius:4px;"></select>
+                    <button id="btn-add-gol-racha" class="btn btn-secondary" style="width:25%;">+ Gol</button>
+                </div>
+            </div>
+
+            <button id="btn-finalizar-racha-partida" class="btn btn-primary" style="width:100%; margin-bottom: 12px;">Encerrar Partida (Vencedor Fica)</button>
+            <div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 6px; font-size: 0.85rem;">
+                <strong>⏳ Fila de Espera:</strong><br><div style="margin-top: 4px; line-height: 1.4; color: var(--text-secondary);">${filaTexto}</div>
+            </div>
+        `;
+
+        const atualizarArtilheirosRacha = () => {
+            const selectArt = document.getElementById('select-artilheiro-racha');
+            if (!selectArt) return;
+            const todos = timeEmCampoA.jogadores.concat(timeEmCampoB.jogadores);
+            selectArt.innerHTML = todos.map(j => `<option value="${escapeHtml(j.nome)}">${escapeHtml(j.nome)}</option>`).join('');
+        };
+        atualizarArtilheirosRacha();
+
+        document.getElementById('select-racha-a')?.addEventListener('change', (e) => {
+            const t = timesSorteados.find(x => x.id === parseInt(e.target.value));
+            if (t) { timeEmCampoA = t; atualizarArtilheirosRacha(); }
+        });
+        document.getElementById('select-racha-b')?.addEventListener('change', (e) => {
+            const t = timesSorteados.find(x => x.id === parseInt(e.target.value));
+            if (t) { timeEmCampoB = t; atualizarArtilheirosRacha(); }
+        });
+
+        document.getElementById('btn-reiniciar-fila')?.addEventListener('click', () => {
+            iniciarModoRachaLivre(true);
+            renderizarCampeonato();
+        });
+
+        document.getElementById('btn-add-gol-racha')?.addEventListener('click', () => {
+            const nome = document.getElementById('select-artilheiro-racha')?.value;
+            if (nome) {
+                artilharia[nome] = (artilharia[nome] || 0) + 1;
+                renderizarArtilharia();
+            }
+        });
+
+        const inputGA = document.getElementById('gols-racha-a');
+        const inputGB = document.getElementById('gols-racha-b');
+        const boxDesempate = document.getElementById('box-desempate-racha');
+        const subPenaltis = document.getElementById('sub-penaltis-racha');
+        const subImparPar = document.getElementById('sub-impar-par-racha');
+
+        tipoDesempateRacha = null; // Reseta ao renderizar
+
+        const verificarEmpateRacha = () => {
+            const gA = parseInt(inputGA.value) || 0;
+            const gB = parseInt(inputGB.value) || 0;
+            if (gA === gB) {
+                boxDesempate.classList.remove('hidden');
+            } else {
+                boxDesempate.classList.add('hidden');
+                subPenaltis.classList.add('hidden');
+                subImparPar.classList.add('hidden');
+                tipoDesempateRacha = null;
+            }
+        };
+
+        inputGA?.addEventListener('input', verificarEmpateRacha);
+        inputGB?.addEventListener('input', verificarEmpateRacha);
+
+        document.getElementById('btn-modo-penaltis')?.addEventListener('click', () => {
+            tipoDesempateRacha = 'penaltis';
+            subPenaltis.classList.remove('hidden');
+            subImparPar.classList.add('hidden');
+            document.getElementById('lbl-racha-pen-a').textContent = `${timeEmCampoA.nome}:`;
+            document.getElementById('lbl-racha-pen-b').textContent = `${timeEmCampoB.nome}:`;
+        });
+
+        document.getElementById('btn-modo-impar-par')?.addEventListener('click', () => {
+            tipoDesempateRacha = 'impar-par';
+            subImparPar.classList.remove('hidden');
+            subPenaltis.classList.add('hidden');
+        });
+
+        let vencedorImparParEscolhido = null;
+        document.getElementById('btn-vencedor-ip-a')?.addEventListener('click', () => {
+            vencedorImparParEscolhido = timeEmCampoA;
+            document.getElementById('btn-vencedor-ip-a').style.background = '#4CAF50';
+            document.getElementById('btn-vencedor-ip-b').style.background = '';
+        });
+        document.getElementById('btn-vencedor-ip-b')?.addEventListener('click', () => {
+            vencedorImparParEscolhido = timeEmCampoB;
+            document.getElementById('btn-vencedor-ip-b').style.background = '#4CAF50';
+            document.getElementById('btn-vencedor-ip-a').style.background = '';
+        });
+
+        document.getElementById('btn-finalizar-racha-partida')?.addEventListener('click', async () => {
+            if (timeEmCampoA.id === timeEmCampoB.id) {
+                await mostrarAlerta('Um time não pode jogar contra ele mesmo!', '⚠️ AVISO');
+                return;
+            }
+
+            const gA = parseInt(inputGA.value) || 0;
+            const gB = parseInt(inputGB.value) || 0;
+
+            let vencedor, perdedor;
+            let descricaoResultadoExtra = '';
+
+            if (gA === gB) {
+                if (!tipoDesempateRacha) {
+                    await mostrarAlerta('O jogo terminou empatado! Escolha entre Pênaltis ou Ímpar ou Par para definir quem fica.', '⚠️ DESEMPATE');
+                    return;
+                }
+
+                if (tipoDesempateRacha === 'penaltis') {
+                    const pA = parseInt(document.getElementById('racha-pen-a').value) || 0;
+                    const pB = parseInt(document.getElementById('racha-pen-b').value) || 0;
+                    if (pA === pB) {
+                        await mostrarAlerta('Defina o vencedor nos pênaltis!', '⚽ PÊNALTIS');
+                        return;
+                    }
+                    vencedor = pA > pB ? timeEmCampoA : timeEmCampoB;
+                    perdedor = pA > pB ? timeEmCampoB : timeEmCampoA;
+                    descricaoResultadoExtra = ` (Pen: ${pA}x${pB})`;
+                } else if (tipoDesempateRacha === 'impar-par') {
+                    if (!vencedorImparParEscolhido) {
+                        await mostrarAlerta('Selecione qual time venceu no Ímpar ou Par!', '✌️ ÍMPAR OU PAR');
+                        return;
+                    }
+                    vencedor = vencedorImparParEscolhido;
+                    perdedor = vencedor.id === timeEmCampoA.id ? timeEmCampoB : timeEmCampoA;
+                    descricaoResultadoExtra = ' (Ímpar/Par)';
+                }
+            } else {
+                vencedor = gA > gB ? timeEmCampoA : timeEmCampoB;
+                perdedor = gA > gB ? timeEmCampoB : timeEmCampoA;
+            }
+
+            // Atualiza a tabela de classificação global do Racha Livre
+            if (!classificacao[timeEmCampoA.id]) classificacao[timeEmCampoA.id] = { nome: timeEmCampoA.nome, p: 0, j: 0, v: 0, e: 0, d: 0, gp: 0, sg: 0 };
+            if (!classificacao[timeEmCampoB.id]) classificacao[timeEmCampoB.id] = { nome: timeEmCampoB.nome, p: 0, j: 0, v: 0, e: 0, d: 0, gp: 0, sg: 0 };
+
+            const tA = classificacao[timeEmCampoA.id];
+            const tB = classificacao[timeEmCampoB.id];
+
+            tA.j++; tB.j++;
+            tA.gp += gA; tB.gp += gB;
+            tA.sg += (gA - gB); tB.sg += (gB - gA);
+
+            if (gA > gB) {
+                tA.p += 3; tA.v++; tB.d++;
+            } else if (gB > gA) {
+                tB.p += 3; tB.v++; tA.d++;
+            } else {
+                // Empate no tempo normal pontua 1 para cada
+                tA.p += 1; tA.e++;
+                tB.p += 1; tB.e++;
+            }
+
+            partidasRachaHistorico.unshift({
+                timeA: timeEmCampoA.nome,
+                golsA: gA,
+                golsB: gB,
+                timeB: timeEmCampoB.nome,
+                vencedor: vencedor.nome + descricaoResultadoExtra
+            });
+
+            filaTimes.push(perdedor);
+            timeEmCampoA = vencedor;
+            timeEmCampoB = filaTimes.shift();
+
+            renderizarCampeonato();
+        });
+    }
+
+    function renderizarConfrontosEncerradosRacha() {
+        const container = document.getElementById('lista-confrontos-encerrados');
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (partidasRachaHistorico.length === 0) {
+            container.innerHTML = '<p class="subtext">Nenhum confronto de racha encerrado ainda.</p>';
+            return;
+        }
+
+        partidasRachaHistorico.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'item-confronto-encerrado';
+            div.innerHTML = `<span><strong>${escapeHtml(p.timeA)}</strong> ${p.golsA} x ${p.golsB} <strong>${escapeHtml(p.timeB)}</strong></span><span style="font-size: 0.8rem; color: #D4AF37;">Venceu: ${escapeHtml(p.vencedor)}</span>`;
+            container.appendChild(div);
+        });
+    }
+
     function renderizarArtilharia() {
         const container = document.getElementById('lista-artilharia');
         if (!container) return;
@@ -1254,22 +1660,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnFinalizarCamp = document.getElementById('btn-finalizar-campeonato');
     if (btnFinalizarCamp) {
         btnFinalizarCamp.addEventListener('click', async () => {
-            if (partidas.length === 0) {
-                await mostrarAlerta('Nenhum campeonato ativo no momento!', '🏆 CAMPEONATO');
+            if (modoJogoAtual === 'todos-contra-todos' && partidas.length === 0 && partidasRachaHistorico.length === 0) {
+                await mostrarAlerta('Nenhum campeonato ou racha ativo no momento!', '🏆 CAMPEONATO');
                 return;
             }
 
-            const confirmacao = await mostrarConfirmacao('Deseja realmente finalizar o campeonato atual e salvar os dados no Histórico?', '🏁 FINALIZAR CAMPEONATO');
+            const confirmacao = await mostrarConfirmacao('Deseja realmente finalizar e salvar os dados no Histórico?', '🏁 FINALIZAR CAMPEONATO');
             if (!confirmacao) return;
 
+            let campeao = 'Racha Livre';
             let listaClass = Object.values(classificacao);
             listaClass.sort((a, b) => b.p - a.p || b.sg - a.sg || b.gp - a.gp);
-            const campeao = listaClass[0] ? listaClass[0].nome : 'Nenhum';
 
-            const confrontosResumo = partidas.filter(p => p.finalizada).map(p => {
-                let pen = (p.golsA === p.golsB) ? ` (Pen: ${p.penaltisA}x${p.penaltisB})` : '';
-                return `${escapeHtml(p.timeA.nome)} ${p.golsA} x ${p.golsB} ${escapeHtml(p.timeB.nome)}${pen}`;
-            });
+            if (listaClass.length > 0) {
+                campeao = listaClass[0].nome;
+            }
+
+            let confrontosResumo = [];
+
+            if (modoJogoAtual === 'todos-contra-todos') {
+                confrontosResumo = partidas.filter(p => p.finalizada).map(p => {
+                    let pen = (p.golsA === p.golsB) ? ` (Pen: ${p.penaltisA}x${p.penaltisB})` : '';
+                    return `${escapeHtml(p.timeA.nome)} ${p.golsA} x ${p.golsB} ${escapeHtml(p.timeB.nome)}${pen}`;
+                });
+            } else {
+                confrontosResumo = partidasRachaHistorico.map(p => `${escapeHtml(p.timeA)} ${p.golsA} x ${p.golsB} ${escapeHtml(p.timeB)} (Venceu: ${escapeHtml(p.vencedor)})`);
+            }
 
             const novoCamp = {
                 id: Date.now(),
@@ -1284,12 +1700,15 @@ document.addEventListener('DOMContentLoaded', () => {
             salvarHistoricoFirebase();
 
             partidas = [];
+            partidasRachaHistorico = [];
             timesSorteados = [];
             classificacao = {};
             artilharia = {};
             partidaAtualIndex = 0;
+            timeEmCampoA = null;
+            timeEmCampoB = null;
 
-            await mostrarAlerta('🏆 Campeonato finalizado e salvo com sucesso no Histórico!', '🏆 SUCESSO');
+            await mostrarAlerta('🏆 Dados finalizados e salvos com sucesso no Histórico!', '🏆 SUCESSO');
             const tabHist = document.querySelector('[data-tab="tab-campeonato"]');
             if (tabHist) tabHist.click();
         });
@@ -1318,7 +1737,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <strong>📅 ${h.data}</strong>
                     <button class="btn btn-danger" onclick="excluirHistorico(${h.id})">Excluir</button>
                 </div>
-                <p style="font-size:0.85rem; margin-bottom:4px;">🏆 <strong>Campeão:</strong> ${escapeHtml(h.campeao)}</p>
+                <p style="font-size:0.85rem; margin-bottom:4px;">🏆 <strong>Campeão/Destaque:</strong> ${escapeHtml(h.campeao)}</p>
                 <p style="font-size:0.85rem; margin-bottom:8px;">🎯 <strong>Artilheiro:</strong> ${txtArtilheiro}</p>
                 
                 <details style="font-size:0.8rem; padding:6px; border-radius:4px;">
