@@ -56,22 +56,25 @@ async function handleAuthAction() {
     }
 }
 
-// --- FUNÇÃO DE LOGIN COM O GOOGLE CORRIGIDA (Redirecionamento Mobile/Acode) ---
+// --- FUNÇÃO DE LOGIN COM O GOOGLE CORRIGIDA (Popup Estável) ---
 async function handleGoogleLogin() {
     if (!window.firebaseAuth || !window.firebaseFns) {
-        alert("Erro: O sistema de autenticação do Firebase não foi carregado.");
+        alert("❌ Erro: O sistema de autenticação do Firebase não foi carregado.");
         return;
     }
 
     try {
         const provider = new window.firebaseFns.GoogleAuthProvider();
-        // Força o uso estrito de redirect para evitar bloqueios de popup no mobile/Acode
-        await window.firebaseFns.signInWithRedirect(window.firebaseAuth, provider);
+        // Utiliza popup para estabilidade em navegadores mobile e web apps
+        await window.firebaseFns.signInWithPopup(window.firebaseAuth, provider);
+        console.log("Login com o Google realizado com sucesso!");
     } catch (error) {
         console.error("Erro detalhado no login com o Google:", error);
         
         if (error.code === 'auth/unauthorized-domain') {
             alert("❌ Erro: Este domínio não está autorizado no painel do Firebase (Authentication > Settings > Authorized domains).");
+        } else if (error.code === 'auth/popup-closed-by-user') {
+            console.log("O usuário fechou a janela de login.");
         } else {
             alert("❌ Erro ao entrar com o Google: " + error.message);
         }
@@ -206,13 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- MONITOR DE SESSÃO DO FIREBASE ---
     setTimeout(async () => {
         if (window.firebaseAuth && window.firebaseFns) {
-            // Processa o retorno do redirecionamento do Google caso tenha ocorrido
-            try {
-                await window.firebaseFns.getRedirectResult(window.firebaseAuth);
-            } catch (redirError) {
-                console.error("Erro no resultado do redirecionamento:", redirError);
-            }
-
             window.firebaseFns.onAuthStateChanged(window.firebaseAuth, (user) => {
                 const authScreen = document.getElementById("auth-screen");
                 const drawerEmail = document.getElementById("drawer-user-email");
