@@ -710,7 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 4. ABA SORTEIO & ALGORITMO EXATO POR ESTRELAS E GOLEIROS ---
+    // --- 4. ABA SORTEIO & ALGORITMO EXATO DE PREENCHIMENTO SEQUENCIAL ---
     function renderizarPresenca() {
         const container = document.getElementById('lista-presenca');
         if (!container) return;
@@ -759,69 +759,42 @@ document.addEventListener('DOMContentLoaded', () => {
             somaEstrelas: 0
         }));
 
-        const goleiros = jogadoresPresentes.filter(j => j.isGoleiro);
-        const linha = jogadoresPresentes.filter(j => !j.isGoleiro);
+        // Separamos goleiros e jogadores de linha para garantir a distribuição correta
+        let goleiros = jogadoresPresentes.filter(j => j.isGoleiro);
+        let linhas = jogadoresPresentes.filter(j => !j.isGoleiro);
 
-        const goleirosEmbaralhados = embaralharArray(goleiros);
-        goleirosEmbaralhados.forEach((g, index) => {
-            const tIndex = index % qtdTimes;
-            timesTemp[tIndex].jogadores.push(g);
-            timesTemp[tIndex].somaEstrelas += Number(g.estrelas || 3.0);
-            timesTemp[tIndex].temGoleiro = true;
-        });
+        goleiros = embaralharArray(goleiros);
+        linhas = embaralharArray(linhas);
 
-        const niveisPossiveis = [5.0, 4.5, 4.0, 3.5, 3.0, 2.5, 2.0, 1.5, 1.0, 0.5];
-        
-        niveisPossiveis.forEach(nivel => {
-            const grupoJogadores = linha.filter(j => Number(j.estrelas || 3.0) === nivel);
-            if (grupoJogadores.length === 0) return;
+        // Define o limite padrão por time (ex: 4 jogadores de linha por time)
+        let limitePorTime = 4;
 
-            const grupoEmbaralhado = embaralharArray(grupoJogadores);
-
-            grupoEmbaralhado.forEach((j, index) => {
-                const tIndex = index % qtdTimes;
-                timesTemp[tIndex].jogadores.push(j);
-                timesTemp[tIndex].somaEstrelas += Number(j.estrelas || 3.0);
-            });
-        });
-
-        for (let iteracao = 0; iteracao < 50; iteracao++) {
-            let somas = timesTemp.map(t => t.somaEstrelas);
-            let maxSoma = Math.max(...somas);
-            let minSoma = Math.min(...somas);
-
-            if (maxSoma - minSoma <= 1.0) break;
-
-            let idxMaisForte = somas.indexOf(maxSoma);
-            let idxMaisFraco = somas.indexOf(minSoma);
-
-            let timeForte = timesTemp[idxMaisForte];
-            let timeFraco = timesTemp[idxMaisFraco];
-
-            let trocou = false;
-            for (let i = 0; i < timeForte.jogadores.length; i++) {
-                if (timeForte.jogadores[i].isGoleiro) continue;
-                for (let k = 0; k < timeFraco.jogadores.length; k++) {
-                    if (timeFraco.jogadores[k].isGoleiro) continue;
-
-                    let jForte = timeForte.jogadores[i];
-                    let jFraco = timeFraco.jogadores[k];
-
-                    if (Math.abs(jForte.estrelas - jFraco.estrelas) <= 1.0 && jForte.estrelas > jFraco.estrelas) {
-                        timeForte.jogadores[i] = jFraco;
-                        timeFraco.jogadores[k] = jForte;
-
-                        timeForte.somaEstrelas = timeForte.jogadores.reduce((acc, curr) => acc + Number(curr.estrelas || 3.0), 0);
-                        timeFraco.somaEstrelas = timeFraco.jogadores.reduce((acc, curr) => acc + Number(curr.estrelas || 3.0), 0);
-                        
-                        trocou = true;
-                        break;
-                    }
-                }
-                if (trocou) break;
+        // Distribui os jogadores de linha preenchendo os times do primeiro até onde der de forma completa
+        // O último time recebe apenas a sobra
+        let indiceTime = 0;
+        linhas.forEach(j => {
+            // Se o time atual já atingiu o limite e não é o último time, avança para o próximo
+            while (indiceTime < qtdTimes - 1 && timesTemp[indiceTime].jogadores.filter(x => !x.isGoleiro).length >= limitePorTime) {
+                indiceTime++;
             }
-            if (!trocou) break;
-        }
+            timesTemp[indiceTime].jogadores.push(j);
+        });
+
+        // Distribui os goleiros para os times (um por time na ordem, se houver goleiros suficientes)
+        goleiros.forEach((g, idx) => {
+            if (idx < qtdTimes) {
+                timesTemp[idx].jogadores.unshift(g); // Coloca o goleiro como primeiro do time
+            } else {
+                // Se houver mais goleiros que times, joga no último
+                timesTemp[qtdTimes - 1].jogadores.push(g);
+            }
+        });
+
+        // Atualiza soma de estrelas e status de goleiro de cada time
+        timesTemp.forEach(t => {
+            t.somaEstrelas = t.jogadores.reduce((acc, curr) => acc + Number(curr.estrelas || 3.0), 0);
+            t.temGoleiro = t.jogadores.some(j => j.isGoleiro);
+        });
 
         return timesTemp;
     }
@@ -833,7 +806,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const qtdTimesEl = document.getElementById('qtd-times');
             const qtdTimes = qtdTimesEl ? parseInt(qtdTimesEl.value) : 2;
 
-            if (presentes.length < qtdTimes * 2) {
+            if (presentes.length < 2) {
                 await mostrarAlerta('Poucos jogadores presentes para a quantidade de times!', '🎲 SORTEIO');
                 return;
             }
@@ -1317,7 +1290,7 @@ document.addEventListener('DOMContentLoaded', () => {
             partidaAtualIndex = 0;
 
             await mostrarAlerta('🏆 Campeonato finalizado e salvo com sucesso no Histórico!', '🏆 SUCESSO');
-            const tabHist = document.querySelector('[data-tab="tab-historico"]');
+            const tabHist = document.querySelector('[data-tab="tab-campeonato"]');
             if (tabHist) tabHist.click();
         });
     }
