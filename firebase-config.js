@@ -6,7 +6,11 @@ import {
     createUserWithEmailAndPassword, 
     signOut, 
     onAuthStateChanged,
-    sendPasswordResetEmail 
+    sendPasswordResetEmail,
+    setPersistence,
+    browserLocalPersistence,
+    GoogleAuthProvider,
+    signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
     getDatabase, 
@@ -31,6 +35,12 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
+// Define a persistência do login como LOCAL:
+setPersistence(auth, browserLocalPersistence)
+    .catch((error) => {
+        console.error("Erro ao definir persistência do login:", error);
+    });
+
 // Disponibiliza globalmente para o script.js usar
 window.firebaseAuth = auth;
 window.firebaseDb = db;
@@ -40,6 +50,10 @@ window.firebaseFns = {
     signOut,
     onAuthStateChanged,
     sendPasswordResetEmail,
+    setPersistence,
+    browserLocalPersistence,
+    GoogleAuthProvider,
+    signInWithPopup,
     ref,
     set,
     get,
