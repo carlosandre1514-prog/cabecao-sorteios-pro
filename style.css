@@ -1,8 +1,8 @@
 /* =========================================================
    CABEÇÃO SORTEIOS PRO - PALETA ESPORTS / LUXURY FOOTBALL
-   🟢 Verde Neon: #9DFF00
-   🟢 Verde Escuro: #0F5A2A
-   🟡 Dourado Metálico: #D4AF37
+   🟢 Verde Neon: #7CFF00
+   🟢 Verde Vivo: #00C853
+   🟡 Dourado Vivo: #FFC400
    ⚫ Preto Jet: #000000
    ⚫ Cinza Carvão: #121212
    ⚪ Branco: #FFFFFF
@@ -19,7 +19,7 @@
 body {
     background-color: #000000;
     background-image: 
-        radial-gradient(circle at 50% 0%, rgba(15, 90, 42, 0.75) 0%, rgba(18, 18, 18, 0.85) 65%, rgba(0, 0, 0, 0.95) 100%),
+        radial-gradient(circle at 50% -10%, rgba(0, 230, 100, 0.85) 0%, rgba(0, 120, 55, 0.55) 35%, rgba(10, 18, 12, 0.92) 75%, rgba(0, 0, 0, 0.97) 100%),
         url('brasao.png');
     background-repeat: no-repeat;
     background-position: center center;
@@ -66,34 +66,34 @@ body {
     height: 52px;
     object-fit: contain;
     border-radius: 12px;
-    border: 2px solid #D4AF37;
-    box-shadow: 0 0 16px rgba(157, 255, 0, 0.7), 0 0 6px rgba(212, 175, 55, 0.6);
+    border: 2px solid #FFC400;
+    box-shadow: 0 0 16px rgba(124, 255, 0, 0.7), 0 0 6px rgba(255, 196, 0, 0.6);
 }
 
 .app-header h1 {
     font-size: 1.35rem;
-    color: #9DFF00;
+    color: #7CFF00;
     font-weight: 900;
     line-height: 1.1;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    text-shadow: 0 0 12px rgba(157, 255, 0, 0.8), 0 0 22px rgba(157, 255, 0, 0.4);
+    text-shadow: 0 0 12px rgba(124, 255, 0, 0.8), 0 0 22px rgba(124, 255, 0, 0.4);
     text-align: left;
 }
 
 .app-header p {
     font-size: 0.75rem;
-    color: #D4AF37;
+    color: #FFC400;
     font-weight: 600;
     letter-spacing: 0.5px;
     text-align: left;
-    text-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
+    text-shadow: 0 0 6px rgba(255, 196, 0, 0.4);
 }
 
 .btn-menu-hamburguer {
     background: #121212;
-    border: 1px solid #9DFF00;
-    color: #9DFF00;
+    border: 1px solid #7CFF00;
+    color: #7CFF00;
     font-size: 1.4rem;
     width: 44px;
     height: 44px;
@@ -102,13 +102,13 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 12px rgba(157, 255, 0, 0.4);
+    box-shadow: 0 0 12px rgba(124, 255, 0, 0.4);
     transition: all 0.2s ease;
 }
 
 .btn-menu-hamburguer:active {
     transform: scale(0.95);
-    background: #0F5A2A;
+    background: #00C853;
     color: #000;
 }
 
@@ -134,8 +134,8 @@ body {
     width: 280px;
     height: 100%;
     background: linear-gradient(160deg, #181818 0%, #0c0c0c 100%);
-    border-right: 2px solid #9DFF00;
-    box-shadow: 5px 0 30px rgba(157, 255, 0, 0.3);
+    border-right: 2px solid #7CFF00;
+    box-shadow: 5px 0 30px rgba(124, 255, 0, 0.3);
     z-index: 9999;
     display: flex;
     flex-direction: column;
@@ -159,14 +159,13 @@ body {
     right: 16px;
     background: none;
     border: none;
-    color: #B0B0B0;
+    color: #D0D8D0;
     font-size: 1.2rem;
     cursor: pointer;
 }
 
 /* Ocultar ferramentas de Configurações e Tema no menu lateral */
-.side-drawer .drawer-section:has(#select-tema),
-.side-drawer .drawer-section:has(h4:contains("Configurações")) {
+.side-drawer .drawer-section:has(#select-tema) {
     display: none !important;
 }
 
@@ -184,8 +183,8 @@ body {
     height: 64px;
     border-radius: 50%;
     background: linear-gradient(135deg, #181818 0%, #0c0c0c 100%);
-    border: 2px solid #9DFF00;
-    box-shadow: 0 0 15px rgba(157, 255, 0, 0.6);
+    border: 2px solid #7CFF00;
+    box-shadow: 0 0 15px rgba(124, 255, 0, 0.6);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -197,16 +196,16 @@ body {
 .profile-avatar-svg {
     width: 38px;
     height: 38px;
-    fill: #9DFF00;
-    filter: drop-shadow(0 0 6px rgba(157, 255, 0, 0.8));
+    fill: #7CFF00;
+    filter: drop-shadow(0 0 6px rgba(124, 255, 0, 0.8));
 }
 
 .drawer-user-info {
     font-size: 0.8rem;
-    color: #D4AF37;
+    color: #FFC400;
     word-break: break-all;
     font-weight: 600;
-    text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+    text-shadow: 0 0 8px rgba(255, 196, 0, 0.4);
 }
 
 .drawer-section {
@@ -215,27 +214,27 @@ body {
 }
 
 .drawer-section h4 {
-    color: #D4AF37;
+    color: #FFC400;
     font-size: 0.85rem;
     text-transform: uppercase;
     margin-bottom: 8px;
     font-weight: 800;
-    text-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
+    text-shadow: 0 0 6px rgba(255, 196, 0, 0.3);
 }
 
 .about-text {
     font-size: 0.78rem;
-    color: #A0A0A0;
+    color: #BFC9BF;
     line-height: 1.4;
     text-align: justify;
 }
 
 .about-version {
     font-size: 0.7rem;
-    color: #9DFF00;
+    color: #7CFF00;
     margin-top: 6px;
     font-weight: bold;
-    text-shadow: 0 0 6px rgba(157, 255, 0, 0.5);
+    text-shadow: 0 0 6px rgba(124, 255, 0, 0.5);
 }
 
 .drawer-footer {
@@ -265,10 +264,10 @@ body {
     width: 100%;
     max-width: 380px;
     background: linear-gradient(145deg, rgba(24, 24, 24, 0.95) 0%, rgba(12, 12, 12, 0.95) 100%);
-    border: 2px solid #9DFF00;
+    border: 2px solid #7CFF00;
     border-radius: 14px;
     padding: 24px;
-    box-shadow: 0 0 35px rgba(157, 255, 0, 0.4);
+    box-shadow: 0 0 35px rgba(124, 255, 0, 0.4);
     text-align: center;
 }
 
@@ -277,18 +276,18 @@ body {
     height: 64px;
     object-fit: contain;
     border-radius: 14px;
-    border: 2px solid #D4AF37;
+    border: 2px solid #FFC400;
     margin-bottom: 12px;
-    box-shadow: 0 0 18px rgba(212, 175, 55, 0.6);
+    box-shadow: 0 0 18px rgba(255, 196, 0, 0.6);
 }
 
 .auth-card h2 {
-    color: #9DFF00;
+    color: #7CFF00;
     font-size: 1.4rem;
     text-transform: uppercase;
     font-weight: 900;
     margin-bottom: 4px;
-    text-shadow: 0 0 10px rgba(157, 255, 0, 0.6);
+    text-shadow: 0 0 10px rgba(124, 255, 0, 0.6);
 }
 
 /* =========================================================
@@ -300,8 +299,8 @@ body {
     border-radius: 10px;
     padding: 4px;
     gap: 4px;
-    border: 1px solid #9DFF00;
-    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.9), 0 0 10px rgba(157, 255, 0, 0.2);
+    border: 1px solid #7CFF00;
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.9), 0 0 10px rgba(124, 255, 0, 0.2);
 }
 
 .tab-btn {
@@ -309,7 +308,7 @@ body {
     padding: 10px 2px;
     background: transparent;
     border: none;
-    color: #A0A0A0;
+    color: #BFC9BF;
     font-weight: 800;
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -319,9 +318,9 @@ body {
 }
 
 .tab-btn.active {
-    background: linear-gradient(135deg, #9DFF00 0%, #0F5A2A 100%);
+    background: linear-gradient(135deg, #7CFF00 0%, #00C853 100%);
     color: #000000;
-    box-shadow: 0 0 15px rgba(157, 255, 0, 0.7);
+    box-shadow: 0 0 15px rgba(124, 255, 0, 0.7);
     text-shadow: none;
 }
 
@@ -343,8 +342,8 @@ body {
     border-radius: 12px;
     padding: 16px;
     border: 1px solid #282828;
-    border-top: 1px solid #9DFF00;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7), 0 0 8px rgba(157, 255, 0, 0.15);
+    border-top: 1px solid #7CFF00;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7), 0 0 8px rgba(124, 255, 0, 0.15);
     position: relative;
     overflow: hidden;
 }
@@ -356,26 +355,26 @@ body {
     left: 0;
     width: 100%;
     height: 3px;
-    background: linear-gradient(90deg, #9DFF00, #D4AF37);
+    background: linear-gradient(90deg, #7CFF00, #FFC400);
     opacity: 0.9;
-    box-shadow: 0 0 10px rgba(157, 255, 0, 0.8);
+    box-shadow: 0 0 10px rgba(124, 255, 0, 0.8);
 }
 
 .card h2 {
     font-size: 1.05rem;
     margin-bottom: 8px;
-    color: #D4AF37;
+    color: #FFC400;
     font-weight: 800;
     text-transform: uppercase;
     display: flex;
     align-items: center;
     gap: 6px;
-    text-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
+    text-shadow: 0 0 6px rgba(255, 196, 0, 0.4);
 }
 
 .subtext {
     font-size: 0.8rem;
-    color: #B0B0B0;
+    color: #D0D8D0;
     margin-bottom: 12px;
 }
 
@@ -397,7 +396,7 @@ body {
 
 input[type="text"], input[type="number"], input[type="password"], input[type="email"], select, textarea {
     background-color: #000000;
-    border: 1px solid #0F5A2A;
+    border: 1px solid #00C853;
     border-radius: 8px;
     color: #FFFFFF;
     padding: 10px 14px;
@@ -407,8 +406,8 @@ input[type="text"], input[type="number"], input[type="password"], input[type="em
 }
 
 input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus, input[type="email"]:focus, select:focus, textarea:focus {
-    border-color: #9DFF00;
-    box-shadow: 0 0 12px rgba(157, 255, 0, 0.6);
+    border-color: #7CFF00;
+    box-shadow: 0 0 12px rgba(124, 255, 0, 0.6);
 }
 
 input[type="text"], input[type="password"], input[type="email"], textarea {
@@ -444,7 +443,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
 
 .star-cad.active {
     opacity: 1;
-    filter: drop-shadow(0 0 8px #D4AF37);
+    filter: drop-shadow(0 0 8px #FFC400);
 }
 
 /* =========================================================
@@ -458,11 +457,11 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
     padding: 10px 12px;
     border-radius: 8px;
     margin-bottom: 8px;
-    border-left: 4px solid #9DFF00;
+    border-left: 4px solid #7CFF00;
     border-right: 1px solid #222;
     border-top: 1px solid #222;
     border-bottom: 1px solid #222;
-    box-shadow: 0 0 8px rgba(157, 255, 0, 0.1);
+    box-shadow: 0 0 8px rgba(124, 255, 0, 0.1);
 }
 
 .acoes-item {
@@ -484,7 +483,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
 .item-presenca input[type="checkbox"] {
     width: 20px;
     height: 20px;
-    accent-color: #9DFF00;
+    accent-color: #7CFF00;
 }
 
 /* =========================================================
@@ -503,9 +502,9 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #9DFF00 0%, #0F5A2A 100%);
+    background: linear-gradient(135deg, #7CFF00 0%, #00C853 100%);
     color: #000000;
-    box-shadow: 0 4px 15px rgba(157, 255, 0, 0.5);
+    box-shadow: 0 4px 15px rgba(124, 255, 0, 0.5);
     text-shadow: none;
 }
 
@@ -520,21 +519,21 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
 }
 
 .btn-success {
-    background: linear-gradient(135deg, #D4AF37 0%, #8A6D1C 100%);
+    background: linear-gradient(135deg, #FFC400 0%, #FF8F00 100%);
     color: #000000;
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 4px 12px rgba(255, 196, 0, 0.4);
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #FF3333 0%, #8B0000 100%);
+    background: linear-gradient(135deg, #FF1744 0%, #D50000 100%);
     color: #FFFFFF;
     padding: 8px 12px;
     font-size: 0.8rem;
-    box-shadow: 0 0 10px rgba(255, 51, 51, 0.4);
+    box-shadow: 0 0 10px rgba(255, 23, 68, 0.4);
 }
 
 .btn-edit {
-    background: linear-gradient(135deg, #D4AF37 0%, #A68019 100%);
+    background: linear-gradient(135deg, #FFC400 0%, #FFA000 100%);
     color: #000;
     padding: 5px 10px;
     font-size: 0.75rem;
@@ -552,18 +551,18 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
 .cronometro-card {
     text-align: center;
     background: rgba(0, 0, 0, 0.9);
-    border: 2px solid #9DFF00;
-    box-shadow: 0 0 25px rgba(157, 255, 0, 0.35);
+    border: 2px solid #7CFF00;
+    box-shadow: 0 0 25px rgba(124, 255, 0, 0.35);
 }
 
 .timer-display {
     font-size: 3.5rem;
     font-weight: 900;
-    color: #9DFF00;
+    color: #7CFF00;
     font-family: monospace;
     letter-spacing: 3px;
     margin: 10px 0;
-    text-shadow: 0 0 20px rgba(157, 255, 0, 0.8), 0 0 35px rgba(157, 255, 0, 0.4);
+    text-shadow: 0 0 20px rgba(124, 255, 0, 0.8), 0 0 35px rgba(124, 255, 0, 0.4);
 }
 
 .timer-config {
@@ -595,12 +594,12 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
 
 .tabela-classificacao th {
     background-color: #000000;
-    color: #D4AF37;
+    color: #FFC400;
     padding: 8px 6px;
-    border-bottom: 2px solid #0F5A2A;
+    border-bottom: 2px solid #00C853;
     font-weight: 800;
     text-transform: uppercase;
-    text-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
+    text-shadow: 0 0 6px rgba(255, 196, 0, 0.4);
 }
 
 .tabela-classificacao td {
@@ -620,8 +619,8 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
     padding: 14px;
     border-radius: 10px;
     margin-bottom: 10px;
-    border: 1px solid #9DFF00;
-    box-shadow: 0 0 10px rgba(157, 255, 0, 0.15);
+    border: 1px solid #7CFF00;
+    box-shadow: 0 0 10px rgba(124, 255, 0, 0.15);
 }
 
 .time-placar input {
@@ -629,7 +628,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
     text-align: center;
     font-size: 1.3rem;
     font-weight: bold;
-    border-color: #D4AF37;
+    border-color: #FFC400;
 }
 
 .modal {
@@ -654,7 +653,7 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
     border-radius: 10px;
     padding: 14px;
     margin-bottom: 12px;
-    border: 1px solid #0F5A2A;
+    border: 1px solid #00C853;
 }
 
 /* =========================================================
@@ -669,10 +668,10 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
 
 .card-time {
     background-color: rgba(0, 0, 0, 0.85);
-    border: 1px solid #9DFF00;
+    border: 1px solid #7CFF00;
     border-radius: 10px;
     padding: 14px;
-    box-shadow: 0 4px 15px rgba(157, 255, 0, 0.2);
+    box-shadow: 0 4px 15px rgba(124, 255, 0, 0.2);
     display: flex;
     flex-direction: column;
 }
@@ -689,30 +688,30 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
 .card-time-header h3 {
     margin: 0;
     font-size: 1.05rem;
-    color: #9DFF00;
+    color: #7CFF00;
     font-weight: 800;
     text-transform: uppercase;
-    text-shadow: 0 0 8px rgba(157, 255, 0, 0.5);
+    text-shadow: 0 0 8px rgba(124, 255, 0, 0.5);
 }
 
 .badge-estrelas {
     background-color: #121212;
-    color: #D4AF37;
+    color: #FFC400;
     font-size: 0.8rem;
     font-weight: bold;
     padding: 3px 8px;
     border-radius: 12px;
-    border: 1px solid #D4AF37;
-    box-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
+    border: 1px solid #FFC400;
+    box-shadow: 0 0 6px rgba(255, 196, 0, 0.4);
 }
 
 .badge-sem-goleiro {
-    color: #FF3333;
+    color: #FF1744;
     font-size: 0.75rem;
     font-weight: bold;
     margin-bottom: 8px;
     display: inline-block;
-    text-shadow: 0 0 6px rgba(255, 51, 51, 0.5);
+    text-shadow: 0 0 6px rgba(255, 23, 68, 0.5);
 }
 
 .lista-jogadores-card {
@@ -747,8 +746,132 @@ input[type="text"], input[type="password"], input[type="email"], textarea {
 
 .penaltis-box {
     background: rgba(0, 0, 0, 0.8);
-    border: 1px solid #D4AF37;
+    border: 1px solid #FFC400;
     border-radius: 8px;
     padding: 10px;
     margin-bottom: 10px;
+}
+
+/* =========================================================
+   MONETIZAÇÃO: PLANO PRO, PATROCINADOR, PIX
+   ========================================================= */
+.plano-status {
+    text-align: center;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-weight: 900;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+.plano-gratis {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid #555;
+    color: #FFFFFF;
+}
+.plano-pro {
+    background: linear-gradient(135deg, #FFC400 0%, #FF8F00 100%);
+    color: #000;
+    box-shadow: 0 0 16px rgba(255, 196, 0, 0.7);
+}
+
+.banner-patrocinador {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(255, 196, 0, 0.22) 0%, rgba(0, 200, 83, 0.22) 100%);
+    border: 1px solid #FFC400;
+    box-shadow: 0 0 14px rgba(255, 196, 0, 0.35);
+    position: relative;
+    text-align: center;
+}
+.patro-label {
+    position: absolute;
+    top: 2px;
+    right: 8px;
+    font-size: 0.6rem;
+    color: #BFC9BF;
+    text-transform: uppercase;
+}
+.patro-img { max-height: 44px; max-width: 120px; object-fit: contain; border-radius: 6px; }
+.patro-texto { font-size: 0.85rem; font-weight: 800; color: #FFFFFF; }
+
+.card-bloqueado {
+    margin-bottom: 12px;
+    text-align: center;
+    cursor: pointer;
+    border: 1px dashed #FFC400;
+    background: rgba(255, 196, 0, 0.08);
+}
+.card-bloqueado h3 { color: #FFC400; font-size: 0.95rem; }
+
+.pro-modal {
+    max-width: 360px;
+    width: 92%;
+    text-align: center;
+    border: 2px solid #FFC400;
+    box-shadow: 0 0 40px rgba(255, 196, 0, 0.5), 0 0 20px rgba(124, 255, 0, 0.3);
+    max-height: 92vh;
+    overflow-y: auto;
+}
+.pro-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #D0D8D0;
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 2;
+}
+.pro-badge-topo {
+    display: inline-block;
+    background: linear-gradient(135deg, #FFC400 0%, #FF8F00 100%);
+    color: #000;
+    font-weight: 900;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+    box-shadow: 0 0 14px rgba(255, 196, 0, 0.8);
+}
+.pro-beneficios {
+    list-style: none;
+    text-align: left;
+    margin: 6px 0 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.88rem;
+}
+.pro-beneficios li {
+    background: rgba(0, 0, 0, 0.55);
+    border-left: 3px solid #7CFF00;
+    padding: 7px 10px;
+    border-radius: 6px;
+}
+.pro-preco {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #7CFF00;
+    text-shadow: 0 0 12px rgba(124, 255, 0, 0.7);
+    margin-bottom: 10px;
+}
+.pro-pix {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid #00C853;
+    border-radius: 8px;
+    padding: 10px;
+}
+.pro-pix code {
+    word-break: break-all;
+    color: #FFC400;
+    font-size: 0.85rem;
+    font-weight: 700;
 }

@@ -6,7 +6,7 @@
     <title>Cabeção Sorteios Pro</title>
     <!-- Manifesto para PWA e geração de APK -->
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="icon" type="image/png" href="Icon.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -69,7 +69,7 @@
                 <p class="about-text">
                     O <strong>Cabeção Sorteios Pro</strong> é o seu assistente definitivo para organizar rachas e partidas de futebol com os amigos de forma justa, equilibrada e profissional. Gerencie elencos, faça sorteios por nível e goleiros, controle o placar em tempo real e guarde o histórico completo das suas peladas!
                 </p>
-                <p class="about-version">Versão 1.0.0 Pro</p>
+                <p class="about-version">Versão 1.1.0 Pro</p>
             </div>
 
             <!-- Seção de Desenvolvedor -->
@@ -106,11 +106,14 @@
 
         <!-- Menu de Navegação por Abas -->
         <nav class="nav-tabs">
-            <button class="tab-btn active" data-tab="tab-jogadores" onclick="switchTab('tab-jogadores')">👥 Jogadores</button>
-            <button class="tab-btn" data-tab="tab-sorteio" onclick="switchTab('tab-sorteio')">🎲 Sorteio</button>
-            <button class="tab-btn" data-tab="tab-campeonato" onclick="switchTab('tab-campeonato')">🏆 Campeonato</button>
-            <button class="tab-btn" data-tab="tab-historico" onclick="switchTab('tab-historico')">📜 Histórico</button>
+            <button class="tab-btn active" data-tab="tab-jogadores">👥 Jogadores</button>
+            <button class="tab-btn" data-tab="tab-sorteio">🎲 Sorteio</button>
+            <button class="tab-btn" data-tab="tab-campeonato">🏆 Campeonato</button>
+            <button class="tab-btn" data-tab="tab-historico">📜 Histórico</button>
         </nav>
+
+        <!-- Banner de patrocinador (controlado pelo Firebase; some para usuários Pro) -->
+        <div id="banner-patrocinador" class="banner-patrocinador hidden"></div>
 
         <!-- ABA 1: JOGADORES -->
         <section id="tab-jogadores" class="tab-content active">
@@ -344,5 +347,6 @@
     </script>
 
     <script src="script.js"></script>
+    <script src="monetizacao.js"></script>
 </body>
 </html>

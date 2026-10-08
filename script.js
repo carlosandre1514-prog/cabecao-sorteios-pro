@@ -11,51 +11,95 @@ let tipoDesempateRacha = null; // Controla o tipo de desempate escolhido em caso
 
 // --- VERSÃO ATUAL DO APLICATIVO ---
 // Lembre-se de atualizar este número toda vez que lançar um novo APK/versão do app!
-const VERSAO_ATUAL_APP = "1.0.0";
+const VERSAO_ATUAL_APP = "1.1.0";
 
 // --- INTERRUPTOR REMOTO (KILL SWITCH GLOBAL E POR VERSÕES) VIA FIREBASE ---
+// Campos no Realtime Database (nó "configuracoes"):
+//   global/app_ativo = false            -> ENCERRA o app para TODAS as versões (volte para true para reativar)
+//   global/mensagem_desativacao = "..." -> texto mostrado na tela de bloqueio
+//   versoes/versao_minima_permitida     -> versões MENORES que esta ficam bloqueadas (ex: "1.2.0")
+//   versoes/versao_mais_recente         -> mostra aviso (não bloqueia) para quem está abaixo
+//   versoes/link_download               -> link do novo APK (botão "Baixar nova versão")
+//   versoes/mensagem_versao_minima      -> texto opcional da tela de atualização obrigatória
+const CHAVE_BLOQUEIO_CACHE = 'cabecao_bloqueio_remoto';
+
+// Decide se esta versão do app deve ser bloqueada. Retorna null se estiver liberada.
+function avaliarConfigRemota(config) {
+    if (config.global && config.global.app_ativo === false) {
+        return {
+            titulo: '⚠️ Aplicativo Desativado',
+            mensagem: config.global.mensagem_desativacao || 'Este aplicativo está temporariamente indisponível. Volte mais tarde!',
+            link: ''
+        };
+    }
+    const versaoMinima = config.versoes && config.versoes.versao_minima_permitida;
+    if (versaoMinima && compararversoes(VERSAO_ATUAL_APP, versaoMinima) < 0) {
+        return {
+            titulo: '⚠️ Atualização Obrigatória',
+            mensagem: (config.versoes && config.versoes.mensagem_versao_minima) ||
+                `Esta versão (${VERSAO_ATUAL_APP}) do aplicativo está desatualizada. Baixe a nova versão (mínima: ${versaoMinima}) para continuar!`,
+            link: (config.versoes && config.versoes.link_download) || ''
+        };
+    }
+    return null;
+}
+
+function lerBloqueioCache() {
+    try { return JSON.parse(localStorage.getItem(CHAVE_BLOQUEIO_CACHE) || 'null'); } catch (e) { return null; }
+}
+
 function verificarStatusAppRemoto() {
+    if (!(window.firebaseDb && window.firebaseFns)) return Promise.resolve();
+    const configRef = window.firebaseFns.ref(window.firebaseDb, 'configuracoes');
+
+    return window.firebaseFns.get(configRef).then((snapshot) => {
+        const config = snapshot.exists() ? (snapshot.val() || {}) : {};
+        const bloqueio = avaliarConfigRemota(config);
+
+        if (bloqueio) {
+            // Guarda o bloqueio: se a pessoa abrir o app sem internet, continua bloqueada
+            try { localStorage.setItem(CHAVE_BLOQUEIO_CACHE, JSON.stringify(bloqueio)); } catch (e) {}
+            bloquearTelaApp(bloqueio.titulo, bloqueio.mensagem, bloqueio.link);
+            return;
+        }
+
+        // Liberado. Se estava bloqueado (cache), recarrega para voltar ao app normal.
+        if (lerBloqueioCache()) {
+            try { localStorage.removeItem(CHAVE_BLOQUEIO_CACHE); } catch (e) {}
+            location.reload();
+            return;
+        }
+
+        // Aviso soft de nova versão (não bloqueia)
+        const versaoMaisRecente = config.versoes && config.versoes.versao_mais_recente;
+        const linkDownload = config.versoes && config.versoes.link_download;
+        if (versaoMaisRecente && compararversoes(VERSAO_ATUAL_APP, versaoMaisRecente) < 0) {
+            exibirBannerAtualizacao(versaoMaisRecente, linkDownload);
+        }
+    }).catch((err) => {
+        // Sem internet / erro: mantém o estado atual (se estava bloqueado, continua bloqueado)
+        console.log("Erro ao checar status remoto:", err);
+    });
+}
+
+function iniciarVigilanciaRemota() {
+    // 1) Se da última vez o app estava bloqueado, bloqueia JÁ (mesmo offline)
+    const cache = lerBloqueioCache();
+    if (cache) bloquearTelaApp(cache.titulo, cache.mensagem, cache.link);
+
+    // 2) Assim que o Firebase carregar, checa; depois rechecha a cada 5 minutos
     const checar = setInterval(() => {
         if (window.firebaseDb && window.firebaseFns) {
             clearInterval(checar);
-            
-            // Referência para a pasta de configurações no Realtime Database
-            const configRef = window.firebaseFns.ref(window.firebaseDb, 'configuracoes');
-            
-            window.firebaseFns.get(configRef).then((snapshot) => {
-                if (snapshot.exists()) {
-                    const config = snapshot.val();
-                    
-                    // 1. CHECAGEM GLOBAL (Se o app inteiro foi desligado no painel)
-                    const globalAtivo = config.global?.app_ativo;
-                    if (globalAtivo === false) {
-                        const mensagemPersonalizada = config.global?.mensagem_desativacao || "Este aplicativo foi descontinuado permanentemente.";
-                        bloquearTelaApp("⚠️ Aplicativo Desativado", mensagemPersonalizada);
-                        return;
-                    }
-                    
-                    // 2. CHECAGEM POR VERSÃO MÍNIMA (Bloqueio total)
-                    const versaoMinima = config.versoes?.versao_minima_permitida;
-                    if (versaoMinima && compararversoes(VERSAO_ATUAL_APP, versaoMinima) < 0) {
-                        bloquearTelaApp(
-                            "⚠️ Atualização Obrigatória", 
-                            `Esta versão (${VERSAO_ATUAL_APP}) do aplicativo está desatualizada. Por favor, baixe a nova versão (mínima: ${versaoMinima}) para continuar jogando!`
-                        );
-                        return;
-                    }
-
-                    // 3. ALTERAÇÃO 1: CHECAGEM SOFT (Aviso de nova versão não-bloqueante)
-                    const versaoMaisRecente = config.versoes?.versao_mais_recente;
-                    const linkDownload = config.versoes?.link_download;
-                    if (versaoMaisRecente && compararversoes(VERSAO_ATUAL_APP, versaoMaisRecente) < 0) {
-                        exibirBannerAtualizacao(versaoMaisRecente, linkDownload);
-                    }
-                }
-            }).catch((err) => {
-                console.log("Erro ao checar status remoto:", err);
-            });
+            verificarStatusAppRemoto();
+            setInterval(verificarStatusAppRemoto, 5 * 60 * 1000);
         }
     }, 300);
+
+    // 3) Rechecha toda vez que a pessoa volta para o app (quem deixou aberto também é bloqueado)
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) verificarStatusAppRemoto();
+    });
 }
 
 // Função para exibir o aviso soft de atualização no topo
@@ -117,19 +161,32 @@ function compararversoes(v1, v2) {
 }
 
 // Função para injetar a tela de bloqueio se alguma regra for acionada
-function bloquearTelaApp(titulo, mensagem) {
-    document.body.innerHTML = `
-        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#121212; color:#fff; text-align:center; padding:20px; font-family:sans-serif;">
-            <h2 style="color:#ff5252; margin-bottom:10px;">${titulo}</h2>
-            <p style="color:#aaa; font-size:0.95rem; max-width:320px; line-height:1.5;">
-                ${mensagem}
-            </p>
-        </div>
-    `;
+function bloquearTelaApp(titulo, mensagem, link) {
+    const seguro = /^https?:\/\//i.test(String(link || ''));
+    document.body.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; background:#0a0a0a; color:#fff; text-align:center; padding:20px; font-family:sans-serif; gap:14px;';
+    const h = document.createElement('h2');
+    h.style.cssText = 'color:#FF1744; margin:0;';
+    h.textContent = titulo;
+    const p = document.createElement('p');
+    p.style.cssText = 'color:#D0D8D0; font-size:0.95rem; max-width:320px; line-height:1.5; margin:0;';
+    p.textContent = mensagem;
+    wrap.appendChild(h);
+    wrap.appendChild(p);
+    if (seguro) {
+        const a = document.createElement('a');
+        a.href = link;
+        a.target = '_blank';
+        a.textContent = '⬇️ Baixar nova versão';
+        a.style.cssText = 'background:linear-gradient(135deg,#7CFF00,#00C853); color:#000; font-weight:800; padding:12px 22px; border-radius:8px; text-decoration:none; text-transform:uppercase;';
+        wrap.appendChild(a);
+    }
+    document.body.appendChild(wrap);
 }
 
 // Inicia a verificação de segurança/atualização assim que o script carrega
-verificarStatusAppRemoto();
+iniciarVigilanciaRemota();
 
 // --- FUNÇÕES DE AUTENTICAÇÃO DO FIREBASE ---
 function toggleAuthMode() {
@@ -735,10 +792,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const filtroInvalido = /pix|pagamento|racha|chegada|chaves|http|@|complexo|arena|valor|\(r\$/i;
 
+            const limiteLote = window.Monetizacao ? window.Monetizacao.limiteJogadores() : Infinity;
+            let passouDoLimite = false;
+
             linhas.forEach(linha => {
                 let nomeLimpo = linha.replace(/^[0-9]+[\.\-\)\s]*/, '').trim();
                 
                 if (nomeLimpo.length > 0 && !filtroInvalido.test(nomeLimpo)) {
+                    if (jogadores.length >= limiteLote) { passouDoLimite = true; return; }
                     jogadores.push({
                         id: Date.now() + Math.random(),
                         nome: nomeLimpo,
@@ -754,6 +815,9 @@ document.addEventListener('DOMContentLoaded', () => {
             renderizarElenco();
             inputLote.value = '';
             await mostrarAlerta(`${adicionados} jogadores válidos adicionados com sucesso!`, '🚀 SUCESSO');
+            if (passouDoLimite && window.Monetizacao) {
+                window.Monetizacao.abrirModal(`Alguns nomes ficaram de fora: o plano grátis permite até ${limiteLote} jogadores. Seja Pro para cadastrar quantos quiser!`);
+            }
         });
     }
 
@@ -770,6 +834,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 await mostrarAlerta('Digite o nome do jogador!', '⚠️ AVISO');
                 return;
             }
+
+            if (window.Monetizacao && !window.Monetizacao.checarLimiteJogadores(jogadores.length, 1)) return;
 
             jogadores.push({
                 id: Date.now() + Math.random(),
@@ -808,7 +874,7 @@ document.addEventListener('DOMContentLoaded', () => {
             div.innerHTML = `
                 <div>
                     <strong>${nomeTratado}</strong> ${j.isGoleiro ? '🧤' : ''}
-                    <small style="color:#D4AF37; font-weight: bold;">(⭐ ${estrelasFormatadas})</small>
+                    <small style="color:#FFC400; font-weight: bold;">(⭐ ${estrelasFormatadas})</small>
                 </div>
                 <div class="acoes-item">
                     <button class="btn-edit" onclick="abrirEdicao(${j.id})">✏️ Editar</button>
@@ -997,7 +1063,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!divContador) {
             divContador = document.createElement('div');
             divContador.id = 'contador-sorteios-info';
-            divContador.style.cssText = 'background: rgba(212, 175, 55, 0.15); border: 1px solid #D4AF37; color: #D4AF37; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; text-align: center; font-weight: bold; font-size: 0.9rem;';
+            divContador.style.cssText = 'background: rgba(255, 196, 0, 0.15); border: 1px solid #FFC400; color: #FFC400; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; text-align: center; font-weight: bold; font-size: 0.9rem;';
             container.parentNode.insertBefore(divContador, container);
         }
         divContador.innerHTML = `🔁 Sorteio realizado <strong>${contadorSorteios}x</strong> nesta sessão`;
@@ -1778,7 +1844,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        container.innerHTML = historico.map((h, i) => {
+        const limiteHist = window.Monetizacao ? window.Monetizacao.limiteHistorico() : Infinity;
+        const visiveis = historico.slice(0, limiteHist);
+        const ocultos = historico.length - visiveis.length;
+
+        container.innerHTML = visiveis.map((h, i) => {
             const classLista = Object.values(h.classificacao || {}).sort((a, b) => b.p - a.p || b.sg - a.sg);
             const campeao = classLista.length > 0 ? classLista[0].nome : 'N/A';
 
@@ -1791,8 +1861,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="subtext">Modo: ${h.modo === 'todos-contra-todos' ? 'Tabela' : 'Racha Livre'} | 🥇 Campeão: <strong>${escapeHtml(campeao)}</strong></p>
                 </div>
             `;
-        }).join('');
+        }).join('') + (ocultos > 0 ? `
+            <div class="card card-bloqueado" onclick="window.Monetizacao && window.Monetizacao.abrirModal('Você tem ${ocultos} campeonato(s) antigo(s) guardados. Seja Pro para ver todo o histórico!')">
+                <h3>🔒 +${ocultos} campeonato(s) no histórico</h3>
+                <p class="subtext" style="margin:6px 0 0;">Seus dados estão salvos. Toque para liberar com o Plano Pro.</p>
+            </div>` : '');
     }
+
+    // Quando o plano do usuário carregar/mudar, redesenha o que depende dele
+    window.aoMudarPlano = function() { renderizarHistorico(); };
 
     window.excluirHistorico = async function(id) {
         const confirmou = await mostrarConfirmacao('Deseja excluir este registro do histórico?', '🗑️ EXCLUIR HISTÓRICO');
