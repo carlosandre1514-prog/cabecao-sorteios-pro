@@ -215,9 +215,38 @@
             (y.p - x.p) || (y.sg - x.sg) || (y.gp - x.gp) || String(x.nome).localeCompare(String(y.nome)));
     }
 
+    // Retrato PÚBLICO do campeonato para a página ao-vivo.html (só nomes, placares e pontos;
+    // nada de e-mail ou dados da conta). `e` é o estado do campeonato do app.
+    function montarAoVivo(e, dono, agora, encerrado) {
+        const nome = t => (t ? String(t.nome) : '');
+        const cl = ordenarClassificacao(Object.values(e.classificacao || {}).filter(Boolean).map(c => ({
+            nome: String(c.nome), p: c.p || 0, j: c.j || 0, v: c.v || 0, e: c.e || 0, d: c.d || 0, gp: c.gp || 0, sg: c.sg || 0
+        })));
+        let jogos, proxima = null;
+        if (e.modo === 'racha-livre') {
+            jogos = (e.partidasRacha || []).map(p => ({ a: nome(p.timeA), b: nome(p.timeB), ga: p.golsA || 0, gb: p.golsB || 0, v: p.vencedor || '' }));
+            if (e.timeA && e.timeB) proxima = { a: nome(e.timeA), b: nome(e.timeB), r: 0 };
+        } else {
+            const lista = e.partidas || [];
+            jogos = lista.filter(p => p.finalizada).map(p => ({
+                r: p.rodada || 0, a: nome(p.timeA), b: nome(p.timeB),
+                ga: p.golsA || 0, gb: p.golsB || 0, pa: p.penaltisA || 0, pb: p.penaltisB || 0
+            }));
+            const prox = (lista[e.partidaAtualIndex] && !lista[e.partidaAtualIndex].finalizada)
+                ? lista[e.partidaAtualIndex] : lista.find(p => !p.finalizada);
+            if (prox) proxima = { a: nome(prox.timeA), b: nome(prox.timeB), r: prox.rodada || 0 };
+        }
+        return {
+            dono, atualizadoEm: agora, encerrado: !!encerrado, modo: e.modo || 'todos-contra-todos',
+            times: (e.times || []).map(t => ({ nome: String(t.nome), jogadores: (t.jogadores || []).map(j => String(j.nome)) })),
+            classificacao: cl, jogos, proxima, fila: (e.fila || []).map(nome),
+            artilharia: Object.entries(e.artilharia || {}).sort((x, y) => y[1] - x[1]).map(([n, g]) => ({ nome: n, gols: g }))
+        };
+    }
+
     return {
         embaralhar, idUnico, chaveSegura, limparMapa, normalizarTime, compararVersoes,
         filtrarLinhasLote, sortearTimes, gerarPartidas, novaClassificacao,
-        aplicarResultado, ordenarClassificacao
+        aplicarResultado, ordenarClassificacao, montarAoVivo
     };
 });

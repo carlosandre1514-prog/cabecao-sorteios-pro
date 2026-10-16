@@ -85,6 +85,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let partidaAtualIndex = 0;
     let classificacao = {};
     let artilharia = {};
+    let aoVivoCodigo = null;     // código do placar ao vivo (null = não está compartilhando)
+    let aoVivoTimer = null;
+    let aoVivoPendente = null;
     let nivelCadastroTemp = 3.0;
     let nivelEdicaoTemp = 3.0;
 
@@ -167,6 +170,10 @@ document.addEventListener('DOMContentLoaded', () => {
         filaTimes = [];
         partidasRachaHistorico = [];
         tipoDesempateRacha = null;
+        aoVivoCodigo = null;
+        aoVivoPendente = null;
+        clearTimeout(aoVivoTimer);
+        atualizarCardAoVivo();
         dadosCarregados = false;
     }
 
@@ -236,8 +243,93 @@ document.addEventListener('DOMContentLoaded', () => {
             classificacao, artilharia, timeEmCampoA, timeEmCampoB,
             filaTimes, partidasRachaHistorico
         });
+        publicarAoVivo(false);
     }
-    function limparCampeonatoAtivo() { gravar('campeonatoAtivo', null); }
+    function limparCampeonatoAtivo() {
+        publicarAoVivo(true); // quem está assistindo vê "encerrado" com a tabela final
+        gravar('campeonatoAtivo', null);
+    }
+
+    // --- PLACAR AO VIVO (link público, só leitura) ---
+    // Cada resultado lançado é copiado para ao_vivo/<codigo> no Firebase; a página
+    // ao-vivo.html lê esse caminho em tempo real. O código tem 8 letras/números sorteados,
+    // então só quem recebe o link consegue abrir.
+    const ALFABETO_CODIGO = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    function gerarCodigoAoVivo() {
+        const b = new Uint8Array(8);
+        crypto.getRandomValues(b);
+        return Array.from(b, x => ALFABETO_CODIGO[x % ALFABETO_CODIGO.length]).join('');
+    }
+    function linkAoVivo() {
+        return new URL('ao-vivo.html', location.href).href.split('#')[0].split('?')[0] + '?c=' + aoVivoCodigo;
+    }
+    function atualizarCardAoVivo() {
+        const off = document.getElementById('ao-vivo-off');
+        const on = document.getElementById('ao-vivo-on');
+        if (!off || !on) return;
+        off.classList.toggle('hidden', !!aoVivoCodigo);
+        on.classList.toggle('hidden', !aoVivoCodigo);
+        const campo = document.getElementById('ao-vivo-link');
+        if (campo) campo.value = aoVivoCodigo ? linkAoVivo() : '';
+    }
+    // Monta o retrato na hora (o estado pode ser zerado logo depois) e grava com um pequeno atraso
+    // para juntar várias mudanças seguidas em uma só escrita.
+    function publicarAoVivo(encerrado) {
+        if (!aoVivoCodigo || !currentUserUid || !window.firebaseDb || !dadosCarregados) return;
+        if (!timesSorteados.length) return;
+        aoVivoPendente = Logica.montarAoVivo({
+            modo: modoJogoAtual, times: timesSorteados, classificacao, partidas, partidaAtualIndex,
+            partidasRacha: partidasRachaHistorico, artilharia, timeA: timeEmCampoA, timeB: timeEmCampoB, fila: filaTimes
+        }, currentUserUid, Date.now(), encerrado);
+        const codigo = aoVivoCodigo;
+        clearTimeout(aoVivoTimer);
+        aoVivoTimer = setTimeout(() => {
+            if (codigo !== aoVivoCodigo || !aoVivoPendente) return;
+            const f = window.firebaseFns;
+            const limpo = JSON.parse(JSON.stringify(aoVivoPendente));
+            aoVivoPendente = null;
+            f.set(f.ref(window.firebaseDb, 'ao_vivo/' + codigo), limpo)
+                .catch(e => console.error('Placar ao vivo:', e));
+        }, 400);
+    }
+    async function copiarTexto(texto) {
+        try { await navigator.clipboard.writeText(texto); return true; } catch (e) { return false; }
+    }
+    function configurarAoVivo() {
+        const $ = id => document.getElementById(id);
+        $('btn-ao-vivo-iniciar')?.addEventListener('click', () => {
+            if (!timesSorteados.length) { toast('Inicie um campeonato primeiro (aba Sorteio).', 'erro'); return; }
+            aoVivoCodigo = gerarCodigoAoVivo();
+            gravar('aoVivo', { codigo: aoVivoCodigo });
+            publicarAoVivo(false);
+            atualizarCardAoVivo();
+            toast('📡 Placar ao vivo ligado! Envie o link para o grupo.');
+        });
+        $('btn-ao-vivo-enviar')?.addEventListener('click', async () => {
+            const url = linkAoVivo();
+            if (navigator.share) {
+                try { await navigator.share({ title: 'Placar ao vivo', text: '🔴 Acompanhe o campeonato ao vivo:', url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+            }
+            toast(await copiarTexto(url) ? 'Link copiado!' : 'Copie o link no campo acima.');
+        });
+        $('btn-ao-vivo-copiar')?.addEventListener('click', async () => {
+            toast(await copiarTexto(linkAoVivo()) ? 'Link copiado!' : 'Copie o link no campo acima.');
+        });
+        $('btn-ao-vivo-parar')?.addEventListener('click', async () => {
+            const ok = await mostrarConfirmacao('O link deixa de funcionar para todo mundo. Parar de compartilhar?', '📡 PARAR');
+            if (!ok || !aoVivoCodigo) return;
+            const codigo = aoVivoCodigo;
+            clearTimeout(aoVivoTimer);
+            aoVivoPendente = null;
+            aoVivoCodigo = null;
+            const f = window.firebaseFns;
+            f.set(f.ref(window.firebaseDb, 'ao_vivo/' + codigo), null).catch(e => console.error('Placar ao vivo:', e));
+            gravar('aoVivo', null);
+            atualizarCardAoVivo();
+            toast('Compartilhamento encerrado.');
+        });
+    }
+    configurarAoVivo();
     function salvarJogadores() { gravar('jogadores', jogadores); }
     function salvarHistoricoFirebase() { gravar('historico', historico); }
 
@@ -296,7 +388,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 partidasRachaHistorico = comoLista(c.partidasRachaHistorico).map(normPartida);
             }
 
+            aoVivoCodigo = (dados.aoVivo && dados.aoVivo.codigo) || null;
             dadosCarregados = true;
+            atualizarCardAoVivo();
+            publicarAoVivo(false);
             mostrarCarregando(false);
             renderizarElenco();
             renderizarHistorico();

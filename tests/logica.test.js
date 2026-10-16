@@ -47,6 +47,24 @@ t('sorteio: goleiro extra (mais goleiros que times) joga na linha', () => {
     assert.strictEqual(times.flatMap(t => t.jogadores).length, 15);
 });
 
+t('ao vivo: retrato público só tem nomes/placares e vem ordenado', () => {
+    const times = [{ id: 1, nome: 'Time 1', jogadores: [mk(1, 3), mk(2, 3)] }, { id: 2, nome: 'Time 2', jogadores: [mk(3, 3)] }];
+    const cl = L.novaClassificacao(times);
+    L.aplicarResultado(cl, 1, 2, 0, 2, 0, 0);
+    const partidas = [
+        { rodada: 1, timeA: times[0], timeB: times[1], golsA: 0, golsB: 2, penaltisA: 0, penaltisB: 0, finalizada: true },
+        { rodada: 2, timeA: times[1], timeB: times[0], golsA: 0, golsB: 0, penaltisA: 0, penaltisB: 0, finalizada: false }
+    ];
+    const s = L.montarAoVivo({ modo: 'todos-contra-todos', times, classificacao: cl, partidas, partidaAtualIndex: 1, artilharia: { Ana: 1, Bia: 2 } }, 'uid1', 123, false);
+    assert.strictEqual(s.classificacao[0].nome, 'Time 2');            // líder primeiro
+    assert.deepStrictEqual(s.jogos, [{ r: 1, a: 'Time 1', b: 'Time 2', ga: 0, gb: 2, pa: 0, pb: 0 }]);
+    assert.deepStrictEqual(s.proxima, { a: 'Time 2', b: 'Time 1', r: 2 });
+    assert.deepStrictEqual(s.artilharia[0], { nome: 'Bia', gols: 2 });
+    assert.deepStrictEqual(s.times[0].jogadores.length, 2);
+    assert.strictEqual(s.encerrado, false);
+    assert.ok(!JSON.stringify(s).includes('@'), 'não pode vazar e-mail');
+});
+
 t('sorteio: ninguém é perdido nem duplicado', () => {
     const js = Array.from({ length: 23 }, (_, i) => mk(i + 1, (i % 5) + 1, i < 2));
     const { times } = L.sortearTimes(js, 4, 5);

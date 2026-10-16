@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Placar ao vivo · Cabeção Sorteios Pro</title>
+    <link rel="icon" type="image/png" href="img/icon-192.png">
+    <meta name="theme-color" content="#0a0e0b">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .app-container { padding-bottom: 32px; }
+        main { display: flex; flex-direction: column; gap: 12px; }
+        .status { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; }
+        .ponto { width: 9px; height: 9px; border-radius: 50%; background: var(--verm); animation: pulsa 1.4s ease-in-out infinite; }
+        .encerrado .ponto { background: var(--mudo); animation: none; }
+        @keyframes pulsa { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.7); } }
+        .em-campo { display: flex; align-items: center; justify-content: space-around; gap: 8px; text-align: center; font-size: 1.15rem; font-weight: 800; }
+        .em-campo .x { color: var(--mudo); font-size: 0.9rem; }
+        .jogo { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--linha); font-size: 0.92rem; }
+        .jogo:last-child { border-bottom: none; }
+        .jogo .rod { color: var(--mudo); font-size: 0.75rem; min-width: 52px; }
+        .jogo .placar { font-weight: 800; color: var(--neon); white-space: nowrap; }
+        .jogo .nomes { flex: 1; text-align: center; }
+        .art { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--linha); }
+        .art:last-child { border-bottom: none; }
+        details { background: var(--s2); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+        details summary { cursor: pointer; font-weight: 700; color: var(--neon); }
+        details ul { list-style: none; margin-top: 8px; font-size: 0.9rem; color: var(--mudo); }
+        .aviso-centro { text-align: center; padding: 40px 10px; color: var(--mudo); }
+        .atualizou { animation: flash 0.8s ease; }
+        @keyframes flash { from { box-shadow: 0 0 0 2px var(--neon); } to { box-shadow: 0 0 0 0 transparent; } }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-titulos">
+                    <h1>Placar ao vivo</h1>
+                    <p><span id="status" class="status"><span class="ponto"></span><span id="status-txt">Conectando...</span></span> · <span id="atualizado"></span></p>
+                </div>
+                <img src="img/icon-192.png" alt="Logo" class="app-logo">
+            </div>
+        </header>
+
+        <main id="conteudo">
+            <div class="aviso-centro"><div class="spinner" style="margin:0 auto 12px;"></div>Conectando ao campeonato...</div>
+        </main>
+
+        <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro · esta página só mostra os resultados</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+        // Mesma configuração do app. Não precisa de login: a leitura pública é só do código do link.
+        const app = initializeApp({
+            apiKey: "AIzaSyCt4kqF8LcHkR7bn3gvF-1ZcpjVW3FH8YA",
+            authDomain: "studio-7737408264-35a36.firebaseapp.com",
+            databaseURL: "https://studio-7737408264-35a36-default-rtdb.firebaseio.com",
+            projectId: "studio-7737408264-35a36",
+            storageBucket: "studio-7737408264-35a36.firebasestorage.app",
+            messagingSenderId: "35330544724",
+            appId: "1:35330544724:web:d9e200c94f376a86ae09c1"
+        });
+        const db = getDatabase(app);
+
+        const $ = id => document.getElementById(id);
+        const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const lista = v => Object.values(v || {}).filter(Boolean); // o Firebase devolve listas como array OU objeto
+        const mostrarAviso = (msg) => { $('conteudo').innerHTML = `<div class="aviso-centro">${msg}</div>`; };
+
+        const codigo = (new URLSearchParams(location.search).get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        let primeiraVez = true;
+
+        function desenhar(d) {
+            const encerrado = !!d.encerrado;
+            document.body.classList.toggle('encerrado', encerrado);
+            $('status-txt').textContent = encerrado ? 'Campeonato encerrado' : 'AO VIVO';
+            if (d.atualizadoEm) $('atualizado').textContent = 'atualizado às ' + new Date(d.atualizadoEm).toLocaleTimeString('pt-BR');
+
+            const cl = lista(d.classificacao), jogos = lista(d.jogos), arts = lista(d.artilharia), times = lista(d.times), fila = lista(d.fila);
+            const racha = d.modo === 'racha-livre';
+            let h = '';
+
+            if (d.proxima && !encerrado) {
+                h += `<div class="card"><h2>⚽ ${racha ? 'Em campo agora' : 'Próxima partida'}</h2>
+                    <div class="em-campo"><span>${esc(d.proxima.a)}</span><span class="x">X</span><span>${esc(d.proxima.b)}</span></div>
+                    ${!racha && d.proxima.r ? `<p class="subtext" style="text-align:center;margin:8px 0 0;">Rodada ${d.proxima.r}</p>` : ''}
+                    ${racha && fila.length ? `<p class="subtext" style="text-align:center;margin:8px 0 0;">Na fila: ${fila.map(esc).join(', ')}</p>` : ''}</div>`;
+            }
+
+            h += `<div class="card"><h2>🏆 Classificação</h2><div class="table-responsive"><table class="tabela-classificacao">
+                <thead><tr><th>Time</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th></tr></thead><tbody>
+                ${cl.length ? cl.map(c => `<tr><td>${esc(c.nome)}</td><td><strong>${c.p}</strong></td><td>${c.j}</td><td>${c.v}</td><td>${c.e}</td><td>${c.d}</td><td>${c.sg}</td></tr>`).join('') : '<tr><td colspan="7">Ainda sem jogos.</td></tr>'}
+                </tbody></table></div></div>`;
+
+            h += `<div class="card"><h2>📋 Resultados</h2>${jogos.length ? jogos.slice().reverse().map((j, i) => {
+                const pen = j.ga === j.gb && (j.pa || j.pb) ? ` <small>(pên. ${j.pa} x ${j.pb})</small>` : '';
+                const rot = racha ? `Jogo ${jogos.length - i}` : `Rod. ${j.r}`;
+                return `<div class="jogo"><span class="rod">${rot}</span><span class="nomes">${esc(j.a)} <span class="placar">${j.ga} x ${j.gb}</span> ${esc(j.b)}${pen}</span></div>`;
+            }).join('') : '<p class="subtext">Nenhum jogo finalizado ainda.</p>'}</div>`;
+
+            if (arts.length) {
+                h += `<div class="card"><h2>🥇 Artilharia</h2>${arts.slice(0, 10).map((a, i) => `<div class="art"><span>${i + 1}. ${esc(a.nome)}</span><strong>${a.gols} gol(s)</strong></div>`).join('')}</div>`;
+            }
+
+            if (times.length) {
+                h += `<div class="card"><h2>👥 Times</h2>${times.map(t => `<details><summary>${esc(t.nome)}</summary><ul>${lista(t.jogadores).map(n => `<li>${esc(n)}</li>`).join('')}</ul></details>`).join('')}</div>`;
+            }
+
+            // mantém os "Times" abertos/fechados como o usuário deixou entre as atualizações
+            const abertos = [...document.querySelectorAll('#conteudo details[open] summary')].map(s => s.textContent);
+            $('conteudo').innerHTML = h;
+            document.querySelectorAll('#conteudo details').forEach(dt => { if (abertos.includes(dt.querySelector('summary').textContent)) dt.open = true; });
+            if (!primeiraVez) document.querySelectorAll('#conteudo .card').forEach(c => c.classList.add('atualizou'));
+            primeiraVez = false;
+        }
+
+        if (codigo.length !== 8) {
+            $('status-txt').textContent = 'Link inválido';
+            mostrarAviso('Este link não está completo. Peça o link de novo para quem organiza o campeonato.');
+        } else {
+            onValue(ref(db, 'ao_vivo/' + codigo), (snap) => {
+                if (!snap.exists()) {
+                    $('status-txt').textContent = 'Sem transmissão';
+                    mostrarAviso('Este campeonato não está sendo compartilhado agora, ou o organizador encerrou o link.');
+                    return;
+                }
+                desenhar(snap.val());
+            }, () => {
+                $('status-txt').textContent = 'Sem conexão';
+                mostrarAviso('Não foi possível carregar. Confira sua internet — a página tenta de novo sozinha.');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -14,6 +14,7 @@ img/                  logo e ícones (já redimensionados)
 js/
   logica.js           ⚙️ regras puras: sorteio, tabela, pontos, filtros  (TEM TESTES)
   remoto.js           🔌 desligar app / bloquear versão antiga / VERSAO_ATUAL_APP
+  ao-vivo.html        📡 página pública do placar ao vivo (só leitura, sem login)
   auth.js             🔐 formulário de login/cadastro/Google/esqueci a senha
   app.js              🖥️ navegação entre telas, salvar/carregar Firebase, telas, cronômetro
   monetizacao.js      ⭐ plano Pro, limites, patrocinador, Pix
@@ -50,3 +51,10 @@ python3 -m http.server 8080
 1. Mude `VERSAO_ATUAL_APP` em `js/remoto.js`.
 2. Gere o APK.
 3. No Firebase, ajuste `configuracoes/versoes/versao_minima_permitida` (veja `docs/`).
+
+
+## Placar ao vivo
+
+Na aba Campeonato, "Compartilhar ao vivo" gera um link (`ao-vivo.html?c=CODIGO`). A cada resultado lançado,
+o app copia o retrato do campeonato (`Logica.montarAoVivo`) para `ao_vivo/CODIGO` no Firebase, e a página
+`ao-vivo.html` lê esse caminho em tempo real. Regras do Firebase: `docs/COMO-CONFIGURAR-MONETIZACAO.md`.

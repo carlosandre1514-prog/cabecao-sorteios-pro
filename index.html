@@ -162,6 +162,23 @@
 
         <!-- ABA 3: CAMPEONATO -->
         <section id="tab-campeonato" class="tab-content">
+            <!-- PLACAR AO VIVO (link público, só leitura) -->
+            <div class="card" id="card-ao-vivo">
+                <h2>📡 Placar ao vivo</h2>
+                <p class="subtext">Quem está esperando acompanha a tabela e os resultados no celular, em tempo real, sem precisar de login.</p>
+                <div id="ao-vivo-off">
+                    <button id="btn-ao-vivo-iniciar" class="btn btn-primary">📡 Compartilhar ao vivo</button>
+                </div>
+                <div id="ao-vivo-on" class="hidden">
+                    <input type="text" id="ao-vivo-link" readonly>
+                    <div class="modal-actions">
+                        <button id="btn-ao-vivo-enviar" class="btn btn-success">📲 Enviar link</button>
+                        <button id="btn-ao-vivo-copiar" class="btn btn-secondary">Copiar</button>
+                    </div>
+                    <button id="btn-ao-vivo-parar" class="btn btn-danger" style="margin-top:8px;">Parar de compartilhar</button>
+                </div>
+            </div>
+
             <!-- CRONÔMETRO -->
             <div class="card cronometro-card">
                 <h2>⏱️ Cronômetro da Partida</h2>

@@ -25,7 +25,7 @@ const document = {
 const alertas = [];
 const win = { listeners: {}, addEventListener(t, f) { (this.listeners[t] = this.listeners[t] || []).push(f); }, dispatchEvent(e) { (this.listeners[e.type] || []).forEach(f => f(e)); }, open() {}, scrollTo() {} };
 const ctx = vm.createContext(Object.assign(win, {
-    window: win, document, self: win, console: { log() {}, error() {}, warn() {} }, setInterval: () => 0, clearInterval() {}, setTimeout: f => { setImmediate(f); return 0; }, history: { replaceState() {}, pushState() {} }, location: { pathname: '/' },
+    window: win, document, self: win, console: { log() {}, error() {}, warn() {} }, setInterval: () => 0, clearInterval() {}, setTimeout: f => { setImmediate(f); return 0; }, history: { replaceState() {}, pushState() {} }, location: { pathname: '/', href: 'https://x.test/index.html' }, clearTimeout() {}, URL, crypto: require('crypto').webcrypto,
     localStorage: { getItem: () => null, setItem() {}, removeItem() {} }, navigator: {}, Event: class { constructor(t) { this.type = t; } },
     Date, Math, JSON, Object, Array, Number, String, Set, Promise, parseInt, parseFloat, isFinite, Infinity, encodeURIComponent
 }));
@@ -105,6 +105,16 @@ assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (a
 
     // sorteio
     document.getElementById('qtd-times').value = '2'; document.getElementById('qtd-por-time').value = '6';
+    // placar ao vivo: gera código, grava o código no usuário e publica o retrato em ao_vivo/<codigo>
+    els['btn-ao-vivo-iniciar'].fire('click');
+    await tick(5);
+    const gCodigo = gravados.find(([c]) => c === 'usuarios/u1/aoVivo');
+    assert.ok(gCodigo && /^[2-9A-HJ-NP-Z]{8}$/.test(gCodigo[1].codigo), 'deveria gravar um código de 8 caracteres');
+    const gLive = gravados.find(([c]) => c === 'ao_vivo/' + gCodigo[1].codigo);
+    assert.ok(gLive && gLive[1].dono === 'u1' && gLive[1].classificacao.length === 2, 'deveria publicar o retrato do campeonato');
+    assert.ok(els['ao-vivo-link'].value.endsWith('ao-vivo.html?c=' + gCodigo[1].codigo), 'link deveria ser mostrado');
+    console.log('✅ placar ao vivo: código gerado e campeonato publicado');
+
     els['btn-sortear'].fire('click');
     await new Promise(r => setImmediate(r));
     assert.ok(els['times-sorteados-container'].children.length >= 2, 'sorteio deveria desenhar os times');

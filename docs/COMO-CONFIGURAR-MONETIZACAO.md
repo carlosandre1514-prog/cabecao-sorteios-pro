@@ -84,3 +84,34 @@ Para liberar o Pro sozinho após o pagamento: webhook do Mercado Pago/Kiwify -> 
 - Quem foi bloqueado e abre o app SEM internet continua bloqueado (o bloqueio fica guardado no aparelho).
 - Regras do Firebase: o nó `configuracoes` precisa ter `".read": true`, pois a checagem acontece antes do login.
 - Limite: o bloqueio só pega versões que já têm este código (a partir da 1.1.0 / a que tinha o interruptor). Versões muito antigas sem o interruptor não conseguem ser bloqueadas.
+
+
+---
+
+## Regras completas do Realtime Database (com placar ao vivo)
+
+Cole em Realtime Database → Regras → Publicar. Esta versão substitui a anterior e acrescenta o `ao_vivo`.
+
+```json
+{
+  "rules": {
+    "configuracoes": { ".read": true, ".write": false },
+    "planos": {
+      "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": false }
+    },
+    "usuarios": {
+      "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": "auth != null && auth.uid === $uid" }
+    },
+    "ao_vivo": {
+      "$codigo": {
+        ".read": true,
+        ".write": "auth != null && (!data.exists() || data.child('dono').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['dono']) && newData.child('dono').val() === auth.uid"
+      }
+    }
+  }
+}
+```
+
+- `ao_vivo/<codigo>`: qualquer pessoa com o link lê; só o dono grava ou apaga. Não há leitura em `ao_vivo` como um todo, então ninguém consegue listar os códigos.
+- O código tem 8 letras/números sorteados (cerca de 1 trilhão de combinações).
