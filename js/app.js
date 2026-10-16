@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let aoVivoCodigo = null;     // código do placar ao vivo (null = não está compartilhando)
     let aoVivoTimer = null;
     let aoVivoPendente = null;
+    let aoVivoAvisouErro = false;
     let nivelCadastroTemp = 3.0;
     let nivelEdicaoTemp = 3.0;
 
@@ -289,7 +290,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const limpo = JSON.parse(JSON.stringify(aoVivoPendente));
             aoVivoPendente = null;
             f.set(f.ref(window.firebaseDb, 'ao_vivo/' + codigo), limpo)
-                .catch(e => console.error('Placar ao vivo:', e));
+                .then(() => { aoVivoAvisouErro = false; })
+                .catch(e => {
+                    console.error('Placar ao vivo:', e);
+                    if (aoVivoAvisouErro) return;
+                    aoVivoAvisouErro = true;
+                    const cod = String((e && (e.code || e.message)) || 'erro');
+                    const dica = /permission/i.test(cod) ? ' O Firebase negou a gravação: publique as regras novas (com "ao_vivo") em Realtime Database → Regras.' : ' Confira a internet.';
+                    mostrarAlerta('Não consegui publicar o placar ao vivo.' + dica + ' (Código: ' + cod + ')', '❌ PLACAR AO VIVO');
+                });
         }, 400);
     }
     async function copiarTexto(texto) {
@@ -298,7 +307,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function configurarAoVivo() {
         const $ = id => document.getElementById(id);
         $('btn-ao-vivo-iniciar')?.addEventListener('click', () => {
-            if (!timesSorteados.length) { toast('Inicie um campeonato primeiro (aba Sorteio).', 'erro'); return; }
+            if (!dadosCarregados) {
+                mostrarAlerta('Seus dados ainda não carregaram, então não dá para compartilhar. Feche e abra o app e tente de novo.', '📡 PLACAR AO VIVO');
+                return;
+            }
+            if (!timesSorteados.length) {
+                mostrarAlerta('Ainda não há campeonato em andamento. Na aba Sorteio, faça o sorteio e toque em "Iniciar Campeonato". Depois volte aqui e toque em "Compartilhar ao vivo".', '📡 PLACAR AO VIVO');
+                return;
+            }
             aoVivoCodigo = gerarCodigoAoVivo();
             gravar('aoVivo', { codigo: aoVivoCodigo });
             publicarAoVivo(false);
