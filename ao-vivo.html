@@ -154,8 +154,8 @@
             let h = '';
 
             if (d.proxima && !encerrado) {
-                h += `<div class="card"><h2>⚽ ${racha ? 'Em campo agora' : 'Próxima partida'}</h2>
-                    <div class="em-campo"><span>${esc(d.proxima.a)}</span><span class="x">X</span><span>${esc(d.proxima.b)}</span></div>
+                h += `<div class="card"><h2>⚽ ${racha ? 'Em campo agora' : 'Partida atual'}</h2>
+                    <div class="em-campo"><span>${esc(d.proxima.a)}</span><span class="placar-vivo">${d.proxima.ga || 0} <span class="x">x</span> ${d.proxima.gb || 0}</span><span>${esc(d.proxima.b)}</span></div>
                     ${!racha && d.proxima.r ? `<p class="subtext" style="text-align:center;margin:8px 0 0;">Rodada ${d.proxima.r}</p>` : ''}
                     ${racha && fila.length ? `<p class="subtext" style="text-align:center;margin:8px 0 0;">Na fila: ${fila.map(esc).join(', ')}</p>` : ''}</div>`;
             }

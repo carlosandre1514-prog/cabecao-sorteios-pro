@@ -17,6 +17,7 @@ let filaTimes = [];
 let timeEmCampoA = null;
 let timeEmCampoB = null;
 let partidasRachaHistorico = [];
+let placarRacha = { a: 0, b: 0 }; // placar da partida em andamento (modo racha)
 let tipoDesempateRacha = null;
 
 // --- FUNÇÕES DE CONTROLE DO MENU LATERAL (DRAWER) ---
@@ -173,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         timeEmCampoB = null;
         filaTimes = [];
         partidasRachaHistorico = [];
+        placarRacha = { a: 0, b: 0 };
         tipoDesempateRacha = null;
         aoVivoCodigo = null;
         aoVivoPendente = null;
@@ -245,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gravar('campeonatoAtivo', {
             modoJogoAtual, timesSorteados, partidas, partidaAtualIndex,
             classificacao, artilharia, timeEmCampoA, timeEmCampoB,
-            filaTimes, partidasRachaHistorico
+            filaTimes, partidasRachaHistorico, placarRacha
         });
         publicarAoVivo(false);
     }
@@ -285,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
         aoVivoPendente = Logica.montarAoVivo({
             modo: modoJogoAtual, times: timesSorteados, classificacao, partidas, partidaAtualIndex,
             partidasRacha: partidasRachaHistorico, artilharia, timeA: timeEmCampoA, timeB: timeEmCampoB, fila: filaTimes,
-            cron: montarCron()
+            placarRacha, cron: montarCron()
         }, currentUserUid, Date.now(), encerrado);
         const codigo = aoVivoCodigo;
         clearTimeout(aoVivoTimer);
@@ -407,6 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 timeEmCampoB = c.timeEmCampoB ? Logica.normalizarTime(c.timeEmCampoB) : null;
                 filaTimes = comoLista(c.filaTimes).map(Logica.normalizarTime);
                 partidasRachaHistorico = comoLista(c.partidasRachaHistorico).map(normPartida);
+                placarRacha = { a: Number(c.placarRacha && c.placarRacha.a) || 0, b: Number(c.placarRacha && c.placarRacha.b) || 0 };
             }
 
             aoVivoCodigo = (dados.aoVivo && dados.aoVivo.codigo) || null;
@@ -1082,6 +1085,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             timesSorteados = sorteioAtual.map(Logica.normalizarTime);
             partidasRachaHistorico = [];
+            placarRacha = { a: 0, b: 0 };
             tipoDesempateRacha = null;
             
             // ALTERAÇÃO 2: Reseta o contador ao iniciar um campeonato
@@ -1111,6 +1115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function iniciarModoRachaLivre(resetar = false) {
         if (resetar) {
             partidasRachaHistorico = [];
+            placarRacha = { a: 0, b: 0 };
             if (timesSorteados.length >= 2) {
                 timeEmCampoA = timesSorteados[0];
                 timeEmCampoB = timesSorteados[1];
@@ -1179,6 +1184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     partidaAtualIndex = 0;
                     artilharia = {};
                     partidasRachaHistorico = [];
+                    placarRacha = { a: 0, b: 0 };
                     tipoDesempateRacha = null;
                     inicializarClassificacao();
                     if (modoJogoAtual === 'racha-livre') {
@@ -1217,6 +1223,30 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             body.appendChild(tr);
         });
+    }
+
+    // Placar "− 0 +": troca o <input> por botões de menos/mais. O input continua existindo
+    // (mesmo id) e dispara 'input' a cada toque, então o resto do código não muda.
+    function montarStepperPlacar(input, aoMudar) {
+        if (!input) return;
+        const wrap = document.createElement('div');
+        wrap.className = 'stepper-placar';
+        const menos = document.createElement('button');
+        menos.type = 'button'; menos.className = 'step-btn'; menos.textContent = '−';
+        menos.setAttribute('aria-label', 'Tirar um gol');
+        const mais = document.createElement('button');
+        mais.type = 'button'; mais.className = 'step-btn step-mais'; mais.textContent = '+';
+        mais.setAttribute('aria-label', 'Adicionar um gol');
+        input.parentNode.insertBefore(wrap, input);
+        wrap.append(menos, input, mais);
+        input.readOnly = true; input.inputMode = 'none';
+        const mudar = d => {
+            input.value = Math.max(0, (parseInt(input.value) || 0) + d);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            if (aoMudar) aoMudar(parseInt(input.value) || 0);
+        };
+        menos.addEventListener('click', () => mudar(-1));
+        mais.addEventListener('click', () => mudar(1));
     }
 
     // --- MODO 1: TODOS CONTRA TODOS ---
@@ -1263,7 +1293,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <select id="select-mudar-time-a" style="width:100%; padding:6px; font-weight:bold; border-radius:4px; text-align:center; margin-bottom:6px;">
                         ${opcoesTimesA}
                     </select>
-                    <input type="number" id="gols-a" value="0" min="0">
+                    <input type="number" id="gols-a" value="${p.golsA || 0}" min="0">
                 </div>
                 
                 <span style="font-size:1.2rem; font-weight:bold; align-self:center;">X</span>
@@ -1272,7 +1302,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <select id="select-mudar-time-b" style="width:100%; padding:6px; font-weight:bold; border-radius:4px; text-align:center; margin-bottom:6px;">
                         ${opcoesTimesB}
                     </select>
-                    <input type="number" id="gols-b" value="0" min="0">
+                    <input type="number" id="gols-b" value="${p.golsB || 0}" min="0">
                 </div>
             </div>
 
@@ -1355,6 +1385,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputA && inputB) {
             inputA.addEventListener('input', checarEmpate);
             inputB.addEventListener('input', checarEmpate);
+            // cada gol contado já vai para o estado, é salvo e aparece no link ao vivo
+            const guardar = () => {
+                p.golsA = parseInt(inputA.value) || 0;
+                p.golsB = parseInt(inputB.value) || 0;
+                salvarCampeonatoAtivo();
+            };
+            montarStepperPlacar(inputA, guardar);
+            montarStepperPlacar(inputB, guardar);
+            if (p.golsA || p.golsB) checarEmpate();
         }
 
         const btnAddGol = document.getElementById('btn-add-gol');
@@ -1434,14 +1473,14 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="placar-box">
                 <div class="time-placar">
                     <p><strong>${escapeHtml(timeEmCampoA.nome)}</strong></p>
-                    <input type="number" id="racha-gols-a" value="0" min="0">
+                    <input type="number" id="racha-gols-a" value="${placarRacha.a || 0}" min="0">
                 </div>
                 
                 <span style="font-size:1.5rem; font-weight:bold;">X</span>
                 
                 <div class="time-placar">
                     <p><strong>${escapeHtml(timeEmCampoB.nome)}</strong></p>
-                    <input type="number" id="racha-gols-b" value="0" min="0">
+                    <input type="number" id="racha-gols-b" value="${placarRacha.b || 0}" min="0">
                 </div>
             </div>
 
@@ -1498,6 +1537,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputA && inputB) {
             inputA.addEventListener('input', checarEmpateRacha);
             inputB.addEventListener('input', checarEmpateRacha);
+            const guardarRacha = () => {
+                placarRacha = { a: parseInt(inputA.value) || 0, b: parseInt(inputB.value) || 0 };
+                salvarCampeonatoAtivo();
+            };
+            montarStepperPlacar(inputA, guardarRacha);
+            montarStepperPlacar(inputB, guardarRacha);
+            if (placarRacha.a || placarRacha.b) checarEmpateRacha();
         }
 
         document.getElementById('btn-empate-sai-a')?.addEventListener('click', () => {
@@ -1562,6 +1608,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 tipoDesempateRacha = null;
+                placarRacha = { a: 0, b: 0 };
                 salvarCampeonatoAtivo();
                 renderizarCampeonato();
             });
@@ -1658,6 +1705,7 @@ document.addEventListener('DOMContentLoaded', () => {
             timesSorteados = [];
             partidas = [];
             partidasRachaHistorico = [];
+            placarRacha = { a: 0, b: 0 };
             classificacao = {};
             artilharia = {};
             partidaAtualIndex = 0;

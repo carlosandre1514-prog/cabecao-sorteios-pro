@@ -238,7 +238,7 @@
         let jogos, proxima = null;
         if (e.modo === 'racha-livre') {
             jogos = (e.partidasRacha || []).map(p => ({ a: nome(p.timeA), b: nome(p.timeB), ga: p.golsA || 0, gb: p.golsB || 0, v: p.vencedor || '' }));
-            if (e.timeA && e.timeB) proxima = { a: nome(e.timeA), b: nome(e.timeB), r: 0 };
+            if (e.timeA && e.timeB) proxima = { a: nome(e.timeA), b: nome(e.timeB), r: 0, ga: (e.placarRacha && e.placarRacha.a) || 0, gb: (e.placarRacha && e.placarRacha.b) || 0 };
         } else {
             const lista = e.partidas || [];
             jogos = lista.filter(p => p.finalizada).map(p => ({
@@ -247,7 +247,7 @@
             }));
             const prox = (lista[e.partidaAtualIndex] && !lista[e.partidaAtualIndex].finalizada)
                 ? lista[e.partidaAtualIndex] : lista.find(p => !p.finalizada);
-            if (prox) proxima = { a: nome(prox.timeA), b: nome(prox.timeB), r: prox.rodada || 0 };
+            if (prox) proxima = { a: nome(prox.timeA), b: nome(prox.timeB), r: prox.rodada || 0, ga: prox.golsA || 0, gb: prox.golsB || 0 };
         }
         return {
             dono, atualizadoEm: agora, encerrado: !!encerrado, modo: e.modo || 'todos-contra-todos',

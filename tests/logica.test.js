@@ -58,7 +58,7 @@ t('ao vivo: retrato público só tem nomes/placares e vem ordenado', () => {
     const s = L.montarAoVivo({ modo: 'todos-contra-todos', times, classificacao: cl, partidas, partidaAtualIndex: 1, artilharia: { Ana: 1, Bia: 2 } }, 'uid1', 123, false);
     assert.strictEqual(s.classificacao[0].nome, 'Time 2');            // líder primeiro
     assert.deepStrictEqual(s.jogos, [{ r: 1, a: 'Time 1', b: 'Time 2', ga: 0, gb: 2, pa: 0, pb: 0 }]);
-    assert.deepStrictEqual(s.proxima, { a: 'Time 2', b: 'Time 1', r: 2 });
+    assert.deepStrictEqual(s.proxima, { a: 'Time 2', b: 'Time 1', r: 2, ga: 0, gb: 0 });
     assert.deepStrictEqual(s.artilharia[0], { nome: 'Bia', gols: 2 });
     assert.deepStrictEqual(s.times[0].jogadores.length, 2);
     assert.strictEqual(s.encerrado, false);
