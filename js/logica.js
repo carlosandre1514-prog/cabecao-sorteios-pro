@@ -166,24 +166,34 @@
     }
 
     // ---------- TABELA (todos contra todos) ----------
+    // Ordem dos confrontos: o time 1 enfrenta o 2, depois o 3, depois o 4...
+    // Com 4 times: 1x2, 3x4 | 1x3, 2x4 | 1x4, 2x3  (cada "|" é uma rodada).
     function gerarPartidas(times) {
         const lista = [...times];
         if (lista.length % 2 !== 0) lista.push(null); // folga
         const n = lista.length;
-        const partidas = [];
+        const rodadas = [];
         for (let r = 0; r < n - 1; r++) {
+            const jogos = [];
             for (let i = 0; i < n / 2; i++) {
                 const a = lista[i], b = lista[n - 1 - i];
-                if (a && b) {
-                    partidas.push({
-                        idPartida: partidas.length + 1, rodada: r + 1,
-                        timeA: a, timeB: b,
-                        golsA: 0, golsB: 0, penaltisA: 0, penaltisB: 0, finalizada: false
-                    });
-                }
+                if (a && b) jogos.push(a.id < b.id ? [a, b] : [b, a]);
             }
+            jogos.sort((x, y) => x[0].id - y[0].id);
+            rodadas.push(jogos);
             lista.splice(1, 0, lista.pop());
         }
+        // rodadas em ordem crescente do adversário do menor time (1x2 primeiro, depois 1x3...)
+        const chave = jogos => jogos[0][0].id * 100000 + jogos[0][1].id;
+        rodadas.sort((x, y) => chave(x) - chave(y));
+        const partidas = [];
+        rodadas.forEach((jogos, r) => jogos.forEach(([a, b]) => {
+            partidas.push({
+                idPartida: partidas.length + 1, rodada: r + 1,
+                timeA: a, timeB: b,
+                golsA: 0, golsB: 0, penaltisA: 0, penaltisB: 0, finalizada: false
+            });
+        }));
         return partidas;
     }
 
@@ -211,8 +221,11 @@
     }
 
     function ordenarClassificacao(lista) {
+        // Critérios: 1) pontos  2) MENOS gols sofridos  3) saldo de gols  4) gols pró  5) nome
+        const gc = c => (c.gp || 0) - (c.sg || 0);
         return lista.filter(Boolean).sort((x, y) =>
-            (y.p - x.p) || (y.sg - x.sg) || (y.gp - x.gp) || String(x.nome).localeCompare(String(y.nome)));
+            ((y.p || 0) - (x.p || 0)) || (gc(x) - gc(y)) || ((y.sg || 0) - (x.sg || 0)) ||
+            ((y.gp || 0) - (x.gp || 0)) || String(x.nome).localeCompare(String(y.nome)));
     }
 
     // Retrato PÚBLICO do campeonato para a página ao-vivo.html (só nomes, placares e pontos;
@@ -220,7 +233,7 @@
     function montarAoVivo(e, dono, agora, encerrado) {
         const nome = t => (t ? String(t.nome) : '');
         const cl = ordenarClassificacao(Object.values(e.classificacao || {}).filter(Boolean).map(c => ({
-            nome: String(c.nome), p: c.p || 0, j: c.j || 0, v: c.v || 0, e: c.e || 0, d: c.d || 0, gp: c.gp || 0, sg: c.sg || 0
+            nome: String(c.nome), p: c.p || 0, j: c.j || 0, v: c.v || 0, e: c.e || 0, d: c.d || 0, gp: c.gp || 0, sg: c.sg || 0, gc: (c.gp || 0) - (c.sg || 0)
         })));
         let jogos, proxima = null;
         if (e.modo === 'racha-livre') {
@@ -239,7 +252,7 @@
         return {
             dono, atualizadoEm: agora, encerrado: !!encerrado, modo: e.modo || 'todos-contra-todos',
             times: (e.times || []).map(t => ({ nome: String(t.nome), jogadores: (t.jogadores || []).map(j => String(j.nome)) })),
-            classificacao: cl, jogos, proxima, fila: (e.fila || []).map(nome),
+            classificacao: cl, jogos, proxima, fila: (e.fila || []).map(nome), cron: e.cron || null,
             artilharia: Object.entries(e.artilharia || {}).sort((x, y) => y[1] - x[1]).map(([n, g]) => ({ nome: n, gols: g }))
         };
     }

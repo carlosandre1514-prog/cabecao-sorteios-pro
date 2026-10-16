@@ -14,6 +14,7 @@ img/                  logo e ícones (já redimensionados)
 js/
   logica.js           ⚙️ regras puras: sorteio, tabela, pontos, filtros  (TEM TESTES)
   remoto.js           🔌 desligar app / bloquear versão antiga / VERSAO_ATUAL_APP
+  js/apito.js         🔔 apito de juiz de fim de partida (6 s), usado no app e no link
   ao-vivo.html        📡 página pública do placar ao vivo (só leitura, sem login)
   auth.js             🔐 formulário de login/cadastro/Google/esqueci a senha
   app.js              🖥️ navegação entre telas, salvar/carregar Firebase, telas, cronômetro
@@ -57,4 +58,7 @@ python3 -m http.server 8080
 
 Na aba Campeonato, "Compartilhar ao vivo" gera um link (`ao-vivo.html?c=CODIGO`). A cada resultado lançado,
 o app copia o retrato do campeonato (`Logica.montarAoVivo`) para `ao_vivo/CODIGO` no Firebase, e a página
-`ao-vivo.html` lê esse caminho em tempo real. Regras do Firebase: `docs/COMO-CONFIGURAR-MONETIZACAO.md`.
+`ao-vivo.html` lê esse caminho em tempo real.
+O cronômetro da partida também vai junto (`cron` dentro de `ao_vivo/CODIGO`): quem abre o link vê a contagem e,
+tocando em "Ativar som do apito", ouve o apito quando o tempo acaba. O apito (6 s: dois sopros curtos + um longo)
+fica em `js/apito.js` e é o mesmo no app e no link. Regras do Firebase: `docs/COMO-CONFIGURAR-MONETIZACAO.md`.

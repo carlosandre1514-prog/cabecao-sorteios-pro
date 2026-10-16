@@ -65,6 +65,15 @@ t('ao vivo: retrato público só tem nomes/placares e vem ordenado', () => {
     assert.ok(!JSON.stringify(s).includes('@'), 'não pode vazar e-mail');
 });
 
+t('ao vivo: o cronômetro vai junto no retrato (e some se não houver)', () => {
+    const times = [{ id: 1, nome: 'A', jogadores: [] }, { id: 2, nome: 'B', jogadores: [] }];
+    const cron = { estado: 'rodando', total: 600, restante: 540, fimEm: 999 };
+    const com = L.montarAoVivo({ modo: 'todos-contra-todos', times, classificacao: L.novaClassificacao(times), partidas: [], partidaAtualIndex: 0, cron }, 'u', 1, false);
+    assert.deepStrictEqual(com.cron, cron);
+    const sem = L.montarAoVivo({ modo: 'todos-contra-todos', times, classificacao: L.novaClassificacao(times), partidas: [], partidaAtualIndex: 0 }, 'u', 1, false);
+    assert.strictEqual(sem.cron, null);
+});
+
 t('sorteio: ninguém é perdido nem duplicado', () => {
     const js = Array.from({ length: 23 }, (_, i) => mk(i + 1, (i % 5) + 1, i < 2));
     const { times } = L.sortearTimes(js, 4, 5);
@@ -136,3 +145,18 @@ t('versões: comparação', () => {
 });
 
 console.log(`\n${ok} testes passaram.`);
+
+t('ordem dos confrontos com 4 times: 1x2,3x4 | 1x3,2x4 | 1x4,2x3', () => {
+    const times = [1, 2, 3, 4].map(id => ({ id, nome: 'T' + id }));
+    const ordem = L.gerarPartidas(times).map(p => p.timeA.id + 'x' + p.timeB.id);
+    assert.deepStrictEqual(ordem, ['1x2', '3x4', '1x3', '2x4', '1x4', '2x3']);
+});
+
+t('desempate: pontos, depois menos gols sofridos, depois saldo', () => {
+    const o = L.ordenarClassificacao([
+        { nome: 'A', p: 3, gp: 5, sg: 1 },   // gc 4
+        { nome: 'B', p: 3, gp: 3, sg: 1 },   // gc 2
+        { nome: 'C', p: 6, gp: 1, sg: 0 }    // gc 1
+    ]);
+    assert.deepStrictEqual(o.map(x => x.nome), ['C', 'B', 'A']);
+});

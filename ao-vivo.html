@@ -6,7 +6,7 @@
     <title>Placar ao vivo · Cabeção Sorteios Pro</title>
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0a0e0b">
-    <link rel="stylesheet" href="css/style.css?v=20261016b">
+    <link rel="stylesheet" href="css/style.css?v=20261016c">
     <style>
         .app-container { padding-bottom: 32px; }
         main { display: flex; flex-direction: column; gap: 12px; }
@@ -27,6 +27,11 @@
         details summary { cursor: pointer; font-weight: 700; color: var(--neon); }
         details ul { list-style: none; margin-top: 8px; font-size: 0.9rem; color: var(--mudo); }
         .aviso-centro { text-align: center; padding: 40px 10px; color: var(--mudo); }
+        .cron-card { margin-bottom: 12px; }
+        .cron-card .timer-display { margin: 4px 0 6px; }
+        .cron-card .timer-display.ultimo { color: var(--verm); }
+        .cron-estado { font-size: 0.85rem; font-weight: 700; color: var(--mudo); margin-bottom: 10px; }
+        .cron-estado.fim { color: var(--verm); }
         .atualizou { animation: flash 0.8s ease; }
         @keyframes flash { from { box-shadow: 0 0 0 2px var(--neon); } to { box-shadow: 0 0 0 0 transparent; } }
     </style>
@@ -43,6 +48,14 @@
             </div>
         </header>
 
+        <div id="cron-card" class="card cronometro-card cron-card hidden">
+            <h2>⏱️ Cronômetro da partida</h2>
+            <div class="timer-display" id="cron-tempo">--:--</div>
+            <div class="cron-estado" id="cron-estado"></div>
+            <button id="btn-som" class="btn btn-secondary" type="button">🔔 Ativar som do apito</button>
+            <p class="subtext" id="som-dica" style="margin:8px 0 0;">O celular só deixa tocar som depois de um toque seu. Toque no botão para ouvir o apito no fim da partida.</p>
+        </div>
+
         <main id="conteudo">
             <div class="aviso-centro"><div class="spinner" style="margin:0 auto 12px;"></div>Conectando ao campeonato...</div>
         </main>
@@ -50,6 +63,7 @@
         <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro · esta página só mostra os resultados</p>
     </div>
 
+    <script src="js/apito.js?v=20261016c"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
@@ -71,11 +85,66 @@
         const lista = v => Object.values(v || {}).filter(Boolean); // o Firebase devolve listas como array OU objeto
         const mostrarAviso = (msg) => { $('conteudo').innerHTML = `<div class="aviso-centro">${msg}</div>`; };
 
+        // ---------- CRONÔMETRO + APITO ----------
+        // O app manda {estado, total, restante, fimEm}. Aqui a contagem é refeita na hora,
+        // usando o relógio do Firebase, então não precisa atualizar a cada segundo.
+        let cron = null, encerradoAoVivo = false, offsetServidor = 0;
+        let somAtivo = false, audioCtx = null, tocouPara = null;
+        const agoraServidor = () => Date.now() + offsetServidor;
+        onValue(ref(db, '.info/serverTimeOffset'), s => { offsetServidor = Number(s.val()) || 0; });
+
+        const restanteCron = c => c.estado === 'rodando' ? Math.max(0, Math.ceil((c.fimEm - agoraServidor()) / 1000))
+            : c.estado === 'fim' ? 0 : (c.restante != null ? c.restante : c.total || 0);
+
+        function tratarFimCron(c) {
+            if (tocouPara === c.fimEm) return;
+            tocouPara = c.fimEm;
+            if (agoraServidor() - c.fimEm > 10000) return; // abriu a página depois do fim: não apita
+            if (somAtivo && window.Apito) {
+                window.Apito.tocar(audioCtx);
+                if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+            }
+        }
+
+        function pintarCron() {
+            const card = $('cron-card');
+            if (!cron || encerradoAoVivo) { card.classList.add('hidden'); return; }
+            card.classList.remove('hidden');
+            const falta = restanteCron(cron);
+            const m = Math.floor(falta / 60), s = falta % 60;
+            const tempo = $('cron-tempo'), estado = $('cron-estado');
+            tempo.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+            const acabou = cron.estado === 'fim' || (cron.estado === 'rodando' && falta <= 0);
+            tempo.classList.toggle('ultimo', cron.estado === 'rodando' && falta > 0 && falta <= 60);
+            estado.classList.toggle('fim', acabou);
+            estado.textContent = acabou ? '⏰ Fim de jogo!'
+                : cron.estado === 'rodando' ? 'Bola rolando'
+                : cron.estado === 'pausado' ? 'Cronômetro pausado' : 'Aguardando o início';
+            if (acabou) tratarFimCron(cron);
+        }
+        setInterval(pintarCron, 250);
+
+        $('btn-som').addEventListener('click', () => {
+            try {
+                const A = window.AudioContext || window.webkitAudioContext;
+                if (!A) { $('som-dica').textContent = 'Este navegador não permite tocar o apito.'; return; }
+                if (!audioCtx) audioCtx = new A();
+                window.Apito.desbloquear(audioCtx);
+                window.Apito.testar(audioCtx);
+                somAtivo = true;
+                $('btn-som').textContent = '🔊 Som ativado (toque para testar)';
+                $('som-dica').textContent = 'Pronto! O apito vai tocar sozinho quando o tempo acabar. Mantenha esta página aberta e o volume alto.';
+            } catch (e) { $('som-dica').textContent = 'Não consegui ligar o som neste aparelho.'; }
+        });
+
         const codigo = (new URLSearchParams(location.search).get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
         let primeiraVez = true;
 
         function desenhar(d) {
             const encerrado = !!d.encerrado;
+            encerradoAoVivo = encerrado;
+            cron = d.cron || null;
+            pintarCron();
             document.body.classList.toggle('encerrado', encerrado);
             $('status-txt').textContent = encerrado ? 'Campeonato encerrado' : 'AO VIVO';
             if (d.atualizadoEm) $('atualizado').textContent = 'atualizado às ' + new Date(d.atualizadoEm).toLocaleTimeString('pt-BR');

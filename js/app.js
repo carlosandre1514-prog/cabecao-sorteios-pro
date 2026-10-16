@@ -96,6 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerInterval = null;
     let tempoTotalSegundos = 600;
     let tempoRestante = 600;
+    let fimEm = 0;               // horário real em que o tempo acaba (não atrasa com a tela bloqueada)
+    let offsetServidor = 0;      // diferença entre o relógio do celular e o do Firebase (para o link bater certo)
+    let ultimoEncerrado = false; // último estado "encerrado" publicado no link (o cronômetro reaproveita)
 
     // --- CONTROLE DOS BOTÕES DE INCREMENTO/DECREMENTO DE ESTRELAS (CADASTRO) ---
     const btnCadMenos = document.getElementById('btn-cad-menos');
@@ -278,9 +281,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function publicarAoVivo(encerrado) {
         if (!aoVivoCodigo || !currentUserUid || !window.firebaseDb || !dadosCarregados) return;
         if (!timesSorteados.length) return;
+        ultimoEncerrado = !!encerrado;
         aoVivoPendente = Logica.montarAoVivo({
             modo: modoJogoAtual, times: timesSorteados, classificacao, partidas, partidaAtualIndex,
-            partidasRacha: partidasRachaHistorico, artilharia, timeA: timeEmCampoA, timeB: timeEmCampoB, fila: filaTimes
+            partidasRacha: partidasRachaHistorico, artilharia, timeA: timeEmCampoA, timeB: timeEmCampoB, fila: filaTimes,
+            cron: montarCron()
         }, currentUserUid, Date.now(), encerrado);
         const codigo = aoVivoCodigo;
         clearTimeout(aoVivoTimer);
@@ -586,8 +591,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const timerDisplay = document.getElementById('timer-display');
     const selectTempo = document.getElementById('select-tempo-predefinido');
     const inputTempoCustom = document.getElementById('input-tempo-custom');
-    let fimEm = 0;       // horário real em que o tempo acaba (não atrasa com a tela bloqueada)
     let audioCtx = null;
+
+    // Relógio do Firebase: o celular de quem assiste pode estar com a hora diferente,
+    // então o cronômetro do link é calculado em cima do horário do servidor.
+    function lerRelogioServidor() {
+        try {
+            const f = window.firebaseFns;
+            f.onValue(f.ref(window.firebaseDb, '.info/serverTimeOffset'), snap => { offsetServidor = Number(snap.val()) || 0; });
+        } catch (e) { /* sem relógio do servidor, usa o do celular */ }
+    }
+    if (window.firebaseReady) lerRelogioServidor();
+    else window.addEventListener('firebase-ready', lerRelogioServidor, { once: true });
+
+    // Retrato do cronômetro que vai junto com o placar ao vivo.
+    // estado: rodando | pausado | parado | fim.  fimEm está no horário do servidor.
+    function montarCron() {
+        const base = { total: tempoTotalSegundos, restante: tempoRestante };
+        if (timerInterval) return Object.assign(base, { estado: 'rodando', fimEm: fimEm + offsetServidor });
+        if (tempoRestante <= 0) return { total: tempoTotalSegundos, restante: 0, estado: 'fim', fimEm: (fimEm || 0) + offsetServidor };
+        if (tempoRestante < tempoTotalSegundos) return Object.assign(base, { estado: 'pausado' });
+        return Object.assign(base, { estado: 'parado' });
+    }
+    function publicarCronometro() { publicarAoVivo(ultimoEncerrado); }
 
     // O celular só libera som depois de um toque: por isso o áudio é preparado no clique em "Iniciar"
     function prepararAudio() {
@@ -616,6 +642,7 @@ document.addEventListener('DOMContentLoaded', () => {
         atualizarDisplayTimer();
         if (tempoRestante <= 0) {
             pararTimer();
+            publicarCronometro();   // o link recebe "fim" e apita junto
             tocarApitoJuiz();
             if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
             mostrarAlerta('⏰ Fim de jogo! Tempo esgotado.', '⏱️ CRONÔMETRO');
@@ -627,6 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tempoTotalSegundos = minutos * 60;
         tempoRestante = tempoTotalSegundos;
         atualizarDisplayTimer();
+        publicarCronometro();
     }
 
     if (selectTempo) {
@@ -651,6 +679,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tempoRestante <= 0) tempoRestante = tempoTotalSegundos;
             fimEm = Date.now() + tempoRestante * 1000;
             timerInterval = setInterval(tickTimer, 250);
+            publicarCronometro();
         });
     }
 
@@ -660,6 +689,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!timerInterval) return;
             tickTimer();   // atualiza o tempo restante antes de parar
             pararTimer();
+            publicarCronometro();
         });
     }
 
@@ -669,42 +699,16 @@ document.addEventListener('DOMContentLoaded', () => {
             pararTimer();
             tempoRestante = tempoTotalSegundos;
             atualizarDisplayTimer();
+            publicarCronometro();
         });
     }
 
+    // Apito de juiz de fim de partida (6 s). O som em si está em js/apito.js
     function tocarApitoJuiz() {
         try {
             prepararAudio();
-            if (!audioCtx) return;
-            const agora = audioCtx.currentTime;
-
-            const osc1 = audioCtx.createOscillator();
-            const osc2 = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc1.frequency.setValueAtTime(2800, agora);
-            osc2.frequency.setValueAtTime(3200, agora);
-
-            // trinado do apito: o LFO precisa passar por um ganho (±300 Hz).
-            // Antes ele ia direto no oscilador (±1 Hz) e o trinado não existia.
-            const lfo = audioCtx.createOscillator();
-            const lfoGain = audioCtx.createGain();
-            lfo.frequency.setValueAtTime(25, agora);
-            lfoGain.gain.setValueAtTime(300, agora);
-            lfo.connect(lfoGain);
-            lfoGain.connect(osc1.frequency);
-
-            osc1.connect(gain);
-            osc2.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            gain.gain.setValueAtTime(0.3, agora);
-            gain.gain.setValueAtTime(0, agora + 0.3);
-            gain.gain.setValueAtTime(0.3, agora + 0.4);
-            gain.gain.setValueAtTime(0, agora + 0.7);
-            gain.gain.setValueAtTime(0.4, agora + 0.8);
-            gain.gain.setValueAtTime(0, agora + 1.5);
-
-            [osc1, osc2, lfo].forEach(o => { o.start(agora); o.stop(agora + 1.5); });
+            if (!audioCtx || !window.Apito) return;
+            window.Apito.tocar(audioCtx);
         } catch (e) {
             console.log("Erro ao tocar áudio:", e);
         }
