@@ -97,7 +97,9 @@
         <section id="tab-jogadores" class="tab-content active">
             <div class="card">
                 <h2>👥 Elenco Cadastrado</h2>
+                <div id="filtro-elenco"></div>
                 <div id="lista-jogadores-cadastrados"></div>
+                <button id="btn-apagar-todos" class="btn btn-danger" style="margin-top: 10px; width: 100%;">🗑️ Apagar todos os jogadores</button>
             </div>
 
             <div class="card">
@@ -121,9 +123,10 @@
                         <span>Nível do Jogador:</span>
                         <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 6px;">
                             <button type="button" id="btn-cad-menos" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">−</button>
-                            <span id="display-estrelas-cad" style="font-size: 1.2rem; font-weight: bold; color: #D4AF37;">⭐ 3,0</span>
+                            <span style="font-size: 1.2rem; font-weight: bold; color: #D4AF37; display: flex; align-items: center; gap: 4px;">⭐ <input type="number" id="input-estrelas-cad" class="input-estrelas" step="0.1" min="0.1" max="5" value="3.0" inputmode="decimal" aria-label="Estrelas do jogador"></span>
                             <button type="button" id="btn-cad-mais" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">+</button>
                         </div>
+                        <small class="subtext">Digite qualquer valor de 0,1 a 5 (ex.: 1,7 ou 2)</small>
                     </div>
 
                     <button id="btn-add-jogador" class="btn btn-secondary" style="margin-top: 8px;">Adicionar Único</button>
@@ -136,6 +139,7 @@
             <div class="card">
                 <h2>1. Quem veio jogar hoje?</h2>
                 <p class="subtext">Marque quem está presente no racha do dia:</p>
+                <div id="filtro-presenca"></div>
                 <div id="lista-presenca"></div>
             </div>
 
@@ -287,11 +291,12 @@
                 <!-- SELETOR DE ESTRELAS (EDIÇÃO) -->
                 <div class="form-group-col" style="margin-top: 10px;">
                     <label class="subtext">Nível do Jogador:</label>
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 4px;">
-                        <button type="button" id="btn-edit-menos" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">−</button>
-                        <span id="display-estrelas-edit" style="font-size: 1.2rem; font-weight: bold; color: #D4AF37;">⭐ 3,0</span>
-                        <button type="button" id="btn-edit-mais" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">+</button>
-                    </div>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 6px;">
+                            <button type="button" id="btn-edit-menos" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">−</button>
+                            <span style="font-size: 1.2rem; font-weight: bold; color: #D4AF37; display: flex; align-items: center; gap: 4px;">⭐ <input type="number" id="input-estrelas-edit" class="input-estrelas" step="0.1" min="0.1" max="5" value="3.0" inputmode="decimal" aria-label="Estrelas do jogador"></span>
+                            <button type="button" id="btn-edit-mais" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">+</button>
+                        </div>
+                        <small class="subtext">Digite qualquer valor de 0,1 a 5 (ex.: 1,7 ou 2)</small>
                 </div>
 
                 <button id="btn-salvar-edicao" class="btn btn-primary" style="margin-top: 10px;">Salvar Alterações</button>

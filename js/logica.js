@@ -257,9 +257,37 @@
         };
     }
 
+    // ---------- Estrelas ----------
+    // Aceita "1,7", "1.7", 2 ... e devolve um número de 0.1 a 5 com 1 casa decimal.
+    function normalizarEstrelas(v, padrao) {
+        if (typeof v === 'string') v = v.trim().replace(',', '.');
+        const n = (v === '' || v == null) ? NaN : Number(v);
+        if (!isFinite(n)) return padrao == null ? 3 : padrao;
+        return Math.round(Math.min(5, Math.max(0.1, n)) * 10) / 10;
+    }
+
+    // Filtro por faixa de estrelas. f = { min, max, opMin: '>=' | '>', opMax: '<=' | '<' }.
+    // Campo vazio = sem limite. Ex.: maior que 1.5 e menor que 2 -> { min: 1.5, opMin: '>', max: 2, opMax: '<' }
+    function filtrarPorEstrelas(lista, f) {
+        f = f || {};
+        const lim = x => {
+            if (x === '' || x == null) return null;
+            const n = parseFloat(String(x).replace(',', '.'));
+            return isFinite(n) ? n : null;
+        };
+        const min = lim(f.min), max = lim(f.max);
+        return lista.filter(j => {
+            const e = Math.round((Number(j.estrelas) || 3) * 100) / 100;
+            if (min !== null && !(f.opMin === '>' ? e > min : e >= min)) return false;
+            if (max !== null && !(f.opMax === '<' ? e < max : e <= max)) return false;
+            return true;
+        });
+    }
+
     return {
         embaralhar, idUnico, chaveSegura, limparMapa, normalizarTime, compararVersoes,
         filtrarLinhasLote, sortearTimes, gerarPartidas, novaClassificacao,
-        aplicarResultado, ordenarClassificacao, montarAoVivo
+        aplicarResultado, ordenarClassificacao, montarAoVivo,
+        normalizarEstrelas, filtrarPorEstrelas
     };
 });

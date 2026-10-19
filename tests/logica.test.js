@@ -160,3 +160,22 @@ t('desempate: pontos, depois menos gols sofridos, depois saldo', () => {
     ]);
     assert.deepStrictEqual(o.map(x => x.nome), ['C', 'B', 'A']);
 });
+
+t('estrelas: aceita vírgula, decimais de 0,1 e limita entre 0,1 e 5', () => {
+    assert.strictEqual(L.normalizarEstrelas('1,7'), 1.7);
+    assert.strictEqual(L.normalizarEstrelas('2'), 2);
+    assert.strictEqual(L.normalizarEstrelas(9), 5);
+    assert.strictEqual(L.normalizarEstrelas(0), 0.1);
+    assert.strictEqual(L.normalizarEstrelas('abc', 3), 3);
+    assert.strictEqual(L.normalizarEstrelas(1.1 + 0.2), 1.3);
+});
+
+t('filtro de estrelas: maior/menor que, com e sem igualdade', () => {
+    const js = [1.1, 1.2, 1.5, 1.9, 2, 3].map((e, i) => ({ id: i, nome: 'J' + e, estrelas: e }));
+    const nomes = f => L.filtrarPorEstrelas(js, f).map(j => j.estrelas);
+    assert.deepStrictEqual(nomes({ min: 1.5, opMin: '>', max: 2, opMax: '<' }), [1.9]);
+    assert.deepStrictEqual(nomes({ min: 1.5, opMin: '>=', max: 2, opMax: '<=' }), [1.5, 1.9, 2]);
+    assert.deepStrictEqual(nomes({ max: '1,2', opMax: '<' }), [1.1]);
+    assert.deepStrictEqual(nomes({ min: 1.9 }), [1.9, 2, 3]);
+    assert.deepStrictEqual(nomes({}), [1.1, 1.2, 1.5, 1.9, 2, 3]);
+});

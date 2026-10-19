@@ -395,3 +395,11 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--verde); }
 .step-mais { background: var(--neon); color: #000; border-color: transparent; }
 .placar-vivo { font-size: 2.2rem; font-weight: 800; color: var(--neon); white-space: nowrap; }
 .placar-vivo .x { font-size: 1.2rem; color: inherit; opacity: .7; }
+
+/* Estrelas digitáveis + filtro por faixa */
+.input-estrelas { width: 80px !important; text-align: center; font-weight: bold; color: #D4AF37; padding: 6px 4px; }
+.filtro-estrelas { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 10px; margin-bottom: 10px; font-size: 0.85rem; }
+.filtro-estrelas .filtro-linha { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.filtro-estrelas select { width: auto; min-width: 0; padding: 6px 4px; }
+.filtro-estrelas input[type="number"] { width: 70px; min-width: 0; text-align: center; padding: 6px 4px; }
+.filtro-estrelas .filtro-resumo { display: block; text-align: center; margin-top: 6px; opacity: 0.8; }
