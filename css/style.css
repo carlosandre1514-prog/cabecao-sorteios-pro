@@ -438,3 +438,12 @@ input[type="text"], input[type="number"], input[type="password"], input[type="em
 .tab-btn.active svg { filter: drop-shadow(0 0 4px rgba(147,213,75,0.55)); }
 .header-titulos p, .timer-display { text-shadow: 0 0 7px rgba(147,213,75,0.4); }
 .step-mais { box-shadow: 0 0 8px rgba(147,213,75,0.35); }
+
+/* ---------- 9. PERFIL NO MENU + ABA RANKING ---------- */
+.drawer-profile-icon { width: 64px; height: 64px; cursor: pointer; overflow: hidden; border: 2px solid var(--verde); }
+.drawer-profile-icon img { width: 100%; height: 100%; object-fit: cover; }
+.perfil-dados { min-width: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.perfil-apelido { background: none; border: 0; color: var(--txt); font-size: 1.1rem; font-weight: 800; padding: 0; text-align: left; }
+.perfil-campo { width: 100%; padding: 8px 10px; font-size: 1rem; }
+.tab-btn { font-size: 0.68rem; padding-left: 2px; padding-right: 2px; }
+#lista-ranking .item-jogador strong { color: var(--ouro); }

@@ -70,6 +70,7 @@ async function fazerLogout() {
 
 document.addEventListener('DOMContentLoaded', () => {
     let currentUserUid = null;
+    let perfil = {}; // { apelido, foto } — fica em usuarios/UID/perfil
     let jogadores = [];
     let historico = [];
     let dadosCarregados = false;   // só salva no Firebase depois de ter carregado (evita apagar dados por engano)
@@ -172,6 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Zera tudo que é do usuário (usado ao sair da conta ou trocar de conta)
     function limparEstadoLocal() {
+        perfil = {}; renderizarPerfil();
         jogadores = [];
         historico = [];
         sorteioAtual = [];
@@ -397,6 +399,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (uid !== currentUserUid) return; // trocou de conta no meio do caminho
             const dados = snapshot.exists() ? (snapshot.val() || {}) : {};
 
+            perfil = (dados.perfil && typeof dados.perfil === 'object') ? dados.perfil : {};
+            renderizarPerfil();
             jogadores = comoLista(dados.jogadores);
             historico = comoLista(dados.historico).map(h => Object.assign({}, h, {
                 classificacao: Logica.limparMapa(h.classificacao),
@@ -578,6 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (id === 'tab-sorteio') renderizarPresenca();
         if (id === 'tab-historico') renderizarHistorico();
+        if (id === 'tab-ranking') renderizarRanking();
         if (id === 'tab-campeonato') {
             const placar = IDS_PLACAR.map(i => [i, document.getElementById(i)]).filter(([, el]) => el).map(([i, el]) => [i, el.value]);
             renderizarCampeonato();
@@ -835,7 +840,7 @@ document.addEventListener('DOMContentLoaded', () => {
             div.innerHTML = `
                 <div>
                     ${j.isGoleiro ? '🧤 ' : ''}<strong>${nomeTratado}</strong>
-                    <small style="color:#FFC400; font-weight: bold;">(⭐ ${estrelasFormatadas})</small>
+                    <small style="color:#ddb43c; font-weight: bold;">(⭐ ${estrelasFormatadas})</small>
                 </div>
                 <div class="acoes-item">
                     <button class="btn-edit" data-acao="editar" data-id="${j.id}">✏️ Editar</button>
@@ -1002,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!divContador) {
             divContador = document.createElement('div');
             divContador.id = 'contador-sorteios-info';
-            divContador.style.cssText = 'background: rgba(255, 196, 0, 0.15); border: 1px solid #FFC400; color: #FFC400; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; text-align: center; font-weight: bold; font-size: 0.9rem;';
+            divContador.style.cssText = 'background: rgba(221, 180, 60, 0.15); border: 1px solid #ddb43c; color: #ddb43c; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; text-align: center; font-weight: bold; font-size: 0.9rem;';
             container.parentNode.insertBefore(divContador, container);
         }
         divContador.innerHTML = `🔁 Sorteio realizado <strong>${contadorSorteios}x</strong> nesta sessão`;
@@ -1763,6 +1768,77 @@ document.addEventListener('DOMContentLoaded', () => {
             toast('🏁 Campeonato finalizado e salvo no histórico!');
         });
     }
+
+    // ---------- RANKING (soma da artilharia de todos os campeonatos finalizados) ----------
+    function renderizarRanking() {
+        const box = document.getElementById('lista-ranking');
+        if (!box) return;
+        const soma = {};
+        historico.forEach(h => Object.entries(h.artilharia || {}).forEach(([n, g]) => {
+            const nome = String(n).replace(/\u2024/g, '.');
+            soma[nome] = (soma[nome] || 0) + (Number(g) || 0);
+        }));
+        const lista = Object.entries(soma).filter(([, g]) => g > 0).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+        if (!lista.length) { box.innerHTML = '<p class="subtext">Ainda não há gols registrados. Finalize um campeonato para montar o ranking.</p>'; return; }
+        const medalha = ['🥇', '🥈', '🥉'];
+        box.innerHTML = lista.map(([n, g], i) =>
+            `<div class="item-jogador"><span>${medalha[i] || (i + 1) + 'º'} ${escapeHtml(n)}</span><strong>${g} ${g === 1 ? 'gol' : 'gols'}</strong></div>`).join('');
+    }
+
+    // ---------- PERFIL NO MENU (foto + apelido) ----------
+    function renderizarPerfil() {
+        const img = document.getElementById('perfil-foto');
+        const svg = document.querySelector('#perfil-avatar .profile-avatar-svg');
+        const btn = document.getElementById('perfil-apelido');
+        if (img && svg) {
+            const tem = !!(perfil && perfil.foto);
+            if (tem) img.src = perfil.foto;
+            img.classList.toggle('hidden', !tem);
+            svg.classList.toggle('hidden', tem);
+        }
+        if (btn) btn.textContent = ((perfil && perfil.apelido) || 'Definir apelido') + ' ✏️';
+    }
+    function salvarPerfil() { gravar('perfil', perfil); renderizarPerfil(); }
+
+    (function ligarPerfil() {
+        const av = document.getElementById('perfil-avatar');
+        const arq = document.getElementById('perfil-arq');
+        const btn = document.getElementById('perfil-apelido');
+        if (av && arq) {
+            av.addEventListener('click', () => arq.click());
+            arq.addEventListener('change', () => {
+                const f = arq.files && arq.files[0];
+                if (!f) return;
+                const leitor = new FileReader();
+                leitor.onload = () => {
+                    const im = new Image();
+                    im.onload = () => {
+                        const c = document.createElement('canvas'); c.width = c.height = 128;
+                        const lado = Math.min(im.width, im.height);
+                        c.getContext('2d').drawImage(im, (im.width - lado) / 2, (im.height - lado) / 2, lado, lado, 0, 0, 128, 128);
+                        perfil = Object.assign({}, perfil, { foto: c.toDataURL('image/jpeg', 0.8) });
+                        salvarPerfil(); toast('Foto atualizada');
+                    };
+                    im.src = leitor.result;
+                };
+                leitor.readAsDataURL(f); arq.value = '';
+            });
+        }
+        if (btn) btn.addEventListener('click', () => {
+            const campo = document.createElement('input');
+            campo.type = 'text'; campo.maxLength = 24; campo.className = 'perfil-campo';
+            campo.value = (perfil && perfil.apelido) || ''; campo.placeholder = 'Seu apelido';
+            btn.replaceWith(campo); campo.focus();
+            let feito = false;
+            const fim = (salvar) => {
+                if (feito) return; feito = true;
+                if (salvar) { perfil = Object.assign({}, perfil, { apelido: campo.value.trim().slice(0, 24) }); salvarPerfil(); }
+                campo.replaceWith(btn); renderizarPerfil();
+            };
+            campo.addEventListener('keydown', e => { if (e.key === 'Enter') fim(true); if (e.key === 'Escape') fim(false); });
+            campo.addEventListener('blur', () => fim(true));
+        });
+    })();
 
     function renderizarHistorico() {
         const container = document.getElementById('container-historico');

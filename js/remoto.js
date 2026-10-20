@@ -62,7 +62,7 @@ function bloquearTelaApp(titulo, mensagem, link) {
         a.target = '_blank';
         a.rel = 'noopener';
         a.textContent = '⬇️ Baixar nova versão';
-        a.style.cssText = 'background:linear-gradient(135deg,#7CFF00,#00C853); color:#000; font-weight:800; padding:12px 22px; border-radius:8px; text-decoration:none; text-transform:uppercase;';
+        a.style.cssText = 'background:linear-gradient(135deg,#93d54b,#2da762); color:#000; font-weight:800; padding:12px 22px; border-radius:8px; text-decoration:none; text-transform:uppercase;';
         wrap.appendChild(a);
     }
     document.body.appendChild(wrap);
