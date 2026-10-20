@@ -62,3 +62,11 @@ o app copia o retrato do campeonato (`Logica.montarAoVivo`) para `ao_vivo/CODIGO
 O cronômetro da partida também vai junto (`cron` dentro de `ao_vivo/CODIGO`): quem abre o link vê a contagem e,
 tocando em "Ativar som do apito", ouve o apito quando o tempo acaba. O apito (6 s: dois sopros curtos + um longo)
 fica em `js/apito.js` e é o mesmo no app e no link. Regras do Firebase: `docs/COMO-CONFIGURAR-MONETIZACAO.md`.
+
+## Visual v3 (novidades)
+- Cores suaves, detalhes em preto translúcido e ícones SVG (`js/icones.js` troca os emojis automaticamente).
+- Aba **Ranking** (gols somados dos campeonatos finalizados do racha ativo).
+- Menu lateral: **foto e apelido**, **Meus rachas** (perfis de racha), **Falar com o suporte**, **Caixa do suporte** (só admin), **Termos de uso** e **Política de privacidade**.
+- **Histórico**: toque no campeonato para abrir a tela completa (tabela, confrontos, artilharia).
+- **Corrigir placar** (✏️) nos confrontos já encerrados do modo Tabela; a classificação é recalculada.
+- Configuração do suporte/admin: veja o fim de `docs/COMO-CONFIGURAR-MONETIZACAO.md`.

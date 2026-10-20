@@ -71,6 +71,13 @@ async function fazerLogout() {
 document.addEventListener('DOMContentLoaded', () => {
     let currentUserUid = null;
     let perfil = {}; // { apelido, foto } — fica em usuarios/UID/perfil
+    // Perfis de racha: o "principal" usa os caminhos de sempre; os outros ficam em usuarios/UID/rachas/ID/...
+    let rachas = [{ id: 'principal', nome: 'Racha principal' }];
+    let rachaAtivo = 'principal';
+    let rachaEscolhida = false;   // true depois que o usuário trocou de racha nesta sessão
+    let resumoRachas = {};        // { id: { j: jogadores, h: campeonatos } } dos rachas que não estão ativos
+    let emailUsuario = '';
+    let souAdmin = false;
     let jogadores = [];
     let historico = [];
     let dadosCarregados = false;   // só salva no Firebase depois de ter carregado (evita apagar dados por engano)
@@ -172,8 +179,13 @@ document.addEventListener('DOMContentLoaded', () => {
     montarFiltroEstrelas('presenca', () => renderizarPresenca());
 
     // Zera tudo que é do usuário (usado ao sair da conta ou trocar de conta)
-    function limparEstadoLocal() {
-        perfil = {}; renderizarPerfil();
+    function limparEstadoLocal(manterRacha) {
+        if (!manterRacha) {
+            perfil = {}; renderizarPerfil();
+            rachas = [{ id: 'principal', nome: 'Racha principal' }];
+            rachaAtivo = 'principal'; rachaEscolhida = false; resumoRachas = {}; souAdmin = false;
+            renderizarRachas(); atualizarBotaoAdmin();
+        }
         jogadores = [];
         historico = [];
         sorteioAtual = [];
@@ -209,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentUserUid = user.uid;
                 if (authScreen) authScreen.classList.add('hidden');
                 if (drawerEmail) drawerEmail.textContent = user.email || 'Usuário Google';
+                emailUsuario = user.email || '';
                 const senha = document.getElementById('auth-password');
                 if (senha) senha.value = '';
                 irParaAba('tab-jogadores', true);
@@ -235,13 +248,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- SALVAR NO FIREBASE (um único ponto; avisa se der erro) ---
     let avisouErroSalvar = false;
-    function gravar(caminho, valor) {
+    function gravar(caminho, valor, raiz) {
         if (!currentUserUid || !window.firebaseDb || !dadosCarregados) return;
         try {
             // o JSON remove `undefined` (o Firebase rejeita) e converte NaN em null
             const limpo = valor === null ? null : JSON.parse(JSON.stringify(valor));
-            const dbRef = window.firebaseFns.ref(window.firebaseDb, `usuarios/${currentUserUid}/${caminho}`);
-            window.firebaseFns.set(dbRef, limpo).then(() => {
+            const destino = (raiz || rachaAtivo === 'principal') ? caminho : `rachas/${rachaAtivo}/${caminho}`;
+            const dbRef = window.firebaseFns.ref(window.firebaseDb, `usuarios/${currentUserUid}/${destino}`);
+            return window.firebaseFns.set(dbRef, limpo).then(() => {
                 avisouErroSalvar = false;
             }).catch(erroSalvar);
         } catch (erro) {
@@ -401,14 +415,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
             perfil = (dados.perfil && typeof dados.perfil === 'object') ? dados.perfil : {};
             renderizarPerfil();
-            jogadores = comoLista(dados.jogadores);
-            historico = comoLista(dados.historico).map(h => Object.assign({}, h, {
+
+            // perfis de racha: principal + os criados pelo usuário
+            const extras = comoLista(dados.rachasLista).filter(r => r && r.id && r.nome).map(r => ({ id: String(r.id), nome: String(r.nome) }));
+            rachas = [{ id: 'principal', nome: 'Racha principal' }].concat(extras);
+            if (!rachaEscolhida) {
+                const salvo = dados.rachaAtivo ? String(dados.rachaAtivo) : 'principal';
+                rachaAtivo = rachas.some(r => r.id === salvo) ? salvo : 'principal';
+                rachaEscolhida = true;
+            }
+            if (!rachas.some(r => r.id === rachaAtivo)) rachaAtivo = 'principal';
+            const todosExtras = (dados.rachas && typeof dados.rachas === 'object') ? dados.rachas : {};
+            resumoRachas = { principal: { j: comoLista(dados.jogadores).length, h: comoLista(dados.historico).length } };
+            extras.forEach(r => { const d = todosExtras[r.id] || {}; resumoRachas[r.id] = { j: comoLista(d.jogadores).length, h: comoLista(d.historico).length }; });
+            const base = rachaAtivo === 'principal' ? dados : (todosExtras[rachaAtivo] || {});
+
+            jogadores = comoLista(base.jogadores);
+            historico = comoLista(base.historico).map(h => Object.assign({}, h, {
                 classificacao: Logica.limparMapa(h.classificacao),
                 artilharia: Logica.limparMapa(h.artilharia),
                 times: comoLista(h.times).map(Logica.normalizarTime)
             }));
 
-            const c = dados.campeonatoAtivo;
+            const c = base.campeonatoAtivo;
             if (c) {
                 const normPartida = p => Object.assign({}, p, {
                     timeA: Logica.normalizarTime(p.timeA),
@@ -427,8 +456,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 placarRacha = { a: Number(c.placarRacha && c.placarRacha.a) || 0, b: Number(c.placarRacha && c.placarRacha.b) || 0 };
             }
 
-            aoVivoCodigo = (dados.aoVivo && dados.aoVivo.codigo) || null;
+            aoVivoCodigo = (base.aoVivo && base.aoVivo.codigo) || null;
             dadosCarregados = true;
+            renderizarRachas();
+            verificarAdmin();
             atualizarCardAoVivo();
             publicarAoVivo(false);
             mostrarCarregando(false);
@@ -1672,11 +1703,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        container.onclick = (e) => {
+            const b = e.target.closest('[data-corrigir]');
+            if (b) abrirCorrigirPlacar(Number(b.dataset.corrigir));
+        };
         container.innerHTML = partidasFinalizadas.map(p => {
             const penaltisTxt = p.golsA === p.golsB ? ` (Pênaltis: ${p.penaltisA} x ${p.penaltisB})` : '';
             return `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
                     <span><strong>Rodada ${p.rodada}:</strong> ${escapeHtml(p.timeA.nome)} ${p.golsA} x ${p.golsB} ${escapeHtml(p.timeB.nome)}${penaltisTxt}</span>
+                    <button type="button" class="btn-corrigir" data-corrigir="${p.idPartida}" aria-label="Corrigir placar">✏️</button>
                 </div>
             `;
         }).join('');
@@ -1685,6 +1721,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderizarConfrontosEncerradosRacha() {
         const container = document.getElementById('lista-confrontos-encerrados');
         if (!container) return;
+        container.onclick = null;
 
         if (partidasRachaHistorico.length === 0) {
             container.innerHTML = '<p class="subtext">Nenhum confronto finalizado ainda.</p>';
@@ -1769,10 +1806,233 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ---------- MODAL SIMPLES, TELAS EXTRAS E MENU ----------
+    function abrirModalHtml(html) {
+        const m = document.createElement('div');
+        m.className = 'modal';
+        m.innerHTML = '<div class="modal-content card">' + html + '</div>';
+        m.addEventListener('click', (e) => { if (e.target === m) m.remove(); });
+        document.body.appendChild(m);
+        return m;
+    }
+    function fecharDrawer() {
+        const d = document.getElementById('side-drawer');
+        if (d && d.classList.contains('open')) toggleDrawer();
+    }
+    // Telas que não têm botão no menu de baixo (detalhe do histórico, caixa do suporte)
+    function irParaTelaExtra(id, titulo) {
+        const alvo = document.getElementById(id);
+        if (!alvo) return;
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.toggle('active', c === alvo));
+        if (tituloTela) tituloTela.textContent = titulo || '';
+        abaAtual = id;
+        if (typeof window.scrollTo === 'function') window.scrollTo({ top: 0 });
+    }
+
+    // ---------- PERFIS DE RACHA ----------
+    function nomeRachaAtivo() {
+        const r = rachas.find(x => String(x.id) === String(rachaAtivo));
+        return r ? r.nome : 'Racha principal';
+    }
+    function renderizarRachas() {
+        const sub = document.getElementById('sub-racha');
+        if (sub) sub.textContent = '⚽ ' + nomeRachaAtivo();
+        const box = document.getElementById('lista-rachas');
+        if (!box) return;
+        box.innerHTML = rachas.map(r => {
+            const ativo = String(r.id) === String(rachaAtivo);
+            const info = ativo ? { j: jogadores.length, h: historico.length } : (resumoRachas[r.id] || { j: 0, h: 0 });
+            return `<button type="button" class="racha-item${ativo ? ' on' : ''}" data-racha="${escapeHtml(String(r.id))}">
+                <span class="racha-ic">⚽</span>
+                <span class="racha-txt"><b>${escapeHtml(r.nome)}</b><small>${info.j} jogadores · ${info.h} campeonatos</small></span>
+                ${ativo ? '<span class="racha-tag">ATIVO</span>' : ''}
+            </button>`;
+        }).join('');
+    }
+    function trocarRacha(id) {
+        id = String(id);
+        if (id === String(rachaAtivo) || !dadosCarregados) { fecharDrawer(); return; }
+        gravar('rachaAtivo', id, true);      // lembra o racha escolhido para a próxima vez
+        rachaAtivo = id; rachaEscolhida = true;
+        limparEstadoLocal(true);
+        fecharDrawer();
+        irParaAba('tab-jogadores', true);
+        carregarDadosDoFirebase();
+        toast('Racha: ' + nomeRachaAtivo());
+    }
+    function abrirNovoRacha() {
+        if (!dadosCarregados) return;
+        fecharDrawer();
+        const m = abrirModalHtml(`<h2>Novo perfil de racha</h2>
+            <input type="text" id="in-novo-racha" maxlength="30" placeholder="Ex.: Pelada de Sexta">
+            <p class="subtext" style="margin-top:8px;">Os jogadores do racha atual (${jogadores.length}) serão copiados, desativados, para o novo perfil.</p>
+            <div class="modal-actions"><button type="button" class="btn btn-primary" id="ok-novo-racha">Criar racha</button><button type="button" class="btn btn-secondary" id="cancela-novo-racha">Cancelar</button></div>`);
+        m.querySelector('#cancela-novo-racha').onclick = () => m.remove();
+        m.querySelector('#ok-novo-racha').onclick = async () => {
+            const nome = m.querySelector('#in-novo-racha').value.trim().slice(0, 30);
+            if (!nome) return;
+            const id = String(Date.now());
+            const copia = jogadores.map((j, i) => ({ id: Logica.idUnico() + i, nome: j.nome, estrelas: j.estrelas, isGoleiro: !!j.isGoleiro, presente: false }));
+            const extras = rachas.filter(r => r.id !== 'principal').concat([{ id, nome }]);
+            m.remove();
+            try {
+                if (copia.length) await gravar(`rachas/${id}/jogadores`, copia, true);
+                await gravar('rachasLista', extras, true);
+            } catch (e) { return; }
+            rachas = [{ id: 'principal', nome: 'Racha principal' }].concat(extras);
+            resumoRachas[id] = { j: copia.length, h: 0 };
+            trocarRacha(id);
+            toast('Racha criado');
+        };
+    }
+
+    // ---------- SUPORTE ----------
+    function atualizarBotaoAdmin() {
+        const b = document.getElementById('btn-caixa-suporte');
+        if (b) b.classList.toggle('hidden', !souAdmin);
+    }
+    async function verificarAdmin() {
+        souAdmin = false;
+        try {
+            const s = await window.firebaseFns.get(window.firebaseFns.ref(window.firebaseDb, 'configuracoes/admin_email'));
+            const adm = String(s.exists() ? s.val() : '').trim().toLowerCase();
+            souAdmin = !!adm && adm === String(emailUsuario).trim().toLowerCase();
+        } catch (e) { /* sem permissão ou sem admin configurado: segue sem a caixa */ }
+        atualizarBotaoAdmin();
+    }
+    function abrirSuporte() {
+        fecharDrawer();
+        const m = abrirModalHtml(`<h2>💬 Falar com o suporte</h2>
+            <textarea id="tx-suporte" rows="4" maxlength="800" placeholder="Conte o problema ou a sugestão..."></textarea>
+            <div class="modal-actions"><button type="button" class="btn btn-primary" id="env-suporte">Enviar mensagem</button><button type="button" class="btn btn-secondary" id="cancela-suporte">Cancelar</button></div>`);
+        m.querySelector('#cancela-suporte').onclick = () => m.remove();
+        m.querySelector('#env-suporte').onclick = () => {
+            const texto = m.querySelector('#tx-suporte').value.trim();
+            if (!texto || !currentUserUid) return;
+            const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            const msg = { de: (perfil && perfil.apelido) || 'Sem apelido', email: emailUsuario, racha: nomeRachaAtivo(), texto, em: Date.now(), ok: false, uid: currentUserUid };
+            window.firebaseFns.set(window.firebaseFns.ref(window.firebaseDb, 'suporte/' + id), msg)
+                .then(() => { m.remove(); toast('Mensagem enviada ao suporte'); })
+                .catch((e) => toast('Não foi possível enviar (' + ((e && e.code) || 'erro') + ')', 'erro'));
+        };
+    }
+    async function carregarCaixa() {
+        const box = document.getElementById('lista-caixa');
+        if (!box) return;
+        box.innerHTML = '<p class="subtext">Carregando...</p>';
+        try {
+            const s = await window.firebaseFns.get(window.firebaseFns.ref(window.firebaseDb, 'suporte'));
+            const obj = s.exists() ? (s.val() || {}) : {};
+            const lista = Object.entries(obj).map(([id, m]) => Object.assign({ id }, m)).sort((a, b) => (b.em || 0) - (a.em || 0));
+            box.innerHTML = lista.length ? lista.map(m => `<div class="msg-suporte">
+                <b>${escapeHtml(m.de || '')}</b> ${m.ok ? '<span class="tag-ok">resolvido</span>' : '<span class="tag-novo">novo</span>'}
+                <div class="msg-texto">${escapeHtml(m.texto || '')}</div>
+                <small>${escapeHtml(m.email || '')} · ${escapeHtml(m.racha || '')} · ${new Date(m.em || 0).toLocaleString('pt-BR')}</small>
+                ${m.ok ? '' : `<button type="button" class="btn btn-secondary" data-resolver="${escapeHtml(m.id)}" style="margin-top:8px;">✔ Marcar como resolvido</button>`}
+            </div>`).join('') : '<p class="subtext">Nenhuma mensagem.</p>';
+        } catch (e) {
+            box.innerHTML = '<p class="subtext">Não foi possível ler as mensagens. Confira as regras do Firebase em docs/COMO-CONFIGURAR-MONETIZACAO.md.</p>';
+        }
+    }
+    function abrirCaixa() {
+        if (!souAdmin) return;
+        fecharDrawer();
+        irParaTelaExtra('tab-caixa', 'Caixa do suporte');
+        carregarCaixa();
+    }
+
+    // ---------- HISTÓRICO: tela do campeonato ----------
+    function abrirDetalheHistorico(id) {
+        const h = historico.find(x => String(x.id) === String(id));
+        if (!h) return;
+        irParaTelaExtra('tab-hist-detalhe', 'Campeonato de ' + String(h.data || '').slice(0, 5));
+        const cl = Logica.ordenarClassificacao(Object.values(h.classificacao || {}));
+        const art = Object.entries(h.artilharia || {}).map(([n, g]) => [String(n).replace(/\u2024/g, '.'), Number(g) || 0]).sort((a, b) => b[1] - a[1]);
+        const jogos = comoLista(h.partidas);
+        const linhaJogo = (p) => (p.rodada !== undefined
+            ? `<strong>Rodada ${p.rodada}:</strong> ${escapeHtml(p.timeA.nome)} ${p.golsA} x ${p.golsB} ${escapeHtml(p.timeB.nome)}${p.golsA === p.golsB ? ` (Pênaltis: ${p.penaltisA || 0} x ${p.penaltisB || 0})` : ''}`
+            : `<strong>Jogo ${p.idPartida}:</strong> ${escapeHtml(p.timeA.nome)} ${p.golsA} x ${p.golsB} ${escapeHtml(p.timeB.nome)} (Avançou: ${escapeHtml(p.vencedor || '')})`);
+        const el = document.getElementById('conteudo-hist-detalhe');
+        if (!el) return;
+        el.innerHTML = `
+            <button type="button" class="voltar-hist" id="voltar-hist">‹ Voltar ao histórico</button>
+            <div class="card"><h2>🏆 Campeão: ${escapeHtml(cl[0] ? cl[0].nome : 'N/A')}</h2>
+                <p class="subtext">${escapeHtml(h.data || '')} · ${h.modo === 'todos-contra-todos' ? 'Tabela' : 'Racha Livre'}</p></div>
+            <div class="card"><h2>📊 Tabela de Classificação</h2><div class="table-responsive"><table class="tabela-classificacao">
+                <thead><tr><th>Time</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>SG</th></tr></thead>
+                <tbody>${cl.map(c => `<tr><td>${escapeHtml(c.nome)}</td><td>${c.p}</td><td>${c.j}</td><td>${c.v}</td><td>${c.e}</td><td>${c.d}</td><td>${c.gp}</td><td>${c.sg}</td></tr>`).join('')}</tbody>
+            </table></div></div>
+            <div class="card"><h2>⚔️ Confrontos Realizados</h2>${jogos.length ? jogos.map(p => `<div style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">${linhaJogo(p)}</div>`).join('') : '<p class="subtext">Sem confrontos registrados.</p>'}</div>
+            <div class="card"><h2>⚽ Artilharia do Campeonato</h2>${art.length ? art.map(([n, g]) => `<div class="item-jogador"><span>${escapeHtml(n)}</span><strong>${g}</strong></div>`).join('') : '<p class="subtext">Nenhum gol marcado.</p>'}</div>`;
+        el.onclick = (e) => { if (e.target.closest('#voltar-hist')) irParaAba('tab-historico'); };
+    }
+
+    // ---------- CORRIGIR PLACAR (modo tabela) ----------
+    function recalcularClassificacao() {
+        classificacao = Logica.novaClassificacao(timesSorteados);
+        partidas.filter(x => x.finalizada).forEach(x => Logica.aplicarResultado(classificacao, x.timeA.id, x.timeB.id, x.golsA, x.golsB, x.penaltisA, x.penaltisB));
+    }
+    function abrirCorrigirPlacar(idPartida) {
+        const p = partidas.find(x => x.idPartida === idPartida);
+        if (!p) return;
+        let a = p.golsA || 0, b = p.golsB || 0, pa = p.penaltisA || 0, pb = p.penaltisB || 0;
+        const m = abrirModalHtml('');
+        const box = m.querySelector('.modal-content');
+        const stp = (k, v) => `<div class="corrige-stp"><button type="button" class="step-btn" data-sp="${k}:-1">−</button><strong>${v}</strong><button type="button" class="step-btn step-mais" data-sp="${k}:1">+</button></div>`;
+        const desenhar = () => {
+            box.innerHTML = `<h2>✏️ Corrigir placar</h2>
+                <div class="corrige-linha"><div class="corrige-time"><span>${escapeHtml(p.timeA.nome)}</span>${stp('a', a)}</div><div class="corrige-time"><span>${escapeHtml(p.timeB.nome)}</span>${stp('b', b)}</div></div>
+                ${a === b ? `<p class="subtext" style="text-align:center;">Empate · pênaltis</p><div class="corrige-linha"><div class="corrige-time">${stp('pa', pa)}</div><div class="corrige-time">${stp('pb', pb)}</div></div>` : ''}
+                <div class="modal-actions"><button type="button" class="btn btn-primary" id="ok-corrige">Salvar placar</button><button type="button" class="btn btn-secondary" id="cancela-corrige">Cancelar</button></div>`;
+        };
+        desenhar();
+        m.addEventListener('click', (e) => {
+            const t = e.target.closest('[data-sp],#ok-corrige,#cancela-corrige');
+            if (!t) return;
+            if (t.dataset.sp) {
+                const [k, d] = t.dataset.sp.split(':'); const n = Number(d);
+                if (k === 'a') a = Math.max(0, a + n);
+                if (k === 'b') b = Math.max(0, b + n);
+                if (k === 'pa') pa = Math.max(0, pa + n);
+                if (k === 'pb') pb = Math.max(0, pb + n);
+                desenhar(); return;
+            }
+            if (t.id === 'cancela-corrige') { m.remove(); return; }
+            if (a === b && pa === pb) { toast('Defina o vencedor nos pênaltis!', 'erro'); return; }
+            p.golsA = a; p.golsB = b;
+            p.penaltisA = a === b ? pa : 0; p.penaltisB = a === b ? pb : 0;
+            recalcularClassificacao();
+            salvarCampeonatoAtivo();
+            m.remove();
+            renderizarCampeonato();
+            toast('Placar salvo · tabela recalculada');
+        });
+    }
+
+    // Liga os botões do menu lateral
+    (function ligarMenu() {
+        const lr = document.getElementById('lista-rachas');
+        if (lr) lr.addEventListener('click', (e) => { const b = e.target.closest('[data-racha]'); if (b) trocarRacha(b.dataset.racha); });
+        const nr = document.getElementById('btn-novo-racha'); if (nr) nr.addEventListener('click', abrirNovoRacha);
+        const su = document.getElementById('btn-suporte'); if (su) su.addEventListener('click', abrirSuporte);
+        const cx = document.getElementById('btn-caixa-suporte'); if (cx) cx.addEventListener('click', abrirCaixa);
+        const lc = document.getElementById('lista-caixa');
+        if (lc) lc.addEventListener('click', async (e) => {
+            const b = e.target.closest('[data-resolver]');
+            if (!b) return;
+            try { await window.firebaseFns.set(window.firebaseFns.ref(window.firebaseDb, 'suporte/' + b.dataset.resolver + '/ok'), true); toast('Marcado como resolvido'); }
+            catch (er) { toast('Não foi possível atualizar', 'erro'); }
+            carregarCaixa();
+        });
+    })();
+
     // ---------- RANKING (soma da artilharia de todos os campeonatos finalizados) ----------
     function renderizarRanking() {
         const box = document.getElementById('lista-ranking');
         if (!box) return;
+        const tit = document.querySelector('#tab-ranking h2');
+        if (tit) tit.textContent = '🥇 Ranking de gols · ' + nomeRachaAtivo();
         const soma = {};
         historico.forEach(h => Object.entries(h.artilharia || {}).forEach(([n, g]) => {
             const nome = String(n).replace(/\u2024/g, '.');
@@ -1798,7 +2058,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (btn) btn.textContent = ((perfil && perfil.apelido) || 'Definir apelido') + ' ✏️';
     }
-    function salvarPerfil() { gravar('perfil', perfil); renderizarPerfil(); }
+    function salvarPerfil() { gravar('perfil', perfil, true); renderizarPerfil(); }
 
     (function ligarPerfil() {
         const av = document.getElementById('perfil-avatar');
@@ -1846,7 +2106,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         container.onclick = (e) => {
             const btn = e.target.closest('button[data-acao="excluir-hist"]');
-            if (btn) window.excluirHistorico(btn.dataset.id);
+            if (btn) { window.excluirHistorico(btn.dataset.id); return; }
+            const card = e.target.closest('[data-acao="abrir-hist"]');
+            if (card) abrirDetalheHistorico(card.dataset.id);
         };
 
         if (historico.length === 0) {
@@ -1863,12 +2125,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const campeao = classLista.length > 0 ? classLista[0].nome : 'N/A';
 
             return `
-                <div class="card" style="margin-bottom:12px;">
+                <div class="card card-hist" data-acao="abrir-hist" data-id="${h.id}" style="margin-bottom:12px;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3>🏆 Edição de ${h.data}</h3>
                         <button class="btn btn-danger" style="padding:2px 8px; font-size:0.8rem;" data-acao="excluir-hist" data-id="${h.id}">🗑️ Excluir</button>
                     </div>
-                    <p class="subtext">Modo: ${h.modo === 'todos-contra-todos' ? 'Tabela' : 'Racha Livre'} | 🥇 Campeão: <strong>${escapeHtml(campeao)}</strong></p>
+                    <p class="subtext">Modo: ${h.modo === 'todos-contra-todos' ? 'Tabela' : 'Racha Livre'} | 🥇 Campeão: <strong>${escapeHtml(campeao)}</strong> · toque para abrir ›</p>
                 </div>
             `;
         }).join('') + (ocultos > 0 ? `

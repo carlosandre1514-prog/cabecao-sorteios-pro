@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0b0e0c">
-    <link rel="stylesheet" href="css/style.css?v=20261020c">
+    <link rel="stylesheet" href="css/style.css?v=20261020d">
 </head>
 <body>
     <!-- Projeto: Cabeção Sorteios Pro | Desenvolvedor: Carlos Andre | 2026 -->
@@ -65,6 +65,18 @@
             </div>
         </div>
         <div class="drawer-links">
+            <div class="drawer-section" id="drawer-rachas">
+                <h4>Meus rachas</h4>
+                <div id="lista-rachas"></div>
+                <button type="button" id="btn-novo-racha" class="btn btn-secondary">＋ Criar perfil de racha</button>
+            </div>
+            <div class="drawer-section">
+                <h4>Ajuda e legal</h4>
+                <button type="button" id="btn-suporte" class="drawer-link">💬 Falar com o suporte <span>›</span></button>
+                <button type="button" id="btn-caixa-suporte" class="drawer-link admin hidden">📥 Caixa do suporte (só admin) <span>›</span></button>
+                <a class="drawer-link" href="termos-uso.html">📄 Termos de uso <span>›</span></a>
+                <a class="drawer-link" href="politica-privacidade.html">🔒 Política de privacidade <span>›</span></a>
+            </div>
             <div class="drawer-section">
                 <h4>Sobre o aplicativo</h4>
                 <p class="about-text">Organize rachas com times equilibrados, controle o placar, a tabela e a artilharia e guarde o histórico das suas peladas.</p>
@@ -73,7 +85,6 @@
         </div>
         <div class="drawer-footer">
             <button id="btn-logout" class="btn btn-danger" onclick="fazerLogout()">🚪 Sair da conta</button>
-            <a href="politica-privacidade.html">Política de Privacidade</a>
         </div>
     </aside>
 
@@ -83,7 +94,7 @@
                 <button class="btn-menu-hamburguer" onclick="toggleDrawer()" aria-label="Abrir menu">☰</button>
                 <div class="header-titulos">
                     <h1 id="titulo-tela">Jogadores</h1>
-                    <p>Cabeção Sorteios Pro</p>
+                    <p id="sub-racha">Cabeção Sorteios Pro</p>
                 </div>
                 <img src="img/icon-192.png" alt="Logo" class="app-logo">
             </div>
@@ -266,6 +277,18 @@
         </section>
 
         <!-- ABA 4: HISTÓRICO -->
+        <section id="tab-hist-detalhe" class="tab-content">
+            <div id="conteudo-hist-detalhe"></div>
+        </section>
+
+        <section id="tab-caixa" class="tab-content">
+            <div class="card">
+                <h2>📥 Mensagens para o suporte</h2>
+                <p class="subtext">Tela visível só para o e-mail do administrador.</p>
+            </div>
+            <div id="lista-caixa"></div>
+        </section>
+
         <section id="tab-ranking" class="tab-content">
             <div class="card">
                 <h2>Ranking de gols</h2>
@@ -369,11 +392,12 @@
         window.dispatchEvent(new Event('firebase-ready'));
     </script>
     <!-- ordem importa: logica -> remoto -> auth -> app -> monetizacao -->
-    <script src="js/logica.js?v=20261016c"></script>
-    <script src="js/apito.js?v=20261016c"></script>
-    <script src="js/remoto.js?v=20261016c"></script>
-    <script src="js/auth.js?v=20261016c"></script>
-    <script src="js/app.js?v=20261016c"></script>
-    <script src="js/monetizacao.js?v=20261016c"></script>
+    <script src="js/logica.js?v=20261020d"></script>
+    <script src="js/apito.js?v=20261020d"></script>
+    <script src="js/remoto.js?v=20261020d"></script>
+    <script src="js/auth.js?v=20261020d"></script>
+    <script src="js/app.js?v=20261020d"></script>
+    <script src="js/monetizacao.js?v=20261020d"></script>
+    <script src="js/icones.js?v=20261020d"></script>
 </body>
 </html>

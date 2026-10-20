@@ -447,3 +447,39 @@ input[type="text"], input[type="number"], input[type="password"], input[type="em
 .perfil-campo { width: 100%; padding: 8px 10px; font-size: 1rem; }
 .tab-btn { font-size: 0.68rem; padding-left: 2px; padding-right: 2px; }
 #lista-ranking .item-jogador strong { color: var(--ouro); }
+
+
+/* ---------- 10. ÍCONES SVG (js/icones.js troca os emojis) ---------- */
+.ic { width: 1.2em; height: 1.2em; vertical-align: -0.24em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.ic.star { color: var(--ouro); filter: drop-shadow(0 0 2px rgba(221,180,60,0.45)); }
+.ic.dot { color: var(--verde); }
+.ic.m1 { color: #e2c155; } .ic.m2 { color: #e3ecef; } .ic.m3 { color: #ffa56b; }
+.ic.trophy { color: var(--ouro); } .ic.trash { color: var(--verm); } .ic.ball { color: #fff; }
+.tab-btn .ic { width: 24px; height: 24px; }
+
+/* ---------- 11. MENU LATERAL: rachas, ajuda, caixa do suporte ---------- */
+.racha-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; margin-bottom: 6px; border-radius: 12px; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.07); color: var(--txt); text-align: left; font: inherit; cursor: pointer; }
+.racha-item.on { border-color: var(--neon); background: rgba(147,213,75,0.08); }
+.racha-ic { width: 36px; height: 36px; border-radius: 10px; background: rgba(45,167,98,0.2); display: grid; place-items: center; flex: none; }
+.racha-txt { display: flex; flex-direction: column; min-width: 0; }
+.racha-txt small { color: var(--mudo); font-size: 0.72rem; }
+.racha-tag { margin-left: auto; font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: rgba(147,213,75,0.14); color: var(--neon); }
+.drawer-link { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; background: none; border: 0; border-bottom: 1px solid rgba(255,255,255,0.07); color: var(--txt); padding: 11px 0; font: inherit; font-size: 0.92rem; text-align: left; text-decoration: none; cursor: pointer; }
+.drawer-link:last-child { border-bottom: 0; }
+.drawer-link.admin { color: var(--ouro); }
+.msg-suporte { padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.06); margin-top: 8px; }
+.msg-suporte .msg-texto { margin: 6px 0; }
+.msg-suporte small { color: var(--mudo); }
+.tag-novo, .tag-ok { font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 99px; }
+.tag-novo { background: rgba(221,180,60,0.15); color: var(--ouro); }
+.tag-ok { background: rgba(147,213,75,0.12); color: var(--neon); }
+
+/* ---------- 12. HISTÓRICO (detalhe) e CORRIGIR PLACAR ---------- */
+.card-hist { cursor: pointer; }
+.voltar-hist { background: none; border: 0; color: var(--neon); font: inherit; font-size: 0.95rem; font-weight: 700; text-align: left; padding: 6px 0; cursor: pointer; }
+#conteudo-hist-detalhe, #lista-caixa { display: flex; flex-direction: column; gap: 12px; }
+.btn-corrigir { background: none; border: 0; font-size: 1rem; padding: 2px 8px; cursor: pointer; color: var(--txt); }
+.corrige-linha { display: flex; justify-content: space-around; align-items: flex-start; padding: 10px 0; gap: 8px; }
+.corrige-time { flex: 1; text-align: center; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.corrige-stp { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.corrige-stp strong { font-size: 1.8rem; min-width: 34px; color: var(--neon); }

@@ -115,3 +115,22 @@ Cole em Realtime Database → Regras → Publicar. Esta versão substitui a ante
 
 - `ao_vivo/<codigo>`: qualquer pessoa com o link lê; só o dono grava ou apaga. Não há leitura em `ao_vivo` como um todo, então ninguém consegue listar os códigos.
 - O código tem 8 letras/números sorteados (cerca de 1 trilhão de combinações).
+
+
+## Suporte (Falar com o suporte + Caixa do suporte) e rachas
+
+1. No Realtime Database, crie `configuracoes/admin_email` com o **e-mail da sua conta** (em minúsculas). Só esse e-mail enxerga a "Caixa do suporte" no menu.
+2. Acrescente o nó `suporte` nas regras (mantenha os nós que já existem):
+
+```json
+"suporte": {
+  ".read": "auth != null && auth.token.email === root.child('configuracoes/admin_email').val()",
+  "$id": {
+    ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid) || auth.token.email === root.child('configuracoes/admin_email').val())",
+    ".validate": "newData.hasChildren(['texto', 'em', 'uid'])"
+  }
+}
+```
+
+- Qualquer usuário logado envia mensagem; só o administrador lê e marca como resolvido.
+- Os perfis de racha ficam dentro de `usuarios/<uid>/rachas/<idDoRacha>/...` (mesma regra de `usuarios`, nada a mudar). O "Racha principal" continua nos caminhos de antes (`usuarios/<uid>/jogadores`, `historico`...), então nenhum dado antigo é perdido.

@@ -29,6 +29,7 @@ const ctx = vm.createContext(Object.assign(win, {
     localStorage: { getItem: () => null, setItem() {}, removeItem() {} }, navigator: {}, Event: class { constructor(t) { this.type = t; } },
     Date, Math, JSON, Object, Array, Number, String, Set, Promise, parseInt, parseFloat, isFinite, Infinity, encodeURIComponent
 }));
+win.scrollTo = () => {};
 const rodar = f => vm.runInContext(fs.readFileSync(path.join(raiz, f), 'utf8'), ctx, { filename: f });
 
 // ---- "Firebase" falso: o banco devolve classificação como ARRAY com null (comportamento real) ----
@@ -43,6 +44,9 @@ const banco = {
         partidas: [{ idPartida: 1, rodada: 1, timeA: time(1, [{ id: 1, nome: 'Ana' }]), timeB: { id: 2, nome: 'Time 2' }, finalizada: false }]
     }
 };
+banco.rachasLista = [{ id: 'r2', nome: 'Pelada de Sexta' }];
+banco.rachas = { r2: { jogadores: [{ id: 5, nome: 'Zé', estrelas: 3, isGoleiro: false, presente: false }] } };
+banco.campeonatoAtivo.partidas.push({ idPartida: 2, rodada: 2, timeA: time(1, [{ id: 1, nome: 'Ana' }]), timeB: { id: 2, nome: 'Time 2' }, golsA: 2, golsB: 0, penaltisA: 0, penaltisB: 0, finalizada: true });
 const gravados = [];
 const authCbs = [];
 let falhasGet = 0;      // quantas leituras do banco vão falhar antes de funcionar ("Client is offline")
@@ -58,7 +62,7 @@ win.firebaseFns = {
 };
 win.firebaseReady = true;
 
-['js/logica.js', 'js/remoto.js', 'js/auth.js', 'js/app.js', 'js/monetizacao.js'].forEach(rodar);
+['js/logica.js', 'js/remoto.js', 'js/auth.js', 'js/app.js', 'js/monetizacao.js', 'js/icones.js'].forEach(rodar);
 (document.listeners.DOMContentLoaded || []).forEach(f => f());
 assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (antes dependia de um setTimeout de 500ms)');
 
@@ -119,6 +123,27 @@ assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (a
     await new Promise(r => setImmediate(r));
     assert.ok(els['times-sorteados-container'].children.length >= 2, 'sorteio deveria desenhar os times');
     console.log('✅ sorteio roda e desenha os times');
+
+    // histórico: tocar no campeonato abre a tela de detalhe
+    els['container-historico'].onclick({ target: { closest: s => s.includes('abrir-hist') ? { dataset: { id: '9' } } : null } });
+    assert.ok(els['conteudo-hist-detalhe'].innerHTML.includes('Voltar') && els['conteudo-hist-detalhe'].innerHTML.includes('Time 1'), 'detalhe do histórico deveria abrir');
+    assert.ok(els['lista-confrontos-encerrados'].innerHTML.includes('data-corrigir="2"'), 'confronto finalizado deveria ter o botão de corrigir placar');
+    console.log('✅ histórico abre a tela completa e confrontos têm "corrigir placar"');
+
+    // perfis de racha: lista, troca e gravação no caminho do racha
+    assert.ok(els['lista-rachas'].innerHTML.includes('Racha principal') && els['lista-rachas'].innerHTML.includes('Pelada de Sexta'), 'deveria listar os rachas');
+    els['lista-rachas'].fire('click', { target: { closest: () => ({ dataset: { racha: 'r2' } }) } });
+    await tick(30);
+    assert.ok(gravados.some(([c, v]) => c === 'usuarios/u1/rachaAtivo' && v === 'r2'), 'deveria lembrar o racha ativo');
+    assert.ok(els['sub-racha'].textContent.includes('Pelada de Sexta'), 'subtítulo deveria mostrar o racha ativo');
+    document.getElementById('novo-nome').value = 'Duda';
+    els['btn-add-jogador'].fire('click');
+    await tick(3);
+    assert.ok(gravados.some(([c, v]) => c === 'usuarios/u1/rachas/r2/jogadores' && v.some(j => j.nome === 'Duda')), 'jogador do racha 2 deveria ir para o caminho do racha');
+    els['lista-rachas'].fire('click', { target: { closest: () => ({ dataset: { racha: 'principal' } }) } });
+    await tick(30);
+    assert.ok(els['sub-racha'].textContent.includes('Racha principal'), 'deveria voltar ao racha principal');
+    console.log('✅ rachas: listar, trocar, gravar no caminho certo e voltar ao principal');
 
     // logout limpa estado e não grava lixo
     const antes = gravados.length;
