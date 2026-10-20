@@ -834,7 +834,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             div.innerHTML = `
                 <div>
-                    <strong>${nomeTratado}</strong> ${j.isGoleiro ? '🧤' : ''}
+                    ${j.isGoleiro ? '🧤 ' : ''}<strong>${nomeTratado}</strong>
                     <small style="color:#FFC400; font-weight: bold;">(⭐ ${estrelasFormatadas})</small>
                 </div>
                 <div class="acoes-item">
@@ -953,7 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const estrelasFmt = Number(j.estrelas || 3.0).toFixed(1).replace('.', ',');
             div.innerHTML = `
                 <input type="checkbox" id="p-${j.id}" ${j.presente ? 'checked' : ''}>
-                <label for="p-${j.id}">${escapeHtml(j.nome)} ${j.isGoleiro ? '🧤' : ''} (⭐ ${estrelasFmt})</label>
+                <label for="p-${j.id}">${j.isGoleiro ? '🧤 ' : ''}${escapeHtml(j.nome)} (⭐ ${estrelasFmt})</label>
             `;
             container.appendChild(div);
 
@@ -1018,7 +1018,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const estFmt = Number(j.estrelas || 3.0).toFixed(1).replace('.', ',');
                 return `
                     <li class="item-jogador-time">
-                        <span>${escapeHtml(j.nome)} ${j.isGoleiro ? '🧤' : ''}</span>
+                        <span>${j.isGoleiro ? '🧤 ' : ''}${escapeHtml(j.nome)}</span>
                         <small class="estrelas-jogador">⭐ ${estFmt}</small>
                     </li>
                 `;
@@ -1070,9 +1070,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const media = (t.jogadores.length > 0 ? (t.somaEstrelas / t.jogadores.length) : 0).toFixed(1).replace('.', ',');
             textoFormatado += `*${t.nome.toUpperCase()}* (Média: ⭐ ${media})\n`;
             t.jogadores.forEach((j, index) => {
-                const tagGoleiro = j.isGoleiro ? ' 🧤' : '';
+                const tagGoleiro = j.isGoleiro ? '🧤 ' : '';
                 const estFmt = Number(j.estrelas || 3.0).toFixed(1).replace('.', ',');
-                textoFormatado += `${index + 1}. ${j.nome}${tagGoleiro} (⭐ ${estFmt})\n`;
+                textoFormatado += `${index + 1}. ${tagGoleiro}${j.nome} (⭐ ${estFmt})\n`;
             });
 
             if (i < sorteioAtual.length - 1) {
