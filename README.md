@@ -104,3 +104,10 @@ fica em `js/apito.js` e é o mesmo no app e no link. Regras do Firebase: `docs/C
   mesmos números), **suplentes** que sobem sozinhos quando o organizador tira alguém (✕), e **pagamento**: o organizador
   marca quem pagou, define prazo e "como pagar"; depois do prazo pode tirar quem não pagou de uma vez. Lógica em `Logica.resumirPresenca` (com testes).
   Regras do Firebase no fim de `docs/COMO-CONFIGURAR-MONETIZACAO.md`.
+- **Cara do racha** (menu → "🎨 Personalizar racha", ou toque no escudo do topo): nome (grátis), escudo e cor
+  (Pro). Fica em `usuarios/<uid>/[rachas/<id>/]visual` e aparece no app inteiro (a cor troca as variáveis
+  `--neon/--verde` do CSS), no link da lista, no placar ao vivo e nas imagens do WhatsApp. Cores em `Logica.CORES_RACHA`.
+- **Mensagem da lista no WhatsApp**: "Enviar lista no grupo" / "Copiar lista" mandam a lista numerada com vagas em
+  aberto, goleiros, suplentes, pagamento e o link (`Logica.textoListaWhatsApp`, com testes).
+- **Repaginada**: avatares com iniciais, estrelas em selo, botões de ícone, interruptor de presença, filtro de
+  estrelas recolhido, histórico em cartões e página da lista com cabeçalho do racha e vagas em aberto.

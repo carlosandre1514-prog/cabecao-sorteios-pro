@@ -273,6 +273,7 @@
             dono, atualizadoEm: agora, encerrado: !!encerrado, modo: e.modo || 'todos-contra-todos',
             times: (e.times || []).map(t => ({ nome: String(t.nome), jogadores: (t.jogadores || []).map(j => String(j.nome)) })),
             classificacao: cl, jogos, proxima, fila: (e.fila || []).map(nome), cron: e.cron || null,
+            visual: e.visual && (e.visual.nome || e.visual.escudo || e.visual.cor) ? { nome: String(e.visual.nome || ''), cor: String(e.visual.cor || ''), escudo: String(e.visual.escudo || '') } : null,
             artilharia: Object.entries(e.artilharia || {}).sort((x, y) => y[1] - x[1]).map(([n, g]) => ({ nome: n, gols: g }))
         };
     }
@@ -494,6 +495,56 @@
         return (pessoas || []).find(p => p && normalizarNome(p.nome) === alvo) || null;
     }
 
+    // ---------- Cara do racha (🎨 Personalizar): cores ----------
+    // a = cor de destaque (textos/realces), b = cor forte (botões). A chave é o que fica salvo.
+    const CORES_RACHA = {
+        verde: { nome: 'Verde', a: '#93d54b', b: '#2da762' },
+        azul: { nome: 'Azul', a: '#6cb8ff', b: '#2f6fd6' },
+        vermelho: { nome: 'Vermelho', a: '#ff7a7a', b: '#d13b47' },
+        laranja: { nome: 'Laranja', a: '#ffb057', b: '#e0702a' },
+        amarelo: { nome: 'Amarelo', a: '#f5d547', b: '#c9a227' },
+        roxo: { nome: 'Roxo', a: '#be98ff', b: '#7b4fd6' },
+        rosa: { nome: 'Rosa', a: '#ff8cc0', b: '#d0457f' },
+        ciano: { nome: 'Ciano', a: '#5ce6d3', b: '#1fa395' },
+        prata: { nome: 'Preto e branco', a: '#e8eef1', b: '#8b98a0' }
+    };
+    function corRacha(chave) { return CORES_RACHA[chave] || CORES_RACHA.verde; }
+    function hexParaRgb(hex) {
+        const h = String(hex || '').replace('#', '');
+        const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+        return [(n >> 16) & 255, (n >> 8) & 255, n & 255].join(', ');
+    }
+
+    // ---------- Lista de presença: mensagem pronta para o WhatsApp ----------
+    // d = presenca/<codigo>, r = resumirPresenca(...), link = URL da página, fmt = formata o prazo (ms -> texto)
+    function textoListaWhatsApp(d, r, link, fmt) {
+        d = d || {}; fmt = fmt || (ms => new Date(ms).toLocaleString('pt-BR'));
+        const L = [];
+        const titulo = String((d.visual && d.visual.nome) || d.titulo || 'Racha').toUpperCase();
+        L.push('⚽ *' + titulo + '*');
+        if (d.quando) L.push('📅 ' + d.quando);
+        if (d.times) L.push('🏟️ ' + d.times + ' times de ' + d.porTime + ' + goleiro (' + d.limite + ' na linha)');
+        if (d.pagamento) L.push('💰 ' + d.pagamento);
+        if (d.prazo) L.push('⏰ Pagar até ' + fmt(d.prazo));
+        const pag = c => !d.prazo && !d.pagamento ? '' : c.pago ? ' ✅' : c.aConfirmar ? ' 🕐' : '';
+        const linha = r.confirmados.filter(c => !c.goleiro), gols = r.confirmados.filter(c => c.goleiro);
+        L.push('', '✅ *LINHA (' + linha.length + (r.limite ? '/' + r.limite : '') + ')*');
+        linha.forEach((c, i) => L.push((i + 1) + '. ' + c.nome + pag(c)));
+        if (r.limite) for (let i = linha.length; i < r.limite; i++) L.push((i + 1) + '. ');
+        if (gols.length || r.vagasGoleiro) {
+            L.push('', '🧤 *GOLEIROS (' + gols.length + (r.vagasGoleiro ? '/' + r.vagasGoleiro : '') + ')*');
+            gols.forEach((c, i) => L.push((i + 1) + '. ' + c.nome + pag(c)));
+            if (r.vagasGoleiro) for (let i = gols.length; i < r.vagasGoleiro; i++) L.push((i + 1) + '. ');
+        }
+        if (r.espera.length) {
+            L.push('', '⏳ *SUPLENTES*');
+            r.espera.forEach((c, i) => L.push((i + 1) + '. ' + c.nome + (c.goleiro ? ' 🧤' : '')));
+        }
+        if (d.prazo || d.pagamento) L.push('', '✅ pago · 🕐 avisou que pagou');
+        if (link) L.push('', '👉 *Confirme aqui:* ' + link);
+        return L.join('\n');
+    }
+
     return {
         embaralhar, idUnico, chaveSegura, limparMapa, normalizarTime, compararVersoes,
         filtrarLinhasLote, sortearTimes, gerarPartidas, novaClassificacao,
@@ -501,6 +552,6 @@
         normalizarEstrelas, filtrarPorEstrelas,
         gravarNoCaminho, lerDoCaminho, diaISO, ultimosDias, resumirMetricas,
         nomeDaChave, resumoCampeonato, textoResumo, proximoTurno, resumirPresenca,
-        normalizarNome, acharPorNome
+        normalizarNome, acharPorNome, CORES_RACHA, corRacha, hexParaRgb, textoListaWhatsApp
     };
 });

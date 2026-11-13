@@ -7,9 +7,36 @@
     <meta name="description" content="Confirme se você vai no racha.">
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0b0e0c">
-    <link rel="stylesheet" href="css/style.css?v=20261113g">
+    <link rel="stylesheet" href="css/style.css?v=20261113h">
     <style>
         .app-container { padding-bottom: 32px; }
+        body { background-image: radial-gradient(ellipse 90% 40% at 50% -8%, rgba(var(--verde-rgb), 0.38), transparent 72%); }
+        .hero { display: flex; align-items: center; gap: 14px; padding: calc(22px + env(safe-area-inset-top)) 6px 14px; animation: entra .45s ease both; }
+        .hero-escudo { width: 76px; height: 76px; border-radius: 20px; object-fit: contain; flex: none; background: rgba(0,0,0,.35); border: 1px solid rgba(var(--neon-rgb), .35); padding: 4px; box-shadow: 0 8px 26px rgba(var(--verde-rgb), .3); }
+        .hero-txt { min-width: 0; }
+        .hero-kicker { color: var(--neon); font-weight: 900; font-size: .7rem; letter-spacing: 1.6px; }
+        .hero h1 { font-size: 1.65rem; line-height: 1.1; font-weight: 900; letter-spacing: -.4px; margin: 2px 0 8px; overflow-wrap: anywhere; }
+        .hero-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 99px; font-size: .75rem; font-weight: 700; background: rgba(0,0,0,.35); border: 1px solid var(--linha); color: var(--txt); }
+        .chip.fechada { color: var(--verm); border-color: rgba(222,90,104,.45); }
+        @keyframes entra { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        main .card { animation: entra .4s ease both; }
+        main .card:nth-child(2) { animation-delay: .05s; } main .card:nth-child(3) { animation-delay: .1s; } main .card:nth-child(4) { animation-delay: .15s; }
+        main.sem-anim .card { animation: none; }
+        .vagas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .vaga-box { background: rgba(0,0,0,.28); border: 1px solid var(--linha); border-radius: 14px; padding: 12px; }
+        .vaga-box strong { display: block; font-size: 1.9rem; line-height: 1; font-weight: 900; color: var(--neon); font-variant-numeric: tabular-nums; }
+        .vaga-box strong small { font-size: 1rem; color: var(--mudo); font-weight: 700; }
+        .vaga-box > span { font-size: .78rem; color: var(--mudo); font-weight: 700; }
+        .vaga-box .barra { margin: 8px 0 0; height: 6px; }
+        .status-vagas { margin: 10px 0 0; font-size: .85rem; font-weight: 700; }
+        .status-vagas.lotado { color: var(--ouro); }
+        .av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: .78rem; font-weight: 900; color: #0b0e0c; }
+        .av.grande { width: 64px; height: 64px; font-size: 1.4rem; margin: 0 auto 8px; box-shadow: 0 0 0 3px rgba(var(--neon-rgb), .35); }
+        .sub-lista { font-size: .72rem; font-weight: 900; letter-spacing: 1px; color: var(--mudo); margin: 14px 0 2px; }
+        .sub-lista:first-of-type { margin-top: 4px; }
+        .linha-pessoa.vazia { color: var(--mudo); opacity: .55; }
+        .linha-pessoa.vazia .av { background: transparent !important; border: 1px dashed var(--mudo); }
         main { display: flex; flex-direction: column; gap: 12px; }
         .aviso-centro { text-align: center; padding: 40px 10px; color: var(--mudo); }
         .contador { display: flex; align-items: baseline; gap: 8px; }
@@ -26,8 +53,9 @@
         .link-discreto { background: none; border: none; color: var(--mudo); text-decoration: underline; font: inherit; font-size: .85rem; margin-top: 12px; cursor: pointer; }
         .linha-pessoa { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--linha); }
         .linha-pessoa:last-child { border-bottom: none; }
-        .linha-pessoa .pos { min-width: 26px; color: var(--mudo); font-weight: 800; font-size: .85rem; }
-        .linha-pessoa .tag { margin-left: auto; font-size: .72rem; color: var(--mudo); }
+        .linha-pessoa .pos { min-width: 20px; color: var(--mudo); font-weight: 800; font-size: .8rem; }
+        .linha-pessoa .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .linha-pessoa .tag { margin-left: auto; font-size: .72rem; color: var(--mudo); white-space: nowrap; }
         .linha-pessoa.sou-eu { color: var(--neon); font-weight: 800; }
         .lista-curta { color: var(--mudo); font-size: .9rem; line-height: 1.6; }
         .entrar-form { display: grid; gap: 8px; }
@@ -54,13 +82,12 @@
 </head>
 <body>
     <div class="app-container">
-        <header class="app-header">
-            <div class="header-content">
-                <div class="header-titulos">
-                    <h1 id="titulo">Lista do racha</h1>
-                    <p id="quando">Carregando...</p>
-                </div>
-                <img src="img/icon-192.png" alt="Logo" class="app-logo">
+        <header class="hero" id="hero">
+            <img src="img/icon-192.png" alt="" class="hero-escudo" id="escudo">
+            <div class="hero-txt">
+                <small class="hero-kicker">LISTA DO RACHA</small>
+                <h1 id="titulo">Carregando...</h1>
+                <div class="hero-chips" id="chips"><span id="quando"></span></div>
             </div>
         </header>
 
@@ -80,7 +107,7 @@
         <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro</p>
     </div>
 
-    <script src="js/logica.js?v=20261113g"></script>
+    <script src="js/logica.js?v=20261113h"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getDatabase, ref, onValue, get, set, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
@@ -150,11 +177,37 @@
             }
         }
 
+        // cor do racha (🎨 Personalizar no app)
+        let visualAplicado = '';
+        function aplicarVisual(v) {
+            const chave = JSON.stringify(v || {});
+            if (chave === visualAplicado) return;
+            visualAplicado = chave;
+            v = v || {};
+            const c = Logica.corRacha(v.cor), raiz = document.documentElement.style;
+            raiz.setProperty('--neon', c.a); raiz.setProperty('--verde', c.b);
+            raiz.setProperty('--neon-rgb', Logica.hexParaRgb(c.a)); raiz.setProperty('--verde-rgb', Logica.hexParaRgb(c.b));
+            $('escudo').src = /^data:image\//.test(v.escudo || '') ? v.escudo : 'img/icon-192.png';
+        }
+        // avatar com as iniciais (cor fixa por nome)
+        function avatar(nome, grande) {
+            const n = String(nome || '?').trim();
+            const partes = n.split(/\s+/);
+            const ini = ((partes[0] || '?')[0] + (partes.length > 1 ? partes[partes.length - 1][0] : (partes[0][1] || ''))).toUpperCase();
+            let h = 0; for (const ch of n) h = (h * 31 + ch.charCodeAt(0)) % 360;
+            return `<span class="av${grande ? ' grande' : ''}" style="background:hsl(${h} 62% 68%)">${esc(ini)}</span>`;
+        }
+        let primeiraVez = true;
+
         function desenhar() {
             const d = lista;
-            document.title = (d.titulo || 'Lista do racha') + ' · Lista';
-            $('titulo').textContent = d.titulo || 'Lista do racha';
-            $('quando').textContent = d.quando ? '📅 ' + d.quando : 'Confirme se você vai';
+            aplicarVisual(d.visual);
+            const nomeRacha = (d.visual && d.visual.nome) || d.titulo || 'Lista do racha';
+            document.title = nomeRacha + ' · Lista';
+            $('titulo').textContent = nomeRacha;
+            $('chips').innerHTML = (d.quando ? `<span class="chip">📅 ${esc(d.quando)}</span>` : '')
+                + (d.times ? `<span class="chip">⚽ ${d.times} times · ${d.porTime} + goleiro</span>` : '')
+                + (d.aberta ? '' : '<span class="chip fechada">🔒 Lista fechada</span>');
             const r = Logica.resumirPresenca(d.jogadores, d.respostas, d.limite, { vagasGoleiro: d.vagasGoleiro, pagos: d.pagos, prazo: d.prazo });
             const fmtPrazo = ms => new Date(ms).toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
             const jogadores = Object.values(d.jogadores || {}).filter(Boolean);
@@ -174,14 +227,17 @@
             };
             let h = '';
 
-            // contador
-            const lim = r.limite;
+            // vagas
+            const lim = r.limite, vg = r.vagasGoleiro;
+            const pct = (a, b) => Math.min(100, Math.round(a / b * 100));
+            const faltam = lim ? Math.max(0, lim - r.linhaConfirmados) : 0;
             h += `<div class="card">
-                ${d.aberta ? '' : '<span class="tag-fechada">🔒 Lista fechada pelo organizador</span>'}
-                ${d.times ? `<p class="subtext" style="margin:0 0 6px;">⚽ ${d.times} times de ${d.porTime} na linha + goleiro</p>` : ''}
-                <div class="contador" style="margin-top:${d.aberta ? 0 : 10}px;"><strong>${r.linhaConfirmados}${lim ? '/' + lim : ''}</strong><span class="subtext">na linha${r.vagasGoleiro || r.goleirosConfirmados ? ` · 🧤 ${r.goleirosConfirmados}${r.vagasGoleiro ? '/' + r.vagasGoleiro : ''} goleiro(s)` : ''}</span></div>
-                ${lim ? `<div class="barra"><div style="width:${Math.min(100, Math.round(r.linhaConfirmados / lim * 100))}%"></div></div>` : ''}
-                <p class="subtext" style="margin:6px 0 0;">${r.espera.length ? `⏳ ${r.espera.length} suplente(s) · ` : ''}${r.naoVao.length} não vão · ${r.semResposta.length} sem resposta</p>
+                <div class="vagas">
+                    <div class="vaga-box"><strong>${r.linhaConfirmados}${lim ? `<small>/${lim}</small>` : ''}</strong><span>na linha</span>${lim ? `<div class="barra"><div style="width:${pct(r.linhaConfirmados, lim)}%"></div></div>` : ''}</div>
+                    <div class="vaga-box"><strong>${r.goleirosConfirmados}${vg ? `<small>/${vg}</small>` : ''}</strong><span>🧤 goleiros</span>${vg ? `<div class="barra"><div style="width:${pct(r.goleirosConfirmados, vg)}%"></div></div>` : ''}</div>
+                </div>
+                <p class="status-vagas ${lim && !faltam ? 'lotado' : ''}">${!lim ? '✅ Sem limite de vagas' : faltam ? `🔥 Faltam ${faltam} vaga${faltam > 1 ? 's' : ''} na linha` : '⚡ Linha lotada! Quem confirmar agora entra como suplente'}</p>
+                <p class="subtext" style="margin:4px 0 0;">${r.espera.length ? `⏳ ${r.espera.length} suplente(s) · ` : ''}${r.naoVao.length} não vão · ${r.semResposta.length} sem resposta</p>
             </div>`;
             if (d.pagamento || d.prazo) h += `<div class="card card-pag">
                 <h2 style="margin-bottom:6px;">💰 Pagamento</h2>
@@ -203,7 +259,7 @@
                         ${d.aberta ? '<button class="btn btn-pagar" data-paguei="sim">💸 Já paguei</button>' : ''}</div>`;
                 const cls = est === 'vou' ? 'vou' : est.startsWith('espera') ? 'espera' : est === 'nao' ? 'nao' : '';
                 h += `<div class="card eu">
-                    <p class="subtext" style="margin:0;">Você é</p>
+                    ${avatar(meu.nome, true)}
                     <div class="nome-eu">${meu.goleiro ? '🧤 ' : ''}${esc(meu.nome)}</div>
                     <div class="estado ${cls}">${txt}</div>
                     ${pagTxt}
@@ -237,13 +293,21 @@
                 : p.pago ? '<span class="tag pago">💰 pago ✔</span>'
                 : p.aConfirmar ? '<span class="tag aguardando">🕐 pagou (a confirmar)</span>'
                 : `<span class="tag ${p.atrasado ? 'atrasado' : ''}">${p.atrasado ? '⚠️ não pagou' : '⏳ a pagar'}</span>`;
-            const linha = (p, i) => `<div class="linha-pessoa ${p.id === eu ? 'sou-eu' : ''}"><span class="pos">${i + 1}</span><span>${p.goleiro ? '🧤 ' : ''}${esc(p.nome)}</span>${tagPag(p)}</div>`;
-            h += `<div class="card"><h2>✅ Confirmados (${r.confirmados.length})</h2>${r.confirmados.length ? r.confirmados.map(linha).join('') : '<p class="subtext">Ninguém confirmou ainda. Seja o primeiro!</p>'}</div>`;
+            const linha = (p, i) => `<div class="linha-pessoa ${p.id === eu ? 'sou-eu' : ''}"><span class="pos">${i + 1}</span>${avatar(p.nome)}<span class="nm">${p.goleiro ? '🧤 ' : ''}${esc(p.nome)}</span>${tagPag(p)}</div>`;
+            const vazia = i => `<div class="linha-pessoa vazia"><span class="pos">${i + 1}</span><span class="av"></span><span class="nm">vaga aberta</span></div>`;
+            const doLinha = r.confirmados.filter(c => !c.goleiro), doGol = r.confirmados.filter(c => c.goleiro);
+            const vagasAbertas = (n, ini) => Array.from({ length: Math.max(0, Math.min(n, 6)) }, (_, k) => vazia(ini + k)).join('');
+            h += `<div class="card"><h2>✅ Confirmados (${r.confirmados.length})</h2>
+                ${r.confirmados.length || lim ? `<p class="sub-lista">LINHA</p>${doLinha.map(linha).join('')}${lim ? vagasAbertas(lim - doLinha.length, doLinha.length) : ''}
+                ${doGol.length || vg ? `<p class="sub-lista">GOLEIROS</p>${doGol.map(linha).join('')}${vg ? vagasAbertas(vg - doGol.length, doGol.length) : ''}` : ''}`
+                : '<p class="subtext">Ninguém confirmou ainda. Seja o primeiro!</p>'}</div>`;
             if (r.espera.length) h += `<div class="card"><h2>⏳ Suplentes (${r.espera.length})</h2><p class="subtext">Se alguém desistir ou não pagar, o primeiro suplente entra.</p>${r.espera.map(linha).join('')}</div>`;
             if (r.naoVao.length) h += `<div class="card"><h2>❌ Não vão (${r.naoVao.length})</h2><p class="lista-curta">${r.naoVao.map(p => esc(p.nome) + (p.removido ? ' (retirado)' : '')).join(', ')}</p></div>`;
             if (r.semResposta.length) h += `<div class="card"><h2>🤔 Ainda não responderam (${r.semResposta.length})</h2><p class="lista-curta">${r.semResposta.map(p => esc(p.nome)).join(', ')}</p></div>`;
 
             const antes = $('meu-nome') ? { nome: $('meu-nome').value, gol: $('meu-goleiro').checked, foco: document.activeElement === $('meu-nome') } : null;
+            $('conteudo').classList.toggle('sem-anim', !primeiraVez);
+            primeiraVez = false;
             $('conteudo').innerHTML = h;
             if (antes && $('meu-nome')) {
                 $('meu-nome').value = antes.nome; $('meu-goleiro').checked = antes.gol;
@@ -297,20 +361,20 @@
         });
 
         if (codigo.length !== 8) {
-            $('quando').textContent = 'Link inválido';
+            $('titulo').textContent = 'Link inválido';
             aviso('Este link não está completo. Peça o link de novo para quem organiza o racha.');
         } else {
             contar('presenca_visita');
             onValue(ref(db, 'presenca/' + codigo), (snap) => {
                 if (!snap.exists()) {
-                    $('quando').textContent = 'Lista encerrada';
+                    $('titulo').textContent = 'Lista encerrada';
                     aviso('Esta lista não existe mais, ou o organizador encerrou o link.');
                     return;
                 }
                 lista = snap.val();
                 desenhar();
             }, () => {
-                $('quando').textContent = 'Sem conexão';
+                $('titulo').textContent = 'Sem conexão';
                 aviso('Não foi possível carregar. Confira sua internet — a página tenta de novo sozinha.');
             });
         }

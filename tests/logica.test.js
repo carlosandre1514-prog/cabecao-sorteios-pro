@@ -307,3 +307,19 @@ t('pagamento: jogador diz "já paguei" -> a confirmar (não conta como atrasado)
     assert.deepStrictEqual(r.atrasados.map(x => x.nome), ['Bia']);
     assert.strictEqual(r.pagos, 1); assert.strictEqual(r.pendentes, 1);
 });
+
+t('cara do racha: cores e mensagem da lista para o WhatsApp', () => {
+    assert.strictEqual(L.corRacha('azul').b, '#2f6fd6');
+    assert.strictEqual(L.corRacha('inexistente').b, '#2da762');
+    assert.strictEqual(L.hexParaRgb('#2da762'), '45, 167, 98');
+    const js = [{ id: '1', nome: 'Ana' }, { id: '2', nome: 'Bia', g: true }, { id: '3', nome: 'Caio' }, { id: '4', nome: 'Duda' }];
+    const d = { visual: { nome: 'Pelada do Zé' }, quando: 'Sexta 20h', times: 2, porTime: 1, limite: 2, vagasGoleiro: 2, pagamento: 'R$ 15 no Pix', prazo: 1,
+        respostas: { 1: { status: 'vou', em: 1, paguei: 9 }, 2: { status: 'vou', em: 2 }, 3: { status: 'vou', em: 3 }, 4: { status: 'vou', em: 4 } }, pagos: { 3: true } };
+    const r = L.resumirPresenca(js, d.respostas, d.limite, { vagasGoleiro: 2, pagos: d.pagos, prazo: 1e15 });
+    const txt = L.textoListaWhatsApp(d, r, 'https://x/presenca.html?c=ABC', () => 'sex 18h');
+    assert.ok(txt.startsWith('⚽ *PELADA DO ZÉ*'));
+    assert.ok(txt.includes('✅ *LINHA (2/2)*\n1. Ana 🕐\n2. Caio ✅'));
+    assert.ok(txt.includes('🧤 *GOLEIROS (1/2)*\n1. Bia\n2. '));   // vaga de goleiro em aberto
+    assert.ok(txt.includes('⏳ *SUPLENTES*\n1. Duda'));
+    assert.ok(txt.includes('⏰ Pagar até sex 18h') && txt.endsWith('👉 *Confirme aqui:* https://x/presenca.html?c=ABC'));
+});

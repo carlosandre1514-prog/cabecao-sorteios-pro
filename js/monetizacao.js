@@ -83,6 +83,7 @@
                 <ul class="pro-beneficios">
                     <li>👥 Jogadores <strong>ilimitados</strong></li>
                     <li>📜 Histórico <strong>completo</strong> de campeonatos</li>
+                    <li>🎨 <strong>Escudo e cor</strong> do seu racha no app, na lista e nas imagens</li>
                     <li>🚫 Sem banners de patrocinador</li>
                     <li>🏅 Selo Pro no seu perfil</li>
                     <li>🚀 Acesso antecipado às novidades</li>

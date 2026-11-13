@@ -6,7 +6,7 @@
     <title>Placar ao vivo · Cabeção Sorteios Pro</title>
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0b0e0c">
-    <link rel="stylesheet" href="css/style.css?v=20261113g">
+    <link rel="stylesheet" href="css/style.css?v=20261113h">
     <style>
         .app-container { padding-bottom: 32px; }
         main { display: flex; flex-direction: column; gap: 12px; }
@@ -44,10 +44,10 @@
         <header class="app-header">
             <div class="header-content">
                 <div class="header-titulos">
-                    <h1>Placar ao vivo</h1>
+                    <h1 id="titulo-vivo">Placar ao vivo</h1>
                     <p><span id="status" class="status"><span class="ponto"></span><span id="status-txt">Conectando...</span></span> · <span id="atualizado"></span></p>
                 </div>
-                <img src="img/icon-192.png" alt="Logo" class="app-logo">
+                <img src="img/icon-192.png" alt="Logo" class="app-logo" id="escudo-vivo">
             </div>
         </header>
 
@@ -76,7 +76,8 @@
         <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro · esta página só mostra os resultados</p>
     </div>
 
-    <script src="js/apito.js?v=20261113g"></script>
+    <script src="js/logica.js?v=20261113h"></script>
+    <script src="js/apito.js?v=20261113h"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getDatabase, ref, onValue, get, set, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
@@ -170,7 +171,23 @@
         const codigo = (new URLSearchParams(location.search).get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
         let primeiraVez = true;
 
+        // cara do racha (🎨 Personalizar no app): nome, escudo e cor
+        let visualAplicado = '';
+        function aplicarVisual(v) {
+            const chave = JSON.stringify(v || {});
+            if (chave === visualAplicado) return;
+            visualAplicado = chave;
+            v = v || {};
+            const c = Logica.corRacha(v.cor), raiz = document.documentElement.style;
+            raiz.setProperty('--neon', c.a); raiz.setProperty('--verde', c.b);
+            raiz.setProperty('--neon-rgb', Logica.hexParaRgb(c.a)); raiz.setProperty('--verde-rgb', Logica.hexParaRgb(c.b));
+            $('escudo-vivo').src = /^data:image\//.test(v.escudo || '') ? v.escudo : 'img/icon-192.png';
+            $('titulo-vivo').textContent = v.nome ? v.nome : 'Placar ao vivo';
+            if (v.nome) document.title = v.nome + ' · Placar ao vivo';
+        }
+
         function desenhar(d) {
+            aplicarVisual(d.visual);
             const encerrado = !!d.encerrado;
             encerradoAoVivo = encerrado;
             cron = d.cron || null;

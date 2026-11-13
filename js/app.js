@@ -141,8 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const f = filtrosEstrelas[chave] = { min: '', max: '', opMin: '>=', opMax: '<=' };
         if (!box) return;
         box.className = 'filtro-estrelas';
-        box.innerHTML = `
-            <strong>⭐ Filtrar por estrelas</strong>
+        box.innerHTML = `<details><summary>⭐ Filtrar por estrelas</summary>
             <div class="filtro-linha">
                 <select data-f="opMin" aria-label="Comparação mínima"><option value=">=">maior ou igual a</option><option value=">">maior que</option></select>
                 <input type="number" data-f="min" step="0.1" min="0" max="5" inputmode="decimal" placeholder="ex: 1,5">
@@ -152,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="number" data-f="max" step="0.1" min="0" max="5" inputmode="decimal" placeholder="ex: 2">
                 <button type="button" class="btn btn-secondary" data-f-limpar style="padding: 4px 10px;">Limpar</button>
             </div>
-            <small class="filtro-resumo subtext"></small>`;
+            </details><small class="filtro-resumo subtext"></small>`;
         const sync = () => { box.querySelectorAll('[data-f]').forEach(el => { f[el.dataset.f] = el.value; }); aoMudar(); };
         box.querySelectorAll('[data-f]').forEach(el => {
             el.addEventListener('input', sync);
@@ -208,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pararEscutaPresenca();
         presencaCodigo = null; presencaDados = null; presencaAssinatura = '';
         renderizarCardPresenca();
+        visualRacha = {}; aplicarVisual();
         dadosCarregados = false;
     }
 
@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
         aoVivoPendente = Logica.montarAoVivo({
             modo: modoJogoAtual, times: timesSorteados, classificacao, partidas, partidaAtualIndex,
             partidasRacha: partidasRachaHistorico, artilharia, timeA: timeEmCampoA, timeB: timeEmCampoB, fila: filaTimes,
-            placarRacha, cron: montarCron()
+            placarRacha, cron: montarCron(), visual: visualRacha
         }, currentUserUid, Date.now(), encerrado);
         const codigo = aoVivoCodigo;
         clearTimeout(aoVivoTimer);
@@ -564,18 +564,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const bf = document.getElementById('btn-presenca-fechar');
         if (bf) bf.textContent = d.aberta === false ? '🔓 Reabrir lista' : '🔒 Fechar lista';
     }
+    // mensagem no formato das listas do WhatsApp: vagas numeradas, goleiros, suplentes, pagamento e o link
+    function textoListaPresenca() {
+        const d = Object.assign({}, presencaDados || {}, { titulo: (presencaDados && presencaDados.titulo) || tituloRacha(), visual: visualRacha });
+        return Logica.textoListaWhatsApp(d, resumoPresencaAtual(), linkPresenca(), fmtPrazo);
+    }
     async function compartilharPresenca() {
         if (!presencaCodigo) return;
-        const d = presencaDados || {};
-        const vagas = d.times ? `\n⚽ ${d.times} times de ${d.porTime} + goleiro (${d.limite} na linha)` : '';
-        const pag = (d.pagamento ? `\n💰 ${d.pagamento}` : '') + (d.prazo ? `\n⏰ Pagar até ${fmtPrazo(d.prazo)}` : '');
-        const texto = `📋 *Lista do ${d.titulo || tituloRacha()}*${d.quando ? ' — ' + d.quando : ''}${vagas}${pag}\nDigite seu nome e confirme 👇`;
-        const url = linkPresenca();
+        const texto = textoListaPresenca();
         if (window.Metricas) Metricas.evento('presenca_enviada');
         if (navigator.share) {
-            try { await navigator.share({ title: 'Lista do racha', text: texto, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+            try { await navigator.share({ text: texto }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
         }
-        toast(await copiarTexto(texto + '\n' + url) ? 'Mensagem com o link copiada! Cole no grupo.' : 'Copie o link no campo acima.');
+        toast(await copiarTexto(texto) ? '📋 Lista copiada! Cole no grupo.' : 'Copie o link no campo acima.');
     }
     // datetime-local <-> ms (hora do aparelho)
     const paraCampoData = ms => { if (!ms) return ''; const d = new Date(ms), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
@@ -642,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const zerar = m.querySelector('#pr-zerar').checked;
             const codigo = gerarCodigoAoVivo();
-            const dados = Object.assign({ dono: currentUserUid, titulo: tituloRacha(), aberta: true, criadoEm: Date.now(), jogadores: jogadoresPublicos() }, cfg);
+            const dados = Object.assign({ dono: currentUserUid, titulo: tituloRacha(), aberta: true, criadoEm: Date.now(), jogadores: jogadoresPublicos(), visual: visualRacha }, cfg);
             try {
                 await f.set(f.ref(window.firebaseDb, 'presenca/' + codigo), dados);
             } catch (e) {
@@ -704,7 +705,8 @@ document.addEventListener('DOMContentLoaded', () => {
         $('btn-presenca-criar')?.addEventListener('click', () => abrirConfigPresenca(false));
         $('btn-presenca-enviar')?.addEventListener('click', compartilharPresenca);
         $('btn-presenca-copiar')?.addEventListener('click', async () => {
-            toast(await copiarTexto(linkPresenca()) ? 'Link copiado!' : 'Copie o link no campo acima.');
+            if (window.Metricas) Metricas.evento('presenca_lista_copiada');
+            toast(await copiarTexto(textoListaPresenca()) ? '📋 Lista atualizada copiada! Cole no grupo.' : 'Copie o link no campo acima.');
         });
         $('btn-presenca-fechar')?.addEventListener('click', async () => {
             if (!presencaCodigo) return;
@@ -875,8 +877,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             aoVivoCodigo = (base.aoVivo && base.aoVivo.codigo) || null;
             presencaCodigo = (base.presenca && base.presenca.codigo) || null;
+            visualRacha = (base.visual && typeof base.visual === 'object') ? base.visual : {};
             presencaAssinatura = '';
             dadosCarregados = true;
+            aplicarVisual();
             escutarPresenca();
             renderizarRachas();
             verificarAdmin();
@@ -988,6 +992,15 @@ document.addEventListener('DOMContentLoaded', () => {
             btnCancelar.addEventListener('click', cancelHandler);
             modal.classList.remove('hidden');
         });
+    }
+
+    // bolinha com as iniciais (cor fixa por nome) — usada nas listas de jogadores
+    function avatarHtml(nome) {
+        const n = String(nome || '?').trim();
+        const partes = n.split(/\s+/);
+        const ini = ((partes[0] || '?')[0] + (partes.length > 1 ? partes[partes.length - 1][0] : (partes[0][1] || ''))).toUpperCase();
+        let h = 0; for (const ch of n) h = (h * 31 + ch.charCodeAt(0)) % 360;
+        return `<span class="av" style="background:hsl(${h} 62% 68%)">${escapeHtml(ini)}</span>`;
     }
 
     function escapeHtml(texto) {
@@ -1277,13 +1290,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const estrelasFormatadas = Number(j.estrelas || 3.0).toFixed(1).replace('.', ',');
 
             div.innerHTML = `
-                <div>
-                    ${j.isGoleiro ? '🧤 ' : ''}<strong>${nomeTratado}</strong>
-                    <small style="color:#ddb43c; font-weight: bold;">(⭐ ${estrelasFormatadas})</small>
+                <div class="jog-info">
+                    ${avatarHtml(j.nome)}
+                    <div class="jog-txt"><strong>${j.isGoleiro ? '🧤 ' : ''}${nomeTratado}</strong><span class="pill-est">⭐ ${estrelasFormatadas}</span></div>
                 </div>
                 <div class="acoes-item">
-                    <button class="btn-edit" data-acao="editar" data-id="${j.id}">✏️ Editar</button>
-                    <button class="btn btn-danger" style="padding: 2px 8px; margin-left: 5px;" data-acao="excluir" data-id="${j.id}">🗑️ Excluir</button>
+                    <button class="btn-icone" data-acao="editar" data-id="${j.id}" aria-label="Editar ${nomeTratado}" title="Editar">✏️</button>
+                    <button class="btn-icone perigo" data-acao="excluir" data-id="${j.id}" aria-label="Excluir ${nomeTratado}" title="Excluir">🗑️</button>
                 </div>
             `;
             container.appendChild(div);
@@ -1396,8 +1409,8 @@ document.addEventListener('DOMContentLoaded', () => {
             div.className = 'item-presenca';
             const estrelasFmt = Number(j.estrelas || 3.0).toFixed(1).replace('.', ',');
             div.innerHTML = `
-                <input type="checkbox" id="p-${j.id}" ${j.presente ? 'checked' : ''}>
-                <label for="p-${j.id}">${j.isGoleiro ? '🧤 ' : ''}${escapeHtml(j.nome)} (⭐ ${estrelasFmt})</label>
+                <input type="checkbox" class="chk-presenca" id="p-${j.id}" ${j.presente ? 'checked' : ''}>
+                <label for="p-${j.id}" class="lbl-presenca">${avatarHtml(j.nome)}<span class="nm">${j.isGoleiro ? '🧤 ' : ''}${escapeHtml(j.nome)}</span><span class="pill-est">⭐ ${estrelasFmt}</span><span class="switch" aria-hidden="true"></span></label>
             `;
             container.appendChild(div);
 
@@ -1515,7 +1528,117 @@ document.addEventListener('DOMContentLoaded', () => {
         if (resDiv) resDiv.classList.remove('hidden');
     }
 
+    // ---------- CARA DO RACHA (🎨 Personalizar): nome, escudo e cor ----------
+    // Fica em usuarios/<uid>/[rachas/<id>/]visual = { nome, cor, escudo (imagem pequena) }.
+    // Aparece no app, no link da lista, no placar ao vivo e nas imagens do WhatsApp.
+    let visualRacha = {};
+    function aplicarVisual() {
+        const c = Logica.corRacha(visualRacha.cor);
+        const raiz = document.documentElement && document.documentElement.style;
+        if (raiz && raiz.setProperty) {
+            raiz.setProperty('--neon', c.a); raiz.setProperty('--verde', c.b);
+            raiz.setProperty('--neon-rgb', Logica.hexParaRgb(c.a)); raiz.setProperty('--verde-rgb', Logica.hexParaRgb(c.b));
+        }
+        const logo = document.querySelector('.app-header .app-logo');
+        if (logo && 'src' in logo) logo.src = visualRacha.escudo || 'img/icon-192.png';
+        const sub = document.getElementById('sub-racha');
+        if (sub) sub.textContent = '⚽ ' + (visualRacha.nome || nomeRachaAtivo());
+    }
+    const podeVisualPro = () => !window.Monetizacao || window.Monetizacao.isPro();
+    function reduzirImagem(arquivo, lado) {
+        return new Promise((ok, falha) => {
+            const leitor = new FileReader();
+            leitor.onerror = falha;
+            leitor.onload = () => {
+                const im = new Image();
+                im.onerror = falha;
+                im.onload = () => {
+                    // cabe inteira no quadrado (escudo não é cortado), fundo transparente
+                    const c = document.createElement('canvas'); c.width = c.height = lado;
+                    const k = Math.min(lado / im.width, lado / im.height);
+                    const w = im.width * k, h = im.height * k;
+                    c.getContext('2d').drawImage(im, (lado - w) / 2, (lado - h) / 2, w, h);
+                    ok(c.toDataURL('image/png'));
+                };
+                im.src = leitor.result;
+            };
+            leitor.readAsDataURL(arquivo);
+        });
+    }
+    function abrirPersonalizar() {
+        if (!dadosCarregados) return;
+        fecharDrawer();
+        const temp = Object.assign({ nome: '', cor: 'verde', escudo: '' }, visualRacha);
+        const sugestao = rachaAtivo !== 'principal' ? nomeRachaAtivo() : ((perfil && perfil.apelido) ? 'Racha do ' + perfil.apelido : '');
+        const m = abrirModalHtml(`<h2>🎨 Cara do racha</h2>
+            <div class="vis-preview" id="vis-preview"></div>
+            <label class="subtext" for="vis-nome" style="display:block;margin-top:12px;">Nome do racha</label>
+            <input type="text" id="vis-nome" maxlength="32" placeholder="Ex.: Pelada de Sexta" value="${escapeHtml(temp.nome || sugestao)}">
+            <p class="subtext" style="margin:14px 0 6px;">Escudo ${podeVisualPro() ? '' : '<span class="tag-pro">PRO</span>'}</p>
+            <div class="vis-escudo-acoes">
+                <button type="button" class="btn btn-secondary" id="vis-escudo-btn">🖼️ Escolher imagem</button>
+                <button type="button" class="btn btn-secondary" id="vis-escudo-tirar">Tirar</button>
+            </div>
+            <input type="file" id="vis-escudo-arq" accept="image/*" class="hidden">
+            <p class="subtext" style="margin:14px 0 6px;">Cor ${podeVisualPro() ? '' : '<span class="tag-pro">PRO</span>'}</p>
+            <div class="vis-cores">${Object.entries(Logica.CORES_RACHA).map(([k, c]) => `<button type="button" class="vis-cor" data-cor="${k}" title="${c.nome}" aria-label="${c.nome}" style="background:linear-gradient(135deg, ${c.a}, ${c.b})"></button>`).join('')}</div>
+            <p class="subtext" style="margin:12px 0 0;">Aparece no app, no link da lista de presença, no placar ao vivo e nas imagens que você manda no grupo.</p>
+            <div class="modal-actions"><button type="button" class="btn btn-primary" id="vis-salvar">Salvar</button><button type="button" class="btn btn-secondary" id="vis-cancelar">Cancelar</button></div>`);
+        const $m = sel => m.querySelector(sel);
+        const desenhar = () => {
+            const c = Logica.corRacha(temp.cor);
+            const nome = ($m('#vis-nome').value || '').trim() || 'Seu racha';
+            const prev = $m('#vis-preview');
+            if (prev) {
+                prev.style.background = `linear-gradient(135deg, ${c.b}55, transparent 70%), rgba(0,0,0,.3)`;
+                prev.style.borderColor = c.a + '88';
+                prev.innerHTML = `<img src="${temp.escudo || 'img/icon-192.png'}" alt=""><div><b style="color:${c.a}">${escapeHtml(nome)}</b><small>Times sorteados · placar ao vivo</small></div>`;
+            }
+            m.querySelectorAll('.vis-cor').forEach(b => b.classList.toggle('on', b.dataset.cor === temp.cor));
+            const tirar = $m('#vis-escudo-tirar'); if (tirar) tirar.disabled = !temp.escudo;
+        };
+        const exigirPro = () => {
+            if (podeVisualPro()) return true;
+            m.remove();
+            if (window.Monetizacao) window.Monetizacao.abrirModal('Escudo e cor do racha são do plano Pro. O nome é grátis!');
+            return false;
+        };
+        $m('#vis-nome').addEventListener('input', desenhar);
+        m.querySelectorAll('.vis-cor').forEach(b => b.addEventListener('click', () => {
+            if (b.dataset.cor !== temp.cor && !exigirPro()) return;
+            temp.cor = b.dataset.cor; desenhar();
+        }));
+        $m('#vis-escudo-btn').onclick = () => { if (exigirPro()) $m('#vis-escudo-arq').click(); };
+        $m('#vis-escudo-tirar').onclick = () => { temp.escudo = ''; desenhar(); };
+        $m('#vis-escudo-arq').addEventListener('change', async (e) => {
+            const f = e.target.files && e.target.files[0];
+            if (!f) return;
+            try { temp.escudo = await reduzirImagem(f, 160); desenhar(); }
+            catch (er) { toast('Não consegui abrir essa imagem', 'erro'); }
+            e.target.value = '';
+        });
+        $m('#vis-cancelar').onclick = () => m.remove();
+        $m('#vis-salvar').onclick = () => {
+            const v = { nome: ($m('#vis-nome').value || '').trim().slice(0, 32), cor: temp.cor || 'verde', escudo: temp.escudo || '' };
+            visualRacha = v;
+            gravar('visual', v);
+            aplicarVisual();
+            // lista de presença e placar ao vivo abertos já mudam de cara
+            if (presencaCodigo) {
+                const f = window.firebaseFns;
+                f.set(refPresenca('visual'), v).catch(() => {});
+                f.set(refPresenca('titulo'), tituloRacha()).catch(() => {});
+            }
+            publicarAoVivo(false);
+            m.remove();
+            if (window.Metricas) Metricas.evento('visual_salvo');
+            toast('🎨 Pronto! O racha está com a cara nova.');
+        };
+        desenhar();
+    }
+
     function tituloRacha() {
+        if (visualRacha.nome) return visualRacha.nome;
         if (rachaAtivo !== 'principal') return nomeRachaAtivo();
         return (perfil && perfil.apelido) ? 'Racha do ' + perfil.apelido : 'Racha de hoje';
     }
@@ -1525,7 +1648,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!window.ImagemTimes) return;
         if (btn) btn.disabled = true;
         try {
-            const r = await ImagemTimes.compartilharResumo(Logica.resumoCampeonato(h), { titulo: tituloRacha() });
+            const r = await ImagemTimes.compartilharResumo(Logica.resumoCampeonato(h), { titulo: tituloRacha(), escudo: visualRacha.escudo, cor: Logica.corRacha(visualRacha.cor) });
             if (r === 'baixado') toast('Imagem salva! Agora é só mandar no grupo.');
             if (r !== 'cancelado' && window.Metricas) Metricas.evento('resumo_imagem');
         } catch (e) {
@@ -1552,7 +1675,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const titulo = tituloRacha();
             const dia = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
-            const r = await ImagemTimes.compartilhar(sorteioAtual, { titulo, subtitulo: dia.charAt(0).toUpperCase() + dia.slice(1) });
+            const r = await ImagemTimes.compartilhar(sorteioAtual, { titulo, subtitulo: dia.charAt(0).toUpperCase() + dia.slice(1), escudo: visualRacha.escudo, cor: Logica.corRacha(visualRacha.cor) });
             if (r === 'baixado') toast('Imagem salva! Agora é só mandar no grupo.');
             if (r !== 'cancelado' && window.Metricas) Metricas.evento('imagem_times');
         } catch (e) {
@@ -2323,7 +2446,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function renderizarRachas() {
         const sub = document.getElementById('sub-racha');
-        if (sub) sub.textContent = '⚽ ' + nomeRachaAtivo();
+        if (sub) sub.textContent = '⚽ ' + (visualRacha.nome || nomeRachaAtivo());
         const box = document.getElementById('lista-rachas');
         if (!box) return;
         box.innerHTML = rachas.map(r => {
@@ -2442,6 +2565,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ['campeonato_finalizado', 'Campeonatos finalizados'],
         ['resumo_imagem', 'Resumos do racha enviados (imagem)'],
         ['resumo_texto', 'Resumos do racha copiados (texto)'],
+        ['visual_salvo', 'Rachas personalizados (🎨)'],
         ['presenca_criada', 'Listas de presença criadas'],
         ['presenca_enviada', 'Listas enviadas no grupo'],
         ['presenca_visita', 'Visitas à lista de presença'],
@@ -2583,6 +2707,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const lr = document.getElementById('lista-rachas');
         if (lr) lr.addEventListener('click', (e) => { const b = e.target.closest('[data-racha]'); if (b) trocarRacha(b.dataset.racha); });
         const nr = document.getElementById('btn-novo-racha'); if (nr) nr.addEventListener('click', abrirNovoRacha);
+        const pz = document.getElementById('btn-personalizar'); if (pz) pz.addEventListener('click', abrirPersonalizar);
+        const lg = document.querySelector('.app-header .app-logo'); if (lg && lg.addEventListener) lg.addEventListener('click', abrirPersonalizar);
         const su = document.getElementById('btn-suporte'); if (su) su.addEventListener('click', abrirSuporte);
         const cx = document.getElementById('btn-caixa-suporte'); if (cx) cx.addEventListener('click', abrirCaixa);
         const mt = document.getElementById('btn-metricas'); if (mt) mt.addEventListener('click', abrirMetricas);
@@ -2694,12 +2820,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const campeao = classLista.length > 0 ? classLista[0].nome : 'N/A';
 
             return `
-                <div class="card card-hist" data-acao="abrir-hist" data-id="${h.id}" style="margin-bottom:12px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3>🏆 Edição de ${h.data}</h3>
-                        <button class="btn btn-danger" style="padding:2px 8px; font-size:0.8rem;" data-acao="excluir-hist" data-id="${h.id}">🗑️ Excluir</button>
+                <div class="card card-hist" data-acao="abrir-hist" data-id="${h.id}">
+                    <div class="hist-topo">
+                        <span class="hist-ic">🏆</span>
+                        <div class="hist-txt"><small>${escapeHtml(String(h.data || ''))} · ${h.modo === 'todos-contra-todos' ? 'Tabela' : 'Racha Livre'}</small><b>${escapeHtml(campeao)}</b><span>Campeão</span></div>
+                        <button class="btn-icone perigo" data-acao="excluir-hist" data-id="${h.id}" aria-label="Excluir campeonato" title="Excluir">🗑️</button>
                     </div>
-                    <p class="subtext">Modo: ${h.modo === 'todos-contra-todos' ? 'Tabela' : 'Racha Livre'} | 🥇 Campeão: <strong>${escapeHtml(campeao)}</strong> · toque para abrir ›</p>
+                    <p class="hist-abrir">Ver tabela, confrontos e artilharia ›</p>
                 </div>
             `;
         }).join('') + (ocultos > 0 ? `

@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0b0e0c">
-    <link rel="stylesheet" href="css/style.css?v=20261113g">
+    <link rel="stylesheet" href="css/style.css?v=20261113h">
 </head>
 <body>
     <!-- Projeto: Cabeção Sorteios Pro | Desenvolvedor: Carlos Andre | 2026 -->
@@ -68,6 +68,7 @@
             <div class="drawer-section" id="drawer-rachas">
                 <h4>Meus rachas</h4>
                 <div id="lista-rachas"></div>
+                <button type="button" id="btn-personalizar" class="btn btn-primary" style="margin-bottom:8px;">🎨 Personalizar racha (nome, escudo e cor)</button>
                 <button type="button" id="btn-novo-racha" class="btn btn-secondary">＋ Criar perfil de racha</button>
             </div>
             <div class="drawer-section">
@@ -158,8 +159,8 @@
                     <div id="presenca-resumo"></div>
                     <input type="text" id="presenca-link" readonly>
                     <div class="modal-actions">
-                        <button id="btn-presenca-enviar" class="btn btn-success">📤 Enviar no grupo</button>
-                        <button id="btn-presenca-copiar" class="btn btn-secondary">Copiar</button>
+                        <button id="btn-presenca-enviar" class="btn btn-success">📤 Enviar lista no grupo</button>
+                        <button id="btn-presenca-copiar" class="btn btn-secondary">📋 Copiar lista</button>
                     </div>
                     <div id="presenca-convidados"></div>
                     <div class="modal-actions" style="margin-top:8px;">
@@ -424,15 +425,15 @@
         window.dispatchEvent(new Event('firebase-ready'));
     </script>
     <!-- ordem importa: logica -> remoto -> auth -> app -> monetizacao -->
-    <script src="js/logica.js?v=20261113g"></script>
-    <script src="js/apito.js?v=20261113g"></script>
-    <script src="js/remoto.js?v=20261113g"></script>
-    <script src="js/auth.js?v=20261113g"></script>
-    <script src="js/app.js?v=20261113g"></script>
-    <script src="js/monetizacao.js?v=20261113g"></script>
-    <script src="js/icones.js?v=20261113g"></script>
-    <script src="js/metricas.js?v=20261113g"></script>
-    <script src="js/imagem-times.js?v=20261113g"></script>
+    <script src="js/logica.js?v=20261113h"></script>
+    <script src="js/apito.js?v=20261113h"></script>
+    <script src="js/remoto.js?v=20261113h"></script>
+    <script src="js/auth.js?v=20261113h"></script>
+    <script src="js/app.js?v=20261113h"></script>
+    <script src="js/monetizacao.js?v=20261113h"></script>
+    <script src="js/icones.js?v=20261113h"></script>
+    <script src="js/metricas.js?v=20261113h"></script>
+    <script src="js/imagem-times.js?v=20261113h"></script>
     <script>
         // Funciona sem internet: guarda o app no aparelho (sw.js)
         if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {

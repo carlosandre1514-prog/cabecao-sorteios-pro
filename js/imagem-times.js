@@ -33,17 +33,20 @@
         ctx.arcTo(x, y, x + w, y, r);
         ctx.closePath();
     }
-    function carregarLogo() {
+    // escudo do racha (🎨 Personalizar) ou a logo do app
+    function carregarLogo(src) {
         return new Promise(res => {
             const img = new Image();
             img.onload = () => res(img);
             img.onerror = () => res(null);
-            img.src = 'img/icon-192.png';
+            img.src = src || 'img/icon-192.png';
         });
     }
 
     async function gerar(times, opcoes) {
         opcoes = opcoes || {};
+        const destaque = (opcoes.cor && opcoes.cor.a) || COR.neon;
+        const forte = (opcoes.cor && opcoes.cor.b) || COR.verde;
         times = (times || []).filter(t => t && Array.isArray(t.jogadores));
         const W = 1080, M = 48, GAP = 28;
         const colunas = times.length > 1 ? 2 : 1;
@@ -65,14 +68,14 @@
         // fundo com leve degradê verde no topo
         ctx.fillStyle = COR.fundo; ctx.fillRect(0, 0, W, H);
         const g = ctx.createLinearGradient(0, 0, 0, 420);
-        g.addColorStop(0, 'rgba(45,167,98,0.28)'); g.addColorStop(1, 'rgba(45,167,98,0)');
+        g.addColorStop(0, forte + '55'); g.addColorStop(1, forte + '00');
         ctx.fillStyle = g; ctx.fillRect(0, 0, W, 420);
 
         // cabeçalho
-        const logo = await carregarLogo();
+        const logo = await carregarLogo(opcoes.escudo);
         if (logo) ctx.drawImage(logo, M, 52, 110, 110);
         const xt = logo ? M + 136 : M;
-        ctx.fillStyle = COR.neon; ctx.font = `800 30px ${FONTE}`;
+        ctx.fillStyle = destaque; ctx.font = `800 30px ${FONTE}`;
         ctx.fillText('TIMES SORTEADOS', xt, 88);
         ctx.fillStyle = COR.txt; ctx.font = `800 54px ${FONTE}`;
         ctx.fillText(cortar(ctx, opcoes.titulo || 'Racha de hoje', W - xt - M), xt, 146);
@@ -91,7 +94,7 @@
                 ctx.strokeStyle = COR.linha; ctx.lineWidth = 2; ctx.stroke();
                 // faixa de cor do time
                 ctx.save(); retangulo(ctx, x, y, larguraCard, h, 22); ctx.clip();
-                ctx.fillStyle = FAIXAS[idx % FAIXAS.length]; ctx.fillRect(x, y, larguraCard, 10);
+                ctx.fillStyle = idx === 0 && opcoes.cor ? forte : FAIXAS[idx % FAIXAS.length]; ctx.fillRect(x, y, larguraCard, 10);
                 ctx.restore();
 
                 const media = t.jogadores.length ? (t.somaEstrelas != null ? t.somaEstrelas : t.jogadores.reduce((a, j) => a + (Number(j.estrelas) || 3), 0)) / t.jogadores.length : 0;
@@ -106,7 +109,7 @@
                     if (!j.isGoleiro) numero++;
                     const yl = y + TOPO_CARD + k * ALT_LINHA + 30;
                     if (k > 0) { ctx.fillStyle = COR.linha; ctx.fillRect(x + 26, yl - 36, larguraCard - 52, 2); }
-                    ctx.fillStyle = j.isGoleiro ? COR.neon : COR.mudo; ctx.font = `700 24px ${FONTE}`;
+                    ctx.fillStyle = j.isGoleiro ? destaque : COR.mudo; ctx.font = `700 24px ${FONTE}`;
                     ctx.fillText(j.isGoleiro ? 'GOL' : String(numero), x + 26, yl);
                     ctx.fillStyle = COR.txt; ctx.font = `600 30px ${FONTE}`;
                     ctx.fillText(cortar(ctx, j.nome, larguraCard - 110), x + 84, yl);
@@ -136,6 +139,7 @@
     // r = Logica.resumoCampeonato(itemDoHistorico)
     async function gerarResumo(r, opcoes) {
         opcoes = opcoes || {};
+        const destaque = (opcoes.cor && opcoes.cor.a) || COR.neon;
         const W = 1080, M = 48, IN = 30;            // margem da página e de dentro dos cards
         const CW = W - M * 2;
         const MAX_JOGOS = 40;
@@ -164,7 +168,7 @@
         ctx.fillStyle = g; ctx.fillRect(0, 0, W, 480);
 
         // cabeçalho
-        const logo = await carregarLogo();
+        const logo = await carregarLogo(opcoes.escudo);
         if (logo) ctx.drawImage(logo, M, 52, 110, 110);
         const xt = logo ? M + 136 : M;
         ctx.fillStyle = COR.ouro; ctx.font = `800 30px ${FONTE}`;
@@ -217,7 +221,7 @@
             const x = M + i * (tw + GAP);
             retangulo(ctx, x, y, tw, H_NUM, 20); ctx.fillStyle = COR.card; ctx.fill();
             ctx.strokeStyle = COR.linha; ctx.lineWidth = 2; ctx.stroke();
-            ctx.fillStyle = COR.neon; ctx.font = `800 58px ${FONTE}`;
+            ctx.fillStyle = destaque; ctx.font = `800 58px ${FONTE}`;
             const t = String(n); ctx.fillText(t, x + (tw - ctx.measureText(t).width) / 2, y + 80);
             ctx.fillStyle = COR.mudo; ctx.font = `600 24px ${FONTE}`;
             ctx.fillText(rot, x + (tw - ctx.measureText(rot).width) / 2, y + 120);
