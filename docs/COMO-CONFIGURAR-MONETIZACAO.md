@@ -134,3 +134,48 @@ Cole em Realtime Database → Regras → Publicar. Esta versão substitui a ante
 
 - Qualquer usuário logado envia mensagem; só o administrador lê e marca como resolvido.
 - Os perfis de racha ficam dentro de `usuarios/<uid>/rachas/<idDoRacha>/...` (mesma regra de `usuarios`, nada a mudar). O "Racha principal" continua nos caminhos de antes (`usuarios/<uid>/jogadores`, `historico`...), então nenhum dado antigo é perdido.
+
+
+---
+
+## Métricas (painel "📊 Métricas do app") e convite do placar ao vivo
+
+O app conta, por dia, eventos anônimos (sorteios, imagens enviadas, visitas ao placar ao vivo,
+cliques em "Criar meu racha", quem abriu a tela do Pro, quem clicou em Assinar...). Só o e-mail de
+`configuracoes/admin_email` enxerga o painel (menu lateral → **Métricas do app**).
+
+Acrescente estes nós nas regras (mantenha os que já existem):
+
+```json
+"metricas": {
+  ".read": "auth != null && auth.token.email === root.child('configuracoes/admin_email').val()",
+  "$dia": {
+    "$evento": {
+      ".write": "$dia.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && $evento.matches(/^[a-z_]{1,40}$/)",
+      ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() : 0) + 1"
+    }
+  }
+},
+"metricas_ativos": {
+  ".read": "auth != null && auth.token.email === root.child('configuracoes/admin_email').val()",
+  "$dia": {
+    "$uid": {
+      ".write": "auth != null && auth.uid === $uid",
+      ".validate": "newData.val() === true"
+    }
+  }
+}
+```
+
+- Cada gravação só consegue somar **+1** (ninguém consegue zerar ou inflar de uma vez).
+- `metricas` aceita escrita sem login porque a página pública `ao-vivo.html` também conta visitas.
+- Sem essas regras o app funciona normalmente; só o painel fica vazio.
+
+### Link do botão "Criar meu racha grátis" (página do placar ao vivo)
+Crie `configuracoes/divulgacao/link` com o link da Play Store (ou do app web).
+Sem esse nó, o botão abre o `index.html` do mesmo site.
+
+### Como ler o funil
+`Sorteios → Imagens enviadas → Visitas ao placar → Cliques em Criar meu racha → Cadastros`
+mostra se o app está se espalhando sozinho. `Bateram no limite → Abriram o Pro → Clicaram em Assinar`
+mostra onde a venda trava.

@@ -6,7 +6,7 @@
     <title>Placar ao vivo · Cabeção Sorteios Pro</title>
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0b0e0c">
-    <link rel="stylesheet" href="css/style.css?v=20261020d">
+    <link rel="stylesheet" href="css/style.css?v=20261113a">
     <style>
         .app-container { padding-bottom: 32px; }
         main { display: flex; flex-direction: column; gap: 12px; }
@@ -34,6 +34,9 @@
         .cron-estado.fim { color: var(--verm); }
         .atualizou { animation: flash 0.8s ease; }
         @keyframes flash { from { box-shadow: 0 0 0 2px var(--neon); } to { box-shadow: 0 0 0 0 transparent; } }
+        .cta-app { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; border-color: rgba(147, 213, 75, 0.35); }
+        .cta-app .cta-logo { width: 56px; height: 56px; border-radius: 12px; }
+        .cta-app .btn { grid-column: 1 / -1; text-align: center; text-decoration: none; display: block; }
     </style>
 </head>
 <body>
@@ -60,13 +63,23 @@
             <div class="aviso-centro"><div class="spinner" style="margin:0 auto 12px;"></div>Conectando ao campeonato...</div>
         </main>
 
+        <!-- CONVITE: quem assiste o placar também organiza racha -->
+        <div class="card cta-app">
+            <img src="img/icon-192.png" alt="" class="cta-logo">
+            <div>
+                <h2 style="margin:0 0 4px;">Organiza um racha?</h2>
+                <p class="subtext" style="margin:0;">Sorteie times equilibrados por estrelas e tenha placar, tabela e artilharia ao vivo como este. É grátis.</p>
+            </div>
+            <a id="cta-link" class="btn btn-primary" href="index.html">⚽ Criar meu racha grátis</a>
+        </div>
+
         <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro · esta página só mostra os resultados</p>
     </div>
 
-    <script src="js/apito.js?v=20261016c"></script>
+    <script src="js/apito.js?v=20261113a"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+        import { getDatabase, ref, onValue, get, set, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
         // Mesma configuração do app. Não precisa de login: a leitura pública é só do código do link.
         const app = initializeApp({
@@ -81,6 +94,23 @@
         const db = getDatabase(app);
 
         const $ = id => document.getElementById(id);
+
+        // ---------- CONVITE + MÉTRICAS (contadores anônimos) ----------
+        const hoje = (() => { const d = new Date(), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); })();
+        const contar = ev => set(ref(db, 'metricas/' + hoje + '/' + ev), increment(1)).catch(() => {});
+        contar('ao_vivo_visita');
+        // link do convite: configuracoes/divulgacao/link (ex.: Play Store). Sem ele, abre o app web.
+        get(ref(db, 'configuracoes/divulgacao/link')).then(s => {
+            const u = String(s.exists() ? s.val() : '');
+            if (/^https?:\/\//i.test(u)) $('cta-link').href = u;
+        }).catch(() => {});
+        // segura a navegação um instante para o contador chegar ao Firebase
+        $('cta-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            const destino = $('cta-link').href;
+            const ir = () => { location.href = destino; };
+            Promise.race([contar('ao_vivo_cta'), new Promise(r => setTimeout(r, 600))]).then(ir, ir);
+        });
         const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         const lista = v => Object.values(v || {}).filter(Boolean); // o Firebase devolve listas como array OU objeto
         const mostrarAviso = (msg) => { $('conteudo').innerHTML = `<div class="aviso-centro">${msg}</div>`; };

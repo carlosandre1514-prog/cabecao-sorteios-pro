@@ -284,10 +284,67 @@
         });
     }
 
+    // ---------- Modo offline: cópia local dos dados do usuário ----------
+    // Grava `valor` dentro de `obj` seguindo "a/b/c" (cria os níveis que faltam). null apaga.
+    // Devolve o próprio obj (ou um objeto novo, se obj não era objeto).
+    function gravarNoCaminho(obj, caminho, valor) {
+        const base = (obj && typeof obj === 'object') ? obj : {};
+        const partes = String(caminho || '').split('/').filter(Boolean);
+        if (!partes.length) return base;
+        let atual = base;
+        for (let i = 0; i < partes.length - 1; i++) {
+            const k = partes[i];
+            if (!atual[k] || typeof atual[k] !== 'object') atual[k] = {};
+            atual = atual[k];
+        }
+        const ultima = partes[partes.length - 1];
+        if (valor === null || valor === undefined) delete atual[ultima];
+        else atual[ultima] = valor;
+        return base;
+    }
+    function lerDoCaminho(obj, caminho) {
+        return String(caminho || '').split('/').filter(Boolean)
+            .reduce((a, k) => (a && typeof a === 'object' && k in a) ? a[k] : undefined, obj);
+    }
+
+    // ---------- Métricas ----------
+    // "2026-11-13" no fuso do aparelho (o dia que o dono do app enxerga)
+    function diaISO(ts) {
+        const d = new Date(ts == null ? Date.now() : ts);
+        const p = n => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    }
+    function ultimosDias(n, ts) {
+        const base = new Date(ts == null ? Date.now() : ts);
+        const out = [];
+        for (let i = 0; i < n; i++) {
+            const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() - i, 12);
+            out.push(diaISO(d.getTime()));
+        }
+        return out;
+    }
+    // dias: { "2026-11-13": { sorteio: 3, ... } }, ativos: { "2026-11-13": { uid: true } }
+    // -> { hoje: {evento: n}, semana: {evento: n}, ativosHoje, ativosSemana }
+    function resumirMetricas(dias, ativos, listaDias) {
+        dias = dias || {}; ativos = ativos || {};
+        const hoje = {}, semana = {};
+        listaDias.forEach((d, i) => {
+            Object.entries(dias[d] || {}).forEach(([ev, n]) => {
+                n = Number(n) || 0;
+                semana[ev] = (semana[ev] || 0) + n;
+                if (i === 0) hoje[ev] = (hoje[ev] || 0) + n;
+            });
+        });
+        const unicos = new Set();
+        listaDias.forEach(d => Object.keys(ativos[d] || {}).forEach(u => unicos.add(u)));
+        return { hoje, semana, ativosHoje: Object.keys(ativos[listaDias[0]] || {}).length, ativosSemana: unicos.size };
+    }
+
     return {
         embaralhar, idUnico, chaveSegura, limparMapa, normalizarTime, compararVersoes,
         filtrarLinhasLote, sortearTimes, gerarPartidas, novaClassificacao,
         aplicarResultado, ordenarClassificacao, montarAoVivo,
-        normalizarEstrelas, filtrarPorEstrelas
+        normalizarEstrelas, filtrarPorEstrelas,
+        gravarNoCaminho, lerDoCaminho, diaISO, ultimosDias, resumirMetricas
     };
 });

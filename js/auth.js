@@ -94,7 +94,10 @@
             if (!(await aguardarFirebase(8000))) throw { code: 'app/sem-firebase' };
             const f = window.firebaseFns;
             if (modoLogin) await f.signInWithEmailAndPassword(window.firebaseAuth, email, senha);
-            else await f.createUserWithEmailAndPassword(window.firebaseAuth, email, senha);
+            else {
+                await f.createUserWithEmailAndPassword(window.firebaseAuth, email, senha);
+                if (window.Metricas) Metricas.evento('cadastro');
+            }
             // sucesso: o app.js percebe o login (onAuthStateChanged) e abre o app sozinho
         } catch (e) {
             aviso(traduzirErro(e));

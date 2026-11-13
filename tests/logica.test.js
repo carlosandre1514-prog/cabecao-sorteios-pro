@@ -179,3 +179,27 @@ t('filtro de estrelas: maior/menor que, com e sem igualdade', () => {
     assert.deepStrictEqual(nomes({ min: 1.9 }), [1.9, 2, 3]);
     assert.deepStrictEqual(nomes({}), [1.1, 1.2, 1.5, 1.9, 2, 3]);
 });
+
+t('offline: gravarNoCaminho/lerDoCaminho criam níveis e null apaga', () => {
+    const o = L.gravarNoCaminho({}, 'rachas/r2/jogadores', [1, 2]);
+    assert.deepStrictEqual(o, { rachas: { r2: { jogadores: [1, 2] } } });
+    assert.deepStrictEqual(L.lerDoCaminho(o, 'rachas/r2/jogadores'), [1, 2]);
+    assert.strictEqual(L.lerDoCaminho(o, 'rachas/r9/jogadores'), undefined);
+    L.gravarNoCaminho(o, 'rachas/r2/jogadores', null);
+    assert.deepStrictEqual(o, { rachas: { r2: {} } });
+    assert.deepStrictEqual(L.gravarNoCaminho(null, 'perfil', { a: 1 }), { perfil: { a: 1 } });
+});
+
+t('métricas: dias e resumo (hoje, 7 dias, usuários únicos)', () => {
+    const ts = new Date(2026, 0, 2, 10).getTime();
+    assert.strictEqual(L.diaISO(ts), '2026-01-02');
+    assert.deepStrictEqual(L.ultimosDias(3, ts), ['2026-01-02', '2026-01-01', '2025-12-31']);
+    const dias = L.ultimosDias(3, ts);
+    const r = L.resumirMetricas(
+        { '2026-01-02': { sorteio: 2 }, '2026-01-01': { sorteio: 3, cadastro: 1 }, '2025-12-20': { sorteio: 99 } },
+        { '2026-01-02': { a: true, b: true }, '2026-01-01': { b: true, c: true } }, dias);
+    assert.deepStrictEqual(r.hoje, { sorteio: 2 });
+    assert.deepStrictEqual(r.semana, { sorteio: 5, cadastro: 1 });
+    assert.strictEqual(r.ativosHoje, 2);
+    assert.strictEqual(r.ativosSemana, 3);
+});

@@ -219,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (user) {
                 if (currentUserUid !== user.uid) limparEstadoLocal();
                 currentUserUid = user.uid;
+                if (window.Metricas) { Metricas.ativo(user.uid); Metricas.evento('abertura', true); }
                 if (authScreen) authScreen.classList.add('hidden');
                 if (drawerEmail) drawerEmail.textContent = user.email || 'Usuário Google';
                 emailUsuario = user.email || '';
@@ -248,20 +249,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- SALVAR NO FIREBASE (um único ponto; avisa se der erro) ---
     let avisouErroSalvar = false;
+
+    // --- MODO OFFLINE ---
+    // Uma cópia de usuarios/<uid> fica no aparelho (localStorage). Sem internet, o app abre
+    // com essa cópia; o que for mudado fica marcado como "pendente" e sobe quando a conexão
+    // voltar (o próprio Firebase segura a gravação; se o app for fechado antes, as pendentes
+    // são reenviadas na próxima vez que os dados carregarem com internet).
+    const chaveCache = uid => 'cabecao_dados_' + uid;
+    const chavePendentes = uid => 'cabecao_pendentes_' + uid;
+    function lerLocal(chave) { try { return JSON.parse(localStorage.getItem(chave) || 'null'); } catch (e) { return null; } }
+    function salvarLocal(chave, v) { try { localStorage.setItem(chave, JSON.stringify(v)); } catch (e) { /* cheio ou bloqueado */ } }
+    let espelho = null;      // cópia local de usuarios/<uid>
+    let modoOffline = false; // true = abriu com a cópia do aparelho
+    function marcarPendente(uid, destino) {
+        const pend = lerLocal(chavePendentes(uid)) || {};
+        const seq = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+        pend[destino] = seq;
+        salvarLocal(chavePendentes(uid), pend);
+        return () => {   // chamado quando o Firebase confirmou a gravação
+            const p = lerLocal(chavePendentes(uid)) || {};
+            if (p[destino] === seq) { delete p[destino]; salvarLocal(chavePendentes(uid), p); }
+        };
+    }
+    function enviarParaNuvem(uid, destino, limpo) {
+        const confirmar = marcarPendente(uid, destino);
+        const dbRef = window.firebaseFns.ref(window.firebaseDb, `usuarios/${uid}/${destino}`);
+        return window.firebaseFns.set(dbRef, limpo).then(() => {
+            confirmar();
+            avisouErroSalvar = false;
+        });
+    }
+    // Junta ao que veio da nuvem o que ficou pendente neste aparelho e reenvia
+    function reaplicarPendentes(uid, dados) {
+        const pend = lerLocal(chavePendentes(uid)) || {};
+        const cache = lerLocal(chaveCache(uid));
+        const caminhos = Object.keys(pend);
+        if (!cache || !caminhos.length) return dados;
+        caminhos.forEach(destino => {
+            const v = Logica.lerDoCaminho(cache, destino);
+            const valor = v === undefined ? null : v;
+            Logica.gravarNoCaminho(dados, destino, valor);
+            enviarParaNuvem(uid, destino, valor).catch(erroSalvar);
+        });
+        return dados;
+    }
+
     function gravar(caminho, valor, raiz) {
         if (!currentUserUid || !window.firebaseDb || !dadosCarregados) return;
         try {
             // o JSON remove `undefined` (o Firebase rejeita) e converte NaN em null
             const limpo = valor === null ? null : JSON.parse(JSON.stringify(valor));
             const destino = (raiz || rachaAtivo === 'principal') ? caminho : `rachas/${rachaAtivo}/${caminho}`;
-            const dbRef = window.firebaseFns.ref(window.firebaseDb, `usuarios/${currentUserUid}/${destino}`);
-            return window.firebaseFns.set(dbRef, limpo).then(() => {
-                avisouErroSalvar = false;
-            }).catch(erroSalvar);
+            espelho = Logica.gravarNoCaminho(espelho || {}, destino, limpo === null ? null : JSON.parse(JSON.stringify(limpo)));
+            salvarLocal(chaveCache(currentUserUid), espelho);
+            return enviarParaNuvem(currentUserUid, destino, limpo).catch(erroSalvar);
         } catch (erro) {
             erroSalvar(erro);
         }
     }
+    window.addEventListener('online', () => {
+        if (!modoOffline || !currentUserUid) return;
+        modoOffline = false;
+        toast('📶 Internet de volta: enviando o que você mudou.');
+    });
+    window.addEventListener('offline', () => {
+        if (currentUserUid && dadosCarregados) toast('📴 Sem internet: pode continuar usando, tudo sobe quando a conexão voltar.');
+    });
 
     function erroSalvar(erro) {
         console.error('Erro ao salvar no Firebase:', erro);
@@ -354,6 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
             publicarAoVivo(false);
             atualizarCardAoVivo();
             toast('📡 Placar ao vivo ligado! Envie o link para o grupo.');
+            if (window.Metricas) Metricas.evento('ao_vivo_ligado');
         });
         $('btn-ao-vivo-enviar')?.addEventListener('click', async () => {
             const url = linkAoVivo();
@@ -407,11 +461,50 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentUserUid || !window.firebaseDb) return;
         const uid = currentUserUid;
         const userRef = window.firebaseFns.ref(window.firebaseDb, `usuarios/${uid}`);
+        const cache = lerLocal(chaveCache(uid));
+        let resolvido = false;
+        const usarCache = () => {
+            if (resolvido || uid !== currentUserUid) return;
+            resolvido = true;
+            modoOffline = true;
+            espelho = cache;
+            aplicarDados(JSON.parse(JSON.stringify(cache)));
+            toast('📴 Sem internet: usando os dados salvos neste aparelho. O que mudar sobe quando a conexão voltar.');
+            if (window.Metricas) Metricas.evento('abriu_offline');
+        };
+        // sem internet e com cópia no aparelho: abre na hora
+        if (cache && typeof navigator !== 'undefined' && navigator.onLine === false) { usarCache(); return; }
         mostrarCarregando(true, 'Carregando seus dados...');
+        // internet ruim (comum na quadra): não deixa o usuário esperando mais que 6 s
+        if (cache) setTimeout(usarCache, 6000);
 
         lerComTentativas(userRef, uid).then((snapshot) => {
-            if (uid !== currentUserUid) return; // trocou de conta no meio do caminho
-            const dados = snapshot.exists() ? (snapshot.val() || {}) : {};
+            if (uid !== currentUserUid || resolvido) return; // trocou de conta ou já abriu com a cópia
+            resolvido = true;
+            modoOffline = false;
+            const dados = reaplicarPendentes(uid, snapshot.exists() ? (snapshot.val() || {}) : {});
+            espelho = JSON.parse(JSON.stringify(dados));
+            salvarLocal(chaveCache(uid), espelho);
+            aplicarDados(dados);
+        }).catch(async (error) => {
+            if (uid !== currentUserUid || resolvido) return;
+            const detalhe = String((error && (error.code || error.message)) || 'erro desconhecido');
+            if (cache && !/permission/i.test(detalhe)) { usarCache(); return; }
+            resolvido = true;
+            console.error("Erro ao carregar dados do Firebase:", error);
+            mostrarCarregando(false);
+            // dadosCarregados continua false: nada será salvo por cima dos seus dados
+            let dica = 'Confira a internet.';
+            if (/permission/i.test(detalhe)) dica = 'O Firebase negou a leitura: as regras do Realtime Database não liberam "usuarios".';
+            else if (/offline|unavailable|network/i.test(detalhe)) dica = 'Não conectou ao banco: confira a internet e o endereço (databaseURL) do Realtime Database.';
+            const tentar = await mostrarConfirmacao(`Não consegui carregar seus dados. ${dica} (Código: ${detalhe}) Tentar de novo?`, '❌ ERRO AO CARREGAR');
+            if (tentar && uid === currentUserUid) carregarDadosDoFirebase();
+        });
+    }
+
+    // Coloca na tela os dados de usuarios/<uid> (vindos da nuvem ou da cópia do aparelho)
+    function aplicarDados(dados) {
+            dados = dados || {};
 
             perfil = (dados.perfil && typeof dados.perfil === 'object') ? dados.perfil : {};
             renderizarPerfil();
@@ -466,18 +559,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderizarElenco();
             renderizarHistorico();
             if (timesSorteados.length > 0) renderizarCampeonato();
-        }).catch(async (error) => {
-            if (uid !== currentUserUid) return;
-            console.error("Erro ao carregar dados do Firebase:", error);
-            mostrarCarregando(false);
-            // dadosCarregados continua false: nada será salvo por cima dos seus dados
-            const detalhe = String((error && (error.code || error.message)) || 'erro desconhecido');
-            let dica = 'Confira a internet.';
-            if (/permission/i.test(detalhe)) dica = 'O Firebase negou a leitura: as regras do Realtime Database não liberam "usuarios".';
-            else if (/offline|unavailable|network/i.test(detalhe)) dica = 'Não conectou ao banco: confira a internet e o endereço (databaseURL) do Realtime Database.';
-            const tentar = await mostrarConfirmacao(`Não consegui carregar seus dados. ${dica} (Código: ${detalhe}) Tentar de novo?`, '❌ ERRO AO CARREGAR');
-            if (tentar && uid === currentUserUid) carregarDadosDoFirebase();
-        });
     }
 
     // --- SISTEMA DE DIÁLOGOS E ALERTAS CUSTOMIZADOS ---
@@ -1020,6 +1101,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             contadorSorteios++;
+            if (window.Metricas) Metricas.evento('sorteio');
             const resultado = Logica.sortearTimes(presentes, qtdTimes, porTime);
             sorteioAtual = resultado.times;
             exibirTimesSorteados();
@@ -1090,11 +1172,45 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        let btnImagem = document.getElementById('btn-imagem-times');
+        if (!btnImagem && window.ImagemTimes) {
+            btnImagem = document.createElement('button');
+            btnImagem.id = 'btn-imagem-times';
+            btnImagem.className = 'btn btn-success';
+            btnImagem.style.width = '100%';
+            btnImagem.style.marginTop = '10px';
+            btnImagem.textContent = '📸 Enviar imagem dos times';
+            btnImagem.addEventListener('click', compartilharImagemTimes);
+            if (container.parentNode) container.parentNode.insertBefore(btnImagem, btnCopiar);
+        }
+
         const resDiv = document.getElementById('resultado-sorteio');
         if (resDiv) resDiv.classList.remove('hidden');
     }
 
+    async function compartilharImagemTimes() {
+        if (!sorteioAtual || sorteioAtual.length === 0) {
+            await mostrarAlerta('Nenhum sorteio realizado ainda!', '⚠️ AVISO');
+            return;
+        }
+        const btn = document.getElementById('btn-imagem-times');
+        if (btn) btn.disabled = true;
+        try {
+            const titulo = rachaAtivo === 'principal' ? ((perfil && perfil.apelido) ? 'Racha do ' + perfil.apelido : 'Racha de hoje') : nomeRachaAtivo();
+            const dia = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
+            const r = await ImagemTimes.compartilhar(sorteioAtual, { titulo, subtitulo: dia.charAt(0).toUpperCase() + dia.slice(1) });
+            if (r === 'baixado') toast('Imagem salva! Agora é só mandar no grupo.');
+            if (r !== 'cancelado' && window.Metricas) Metricas.evento('imagem_times');
+        } catch (e) {
+            console.error('Imagem dos times:', e);
+            await mostrarAlerta('Não consegui gerar a imagem. Use "Copiar Lista de Times".', '❌ ERRO');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
     async function copiarListaTimes() {
+        if (window.Metricas) Metricas.evento('lista_copiada');
         if (!sorteioAtual || sorteioAtual.length === 0) {
             await mostrarAlerta('Nenhum sorteio realizado ainda!', '⚠️ AVISO');
             return;
@@ -1181,6 +1297,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // ALTERAÇÃO 3: Salva o estado inicial do campeonato no Firebase
             salvarCampeonatoAtivo();
+            if (window.Metricas) Metricas.evento('campeonato_iniciado');
 
             irParaAba('tab-campeonato');
         });
@@ -1781,6 +1898,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             historico.unshift(edicaoHistorico);
             salvarHistoricoFirebase();
+            if (window.Metricas) Metricas.evento('campeonato_finalizado');
 
             // ALTERAÇÃO 3: Apaga o registro do campeonato ativo no Firebase ao finalizar
             limparCampeonatoAtivo();
@@ -1891,6 +2009,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function atualizarBotaoAdmin() {
         const b = document.getElementById('btn-caixa-suporte');
         if (b) b.classList.toggle('hidden', !souAdmin);
+        const m = document.getElementById('btn-metricas');
+        if (m) m.classList.toggle('hidden', !souAdmin);
     }
     async function verificarAdmin() {
         souAdmin = false;
@@ -1940,6 +2060,68 @@ document.addEventListener('DOMContentLoaded', () => {
         fecharDrawer();
         irParaTelaExtra('tab-caixa', 'Caixa do suporte');
         carregarCaixa();
+    }
+
+    // ---------- MÉTRICAS (só admin) ----------
+    // nome do evento -> texto da tela (a ordem aqui é a ordem do funil)
+    const NOMES_METRICAS = [
+        ['abertura', 'Aberturas do app'],
+        ['cadastro', 'Novos cadastros'],
+        ['sorteio', 'Sorteios feitos'],
+        ['imagem_times', 'Imagens dos times enviadas'],
+        ['lista_copiada', 'Listas copiadas'],
+        ['campeonato_iniciado', 'Campeonatos iniciados'],
+        ['campeonato_finalizado', 'Campeonatos finalizados'],
+        ['ao_vivo_ligado', 'Placares ao vivo ligados'],
+        ['ao_vivo_visita', 'Visitas ao placar ao vivo'],
+        ['ao_vivo_cta', 'Cliques em "Criar meu racha" (ao vivo)'],
+        ['limite_jogadores', 'Bateram no limite de jogadores'],
+        ['pro_aberto', 'Abriram a tela do Pro'],
+        ['pro_assinar', 'Clicaram em Assinar'],
+        ['pro_pix_copiado', 'Copiaram a chave Pix'],
+        ['pro_comprovante', 'Enviaram comprovante'],
+        ['abriu_offline', 'Abriram sem internet']
+    ];
+    async function carregarMetricas() {
+        const box = document.getElementById('conteudo-metricas');
+        if (!box) return;
+        box.innerHTML = '<p class="subtext">Carregando...</p>';
+        const f = window.firebaseFns, db = window.firebaseDb;
+        const dias = Logica.ultimosDias(7);
+        try {
+            const ler = caminho => f.get(f.ref(db, caminho)).then(s => (s.exists() ? s.val() : null));
+            const [eventos, ativos] = await Promise.all([
+                Promise.all(dias.map(d => ler('metricas/' + d))),
+                Promise.all(dias.map(d => ler('metricas_ativos/' + d)))
+            ]);
+            const porDia = {}, ativosPorDia = {};
+            dias.forEach((d, i) => { porDia[d] = eventos[i] || {}; ativosPorDia[d] = ativos[i] || {}; });
+            const r = Logica.resumirMetricas(porDia, ativosPorDia, dias);
+            const conhecidos = new Set(NOMES_METRICAS.map(n => n[0]));
+            const linhas = NOMES_METRICAS.concat(Object.keys(r.semana).filter(k => !conhecidos.has(k)).map(k => [k, k]));
+            const pct = (a, b) => b ? Math.round((a / b) * 100) + '%' : '–';
+            box.innerHTML = `
+                <div class="metricas-destaques">
+                    <div><strong>${r.ativosHoje}</strong><small>usuários hoje</small></div>
+                    <div><strong>${r.ativosSemana}</strong><small>usuários em 7 dias</small></div>
+                    <div><strong>${pct(r.semana.pro_assinar || 0, r.semana.pro_aberto || 0)}</strong><small>abriu Pro → assinar</small></div>
+                </div>
+                <div class="table-responsive"><table class="tabela-classificacao tabela-metricas">
+                    <thead><tr><th>Evento</th><th>Hoje</th><th>7 dias</th></tr></thead>
+                    <tbody>${linhas.map(([k, nome]) => `<tr><td>${escapeHtml(nome)}</td><td>${r.hoje[k] || 0}</td><td>${r.semana[k] || 0}</td></tr>`).join('')}</tbody>
+                </table></div>
+                <button type="button" class="btn btn-secondary" id="btn-atualizar-metricas" style="margin-top:12px;">↻ Atualizar</button>`;
+            const bt = document.getElementById('btn-atualizar-metricas');
+            if (bt) bt.onclick = carregarMetricas;
+        } catch (e) {
+            box.innerHTML = '<p class="subtext">Não foi possível ler as métricas. Publique as regras de "metricas" (docs/COMO-CONFIGURAR-MONETIZACAO.md).</p>';
+        }
+    }
+    function abrirMetricas() {
+        if (!souAdmin) return;
+        fecharDrawer();
+        irParaTelaExtra('tab-metricas', 'Métricas');
+        carregarMetricas();
     }
 
     // ---------- HISTÓRICO: tela do campeonato ----------
@@ -2017,6 +2199,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const nr = document.getElementById('btn-novo-racha'); if (nr) nr.addEventListener('click', abrirNovoRacha);
         const su = document.getElementById('btn-suporte'); if (su) su.addEventListener('click', abrirSuporte);
         const cx = document.getElementById('btn-caixa-suporte'); if (cx) cx.addEventListener('click', abrirCaixa);
+        const mt = document.getElementById('btn-metricas'); if (mt) mt.addEventListener('click', abrirMetricas);
         const lc = document.getElementById('lista-caixa');
         if (lc) lc.addEventListener('click', async (e) => {
             const b = e.target.closest('[data-resolver]');

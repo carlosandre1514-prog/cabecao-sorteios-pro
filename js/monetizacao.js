@@ -46,6 +46,9 @@
         return /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
     }
 
+    function guardar(chave, v) { try { localStorage.setItem(chave, JSON.stringify(v)); } catch (e) { /* ignora */ } }
+    function lembrar(chave) { try { return JSON.parse(localStorage.getItem(chave) || 'null'); } catch (e) { return null; } }
+
     function isPro() {
         if (!config.ativo) return true; // monetização desligada = tudo liberado
         if (!plano.ativo) return false;
@@ -122,6 +125,7 @@
 
     function abrirModal(motivo) {
         criarModal();
+        if (window.Metricas) Metricas.evento(isPro() ? 'pro_detalhes' : 'pro_aberto');
         const m = document.getElementById('modal-pro');
         const acoes = m.querySelector('#pro-acoes');
         m.querySelector('#pro-motivo').textContent = motivo || 'Libere todos os recursos e apoie o desenvolvimento do app!';
@@ -137,7 +141,7 @@
                 const b = document.createElement('button');
                 b.className = 'btn btn-primary';
                 b.textContent = '💳 Assinar o Plano Pro';
-                b.onclick = () => window.open(link, '_blank');
+                b.onclick = () => { if (window.Metricas) Metricas.evento('pro_assinar'); window.open(link, '_blank'); };
                 acoes.appendChild(b);
             }
 
@@ -148,7 +152,7 @@
                 const bp = document.createElement('button');
                 bp.className = 'btn btn-success';
                 bp.textContent = '📋 Copiar chave Pix';
-                bp.onclick = () => copiar(config.chave_pix, bp);
+                bp.onclick = () => { if (window.Metricas) Metricas.evento('pro_pix_copiado'); copiar(config.chave_pix, bp); };
                 box.appendChild(bp);
                 acoes.appendChild(box);
             }
@@ -159,6 +163,7 @@
                 bz.className = 'btn btn-secondary';
                 bz.textContent = '✅ Já paguei – enviar comprovante';
                 bz.onclick = () => {
+                    if (window.Metricas) Metricas.evento('pro_comprovante');
                     const email = usuario && usuario.email ? usuario.email : '(sem e-mail)';
                     const uid = usuario ? usuario.uid : '';
                     const msg = `Olá! Já fiz o pagamento do Plano Pro do Cabeção Sorteios.\nE-mail: ${email}\nID: ${uid}`;
@@ -237,18 +242,30 @@
         return get(ref(window.firebaseDb, 'configuracoes/monetizacao')).then(s => {
             if (s.exists()) {
                 const c = s.val() || {};
+                guardar('cabecao_monetizacao', c);
                 config = Object.assign({}, CONFIG_PADRAO, c, {
                     patrocinador: Object.assign({}, CONFIG_PADRAO.patrocinador, c.patrocinador || {})
                 });
             }
-        }).catch(e => console.log('Monetização: usando configuração padrão.', e));
+        }).catch(e => {
+            // sem internet: usa a última configuração que veio do Firebase
+            const c = lembrar('cabecao_monetizacao');
+            if (c) config = Object.assign({}, CONFIG_PADRAO, c, {
+                patrocinador: Object.assign({}, CONFIG_PADRAO.patrocinador, c.patrocinador || {})
+            });
+            console.log('Monetização: sem conexão, usando configuração salva/padrão.', e);
+        });
     }
 
     function carregarPlano(uid) {
         const { ref, get } = window.firebaseFns;
         return get(ref(window.firebaseDb, 'planos/' + uid)).then(s => {
             plano = s.exists() ? (s.val() || { ativo: false }) : { ativo: false, ate: null };
-        }).catch(() => { plano = { ativo: false, ate: null }; });
+            guardar('cabecao_plano_' + uid, plano);
+        }).catch(() => {
+            // sem internet: quem é Pro continua Pro (vale o último plano lido; o "ate" continua valendo)
+            plano = lembrar('cabecao_plano_' + uid) || { ativo: false, ate: null };
+        });
     }
 
     function iniciar() {
@@ -272,6 +289,7 @@
         checarLimiteJogadores(qtdAtual, qtdNova) {
             const lim = limiteJogadores();
             if (qtdAtual + qtdNova <= lim) return true;
+            if (window.Metricas) Metricas.evento('limite_jogadores');
             abrirModal(`O plano grátis permite até ${lim} jogadores. Seja Pro para cadastrar quantos quiser!`);
             return false;
         }

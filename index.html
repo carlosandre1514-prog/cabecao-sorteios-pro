@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0b0e0c">
-    <link rel="stylesheet" href="css/style.css?v=20261020d">
+    <link rel="stylesheet" href="css/style.css?v=20261113a">
 </head>
 <body>
     <!-- Projeto: Cabeção Sorteios Pro | Desenvolvedor: Carlos Andre | 2026 -->
@@ -74,6 +74,7 @@
                 <h4>Ajuda e legal</h4>
                 <button type="button" id="btn-suporte" class="drawer-link">💬 Falar com o suporte <span>›</span></button>
                 <button type="button" id="btn-caixa-suporte" class="drawer-link admin hidden">📥 Caixa do suporte (só admin) <span>›</span></button>
+                <button type="button" id="btn-metricas" class="drawer-link admin hidden">📊 Métricas do app (só admin) <span>›</span></button>
                 <a class="drawer-link" href="termos-uso.html">📄 Termos de uso <span>›</span></a>
                 <a class="drawer-link" href="politica-privacidade.html">🔒 Política de privacidade <span>›</span></a>
             </div>
@@ -289,6 +290,14 @@
             <div id="lista-caixa"></div>
         </section>
 
+        <section id="tab-metricas" class="tab-content">
+            <div class="card">
+                <h2>📊 Métricas do app</h2>
+                <p class="subtext">Contadores anônimos de uso. Hoje e últimos 7 dias. Tela visível só para o administrador.</p>
+                <div id="conteudo-metricas"></div>
+            </div>
+        </section>
+
         <section id="tab-ranking" class="tab-content">
             <div class="card">
                 <h2>Ranking de gols</h2>
@@ -350,7 +359,7 @@
 <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, updatePassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-        import { getDatabase, ref, set, get, onValue, push, update, remove } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+        import { getDatabase, ref, set, get, onValue, push, update, remove, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyCt4kqF8LcHkR7bn3gvF-1ZcpjVW3FH8YA",
@@ -384,7 +393,8 @@
             onValue,
             push,
             update,
-            remove
+            remove,
+            increment
         };
 
         // avisa os outros scripts que o Firebase já pode ser usado
@@ -392,12 +402,20 @@
         window.dispatchEvent(new Event('firebase-ready'));
     </script>
     <!-- ordem importa: logica -> remoto -> auth -> app -> monetizacao -->
-    <script src="js/logica.js?v=20261020d"></script>
-    <script src="js/apito.js?v=20261020d"></script>
-    <script src="js/remoto.js?v=20261020d"></script>
-    <script src="js/auth.js?v=20261020d"></script>
-    <script src="js/app.js?v=20261020d"></script>
-    <script src="js/monetizacao.js?v=20261020d"></script>
-    <script src="js/icones.js?v=20261020d"></script>
+    <script src="js/logica.js?v=20261113a"></script>
+    <script src="js/apito.js?v=20261113a"></script>
+    <script src="js/remoto.js?v=20261113a"></script>
+    <script src="js/auth.js?v=20261113a"></script>
+    <script src="js/app.js?v=20261113a"></script>
+    <script src="js/monetizacao.js?v=20261113a"></script>
+    <script src="js/icones.js?v=20261113a"></script>
+    <script src="js/metricas.js?v=20261113a"></script>
+    <script src="js/imagem-times.js?v=20261113a"></script>
+    <script>
+        // Funciona sem internet: guarda o app no aparelho (sw.js)
+        if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.log('Service worker:', e)));
+        }
+    </script>
 </body>
 </html>

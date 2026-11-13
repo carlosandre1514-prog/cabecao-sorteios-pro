@@ -26,7 +26,7 @@ const alertas = [];
 const win = { listeners: {}, addEventListener(t, f) { (this.listeners[t] = this.listeners[t] || []).push(f); }, dispatchEvent(e) { (this.listeners[e.type] || []).forEach(f => f(e)); }, open() {}, scrollTo() {} };
 const ctx = vm.createContext(Object.assign(win, {
     window: win, document, self: win, console: { log() {}, error() {}, warn() {} }, setInterval: () => 0, clearInterval() {}, setTimeout: f => { setImmediate(f); return 0; }, history: { replaceState() {}, pushState() {} }, location: { pathname: '/', href: 'https://x.test/index.html' }, clearTimeout() {}, URL, crypto: require('crypto').webcrypto,
-    localStorage: { getItem: () => null, setItem() {}, removeItem() {} }, navigator: {}, Event: class { constructor(t) { this.type = t; } },
+    localStorage: { m: new Map(), getItem(k) { return this.m.has(k) ? this.m.get(k) : null; }, setItem(k, v) { this.m.set(k, String(v)); }, removeItem(k) { this.m.delete(k); } }, navigator: {}, Event: class { constructor(t) { this.type = t; } },
     Date, Math, JSON, Object, Array, Number, String, Set, Promise, parseInt, parseFloat, isFinite, Infinity, encodeURIComponent
 }));
 win.scrollTo = () => {};
@@ -51,6 +51,7 @@ const gravados = [];
 const authCbs = [];
 let falhasGet = 0;      // quantas leituras do banco vão falhar antes de funcionar ("Client is offline")
 let loginErro = null;   // erro que o signIn vai devolver
+let semRede = false;    // true = gravações ficam presas (sem internet)
 win.firebaseAuth = {};
 win.firebaseDb = {};
 win.firebaseFns = {
@@ -58,11 +59,12 @@ win.firebaseFns = {
     ref: (db, caminho) => caminho,
     signInWithEmailAndPassword: () => loginErro ? Promise.reject(loginErro) : Promise.resolve({}),
     get: caminho => falhasGet-- > 0 ? Promise.reject(Object.assign(new Error('Client is offline'), { code: 'unavailable' })) : Promise.resolve({ exists: () => true, val: () => JSON.parse(JSON.stringify(banco[caminho.split('/').pop()] ? banco[caminho.split('/').pop()] : banco)) }),
-    set: (caminho, v) => { gravados.push([caminho, v]); return Promise.resolve(); }
+    set: (caminho, v) => { gravados.push([caminho, v]); return semRede ? new Promise(() => {}) : Promise.resolve(); },
+    increment: n => ({ '.sv': { increment: n } })
 };
 win.firebaseReady = true;
 
-['js/logica.js', 'js/remoto.js', 'js/auth.js', 'js/app.js', 'js/monetizacao.js', 'js/icones.js'].forEach(rodar);
+['js/logica.js', 'js/remoto.js', 'js/auth.js', 'js/app.js', 'js/monetizacao.js', 'js/icones.js', 'js/metricas.js'].forEach(rodar);
 (document.listeners.DOMContentLoaded || []).forEach(f => f());
 assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (antes dependia de um setTimeout de 500ms)');
 
@@ -144,6 +146,36 @@ assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (a
     await tick(30);
     assert.ok(els['sub-racha'].textContent.includes('Racha principal'), 'deveria voltar ao racha principal');
     console.log('✅ rachas: listar, trocar, gravar no caminho certo e voltar ao principal');
+
+    // métricas: sorteio conta +1 em metricas/<dia>/sorteio
+    assert.ok(gravados.some(([c, v]) => /^metricas\/\d{4}-\d{2}-\d{2}\/sorteio$/.test(c) && v['.sv']), 'sorteio deveria contar nas métricas');
+    assert.ok(gravados.some(([c, v]) => /^metricas_ativos\/\d{4}-\d{2}-\d{2}\/u1$/.test(c) && v === true), 'deveria contar usuário ativo');
+    console.log('✅ métricas: eventos e usuário ativo contados');
+
+    // SEM INTERNET: o banco não responde -> abre com a cópia do aparelho, sem erro na tela
+    authCbs.forEach(cb => cb(null));
+    falhasGet = 1000; semRede = true;
+    authCbs.forEach(cb => cb({ uid: 'u1', email: 'a@b.com' }));
+    await tick(40);
+    assert.ok(els['modal-alerta-custom'].classList.contains('hidden'), 'sem internet com cópia salva não deve mostrar erro');
+    assert.ok(els['carregando-dados'].classList.contains('hidden'), 'a tela "carregando" deve sumir sem internet');
+    assert.ok(els['body-classificacao'].children.some(c => c.innerHTML.includes('Time 1')), 'campeonato da cópia local deveria aparecer');
+    document.getElementById('novo-nome').value = 'Offline';
+    els['btn-add-jogador'].fire('click');
+    await tick(3);
+    const pend = JSON.parse(ctx.localStorage.getItem('cabecao_pendentes_u1') || '{}');
+    assert.ok(pend.jogadores, 'jogador cadastrado sem internet deveria ficar pendente');
+    console.log('✅ sem internet: abre com a cópia do aparelho e guarda o que mudou');
+
+    // internet volta (app reaberto): o que ficou pendente é reenviado por cima do que veio da nuvem
+    authCbs.forEach(cb => cb(null));
+    falhasGet = 0; semRede = false;
+    const antesSync = gravados.length;
+    authCbs.forEach(cb => cb({ uid: 'u1', email: 'a@b.com' }));
+    await tick(10);
+    assert.ok(gravados.slice(antesSync).some(([c, v]) => c === 'usuarios/u1/jogadores' && v.some(j => j.nome === 'Offline')), 'pendente deveria subir para a nuvem');
+    assert.ok(!JSON.parse(ctx.localStorage.getItem('cabecao_pendentes_u1') || '{}').jogadores, 'pendente confirmado deveria sair da lista');
+    console.log('✅ internet de volta: pendências reenviadas');
 
     // logout limpa estado e não grava lixo
     const antes = gravados.length;
