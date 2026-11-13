@@ -203,3 +203,25 @@ t('métricas: dias e resumo (hoje, 7 dias, usuários únicos)', () => {
     assert.strictEqual(r.ativosHoje, 2);
     assert.strictEqual(r.ativosSemana, 3);
 });
+
+t('resumo do racha: campeão, jogos, artilharia e texto do WhatsApp', () => {
+    const h = {
+        data: '13/11/2026 22:00', modo: 'todos-contra-todos',
+        classificacao: [null, { nome: 'Time 1', p: 3, j: 2, v: 1, e: 0, d: 1, gp: 3, sg: 1 }, { nome: 'Time 2', p: 4, j: 2, v: 1, e: 1, d: 0, gp: 2, sg: 1 }],
+        artilharia: { 'J․ Silva': 2, Ana: 3, Zero: 0 },
+        partidas: [
+            { rodada: 1, timeA: { nome: 'Time 1' }, timeB: { nome: 'Time 2' }, golsA: 1, golsB: 1, penaltisA: 3, penaltisB: 4 },
+            { rodada: 2, timeA: { nome: 'Time 1' }, timeB: { nome: 'Time 2' }, golsA: 2, golsB: 0 }
+        ]
+    };
+    const r = L.resumoCampeonato(h);
+    assert.strictEqual(r.campeao, 'Time 2');
+    assert.deepStrictEqual(r.artilharia, [{ nome: 'Ana', gols: 3 }, { nome: 'J. Silva', gols: 2 }]);
+    assert.strictEqual(r.jogos[0].extra, 'pên. 3 x 4');
+    assert.strictEqual(r.totalGols, 4); assert.strictEqual(r.mediaGols, 2);
+    const txt = L.textoResumo(r, 'Pelada de Sexta');
+    assert.ok(txt.includes('*Campeão: Time 2*') && txt.includes('🥇 Ana — 3 gols') && txt.includes('Rodada 1: Time 1 1 x 1 Time 2 (pên. 3 x 4)'));
+    const livre = L.resumoCampeonato({ modo: 'racha-livre', partidas: [{ idPartida: 1, timeA: { nome: 'A' }, timeB: { nome: 'B' }, golsA: 0, golsB: 0, vencedor: 'B' }] });
+    assert.strictEqual(livre.jogos[0].extra, 'avançou B');
+    assert.strictEqual(L.resumoCampeonato({}).campeao, null);
+});

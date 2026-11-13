@@ -1188,6 +1188,33 @@ document.addEventListener('DOMContentLoaded', () => {
         if (resDiv) resDiv.classList.remove('hidden');
     }
 
+    function tituloRacha() {
+        if (rachaAtivo !== 'principal') return nomeRachaAtivo();
+        return (perfil && perfil.apelido) ? 'Racha do ' + perfil.apelido : 'Racha de hoje';
+    }
+
+    // ---------- RESUMO DO RACHA (imagem + texto) ----------
+    async function enviarResumoImagem(h, btn) {
+        if (!window.ImagemTimes) return;
+        if (btn) btn.disabled = true;
+        try {
+            const r = await ImagemTimes.compartilharResumo(Logica.resumoCampeonato(h), { titulo: tituloRacha() });
+            if (r === 'baixado') toast('Imagem salva! Agora é só mandar no grupo.');
+            if (r !== 'cancelado' && window.Metricas) Metricas.evento('resumo_imagem');
+        } catch (e) {
+            console.error('Resumo do racha:', e);
+            await mostrarAlerta('Não consegui gerar a imagem. Use "Copiar resumo".', '❌ ERRO');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+    async function copiarResumoTexto(h) {
+        const texto = Logica.textoResumo(Logica.resumoCampeonato(h), tituloRacha());
+        if (window.Metricas) Metricas.evento('resumo_texto');
+        if (await copiarTexto(texto)) toast('Resumo copiado! Agora é só colar no WhatsApp.');
+        else fallbackCopiarTexto(texto);
+    }
+
     async function compartilharImagemTimes() {
         if (!sorteioAtual || sorteioAtual.length === 0) {
             await mostrarAlerta('Nenhum sorteio realizado ainda!', '⚠️ AVISO');
@@ -1196,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = document.getElementById('btn-imagem-times');
         if (btn) btn.disabled = true;
         try {
-            const titulo = rachaAtivo === 'principal' ? ((perfil && perfil.apelido) ? 'Racha do ' + perfil.apelido : 'Racha de hoje') : nomeRachaAtivo();
+            const titulo = tituloRacha();
             const dia = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
             const r = await ImagemTimes.compartilhar(sorteioAtual, { titulo, subtitulo: dia.charAt(0).toUpperCase() + dia.slice(1) });
             if (r === 'baixado') toast('Imagem salva! Agora é só mandar no grupo.');
@@ -1918,9 +1945,11 @@ document.addEventListener('DOMContentLoaded', () => {
             renderizarCampeonato();
             renderizarHistorico();
 
+            // abre o resultado completo, já com os botões para mandar no grupo
             irParaAba('tab-historico');
+            abrirDetalheHistorico(edicaoHistorico.id);
 
-            toast('🏁 Campeonato finalizado e salvo no histórico!');
+            toast('🏁 Campeonato salvo! Mande o resumo para o grupo 👇');
         });
     }
 
@@ -2072,6 +2101,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ['lista_copiada', 'Listas copiadas'],
         ['campeonato_iniciado', 'Campeonatos iniciados'],
         ['campeonato_finalizado', 'Campeonatos finalizados'],
+        ['resumo_imagem', 'Resumos do racha enviados (imagem)'],
+        ['resumo_texto', 'Resumos do racha copiados (texto)'],
         ['ao_vivo_ligado', 'Placares ao vivo ligados'],
         ['ao_vivo_visita', 'Visitas ao placar ao vivo'],
         ['ao_vivo_cta', 'Cliques em "Criar meu racha" (ao vivo)'],
@@ -2140,14 +2171,21 @@ document.addEventListener('DOMContentLoaded', () => {
         el.innerHTML = `
             <button type="button" class="voltar-hist" id="voltar-hist">‹ Voltar ao histórico</button>
             <div class="card"><h2>🏆 Campeão: ${escapeHtml(cl[0] ? cl[0].nome : 'N/A')}</h2>
-                <p class="subtext">${escapeHtml(h.data || '')} · ${h.modo === 'todos-contra-todos' ? 'Tabela' : 'Racha Livre'}</p></div>
+                <p class="subtext">${escapeHtml(h.data || '')} · ${h.modo === 'todos-contra-todos' ? 'Tabela' : 'Racha Livre'}</p>
+                <p class="subtext" style="margin-top:10px;">Mande o resultado completo (campeão, tabela, artilharia e confrontos) no grupo:</p>
+                <button type="button" class="btn btn-success" id="btn-resumo-imagem">📸 Enviar resumo em imagem</button>
+                <button type="button" class="btn btn-secondary" id="btn-resumo-texto" style="margin-top:8px;">📋 Copiar resumo em texto</button></div>
             <div class="card"><h2>📊 Tabela de Classificação</h2><div class="table-responsive"><table class="tabela-classificacao">
                 <thead><tr><th>Time</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>SG</th></tr></thead>
                 <tbody>${cl.map(c => `<tr><td>${escapeHtml(c.nome)}</td><td>${c.p}</td><td>${c.j}</td><td>${c.v}</td><td>${c.e}</td><td>${c.d}</td><td>${c.gp}</td><td>${c.sg}</td></tr>`).join('')}</tbody>
             </table></div></div>
             <div class="card"><h2>⚔️ Confrontos Realizados</h2>${jogos.length ? jogos.map(p => `<div style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">${linhaJogo(p)}</div>`).join('') : '<p class="subtext">Sem confrontos registrados.</p>'}</div>
             <div class="card"><h2>⚽ Artilharia do Campeonato</h2>${art.length ? art.map(([n, g]) => `<div class="item-jogador"><span>${escapeHtml(n)}</span><strong>${g}</strong></div>`).join('') : '<p class="subtext">Nenhum gol marcado.</p>'}</div>`;
-        el.onclick = (e) => { if (e.target.closest('#voltar-hist')) irParaAba('tab-historico'); };
+        el.onclick = (e) => {
+            if (e.target.closest('#voltar-hist')) irParaAba('tab-historico');
+            else if (e.target.closest('#btn-resumo-imagem')) enviarResumoImagem(h, e.target.closest('#btn-resumo-imagem'));
+            else if (e.target.closest('#btn-resumo-texto')) copiarResumoTexto(h);
+        };
     }
 
     // ---------- CORRIGIR PLACAR (modo tabela) ----------

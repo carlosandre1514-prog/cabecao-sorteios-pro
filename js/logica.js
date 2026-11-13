@@ -340,11 +340,70 @@
         return { hoje, semana, ativosHoje: Object.keys(ativos[listaDias[0]] || {}).length, ativosSemana: unicos.size };
     }
 
+    // ---------- Resumo do racha (para mandar no grupo depois do fim) ----------
+    // h = item do histórico (ou o campeonato que acabou de terminar). Só nomes e números.
+    function nomeDaChave(k) {
+        return String(k).replace(/\u2024/g, '.').replace(/\uFF03/g, '#').replace(/\uFF04/g, '$');
+    }
+    function resumoCampeonato(h) {
+        h = h || {};
+        const lista = v => Object.values(v || {}).filter(Boolean);
+        const nome = t => (t && t.nome != null ? String(t.nome) : '?');
+        const racha = h.modo === 'racha-livre';
+        const classificacao = ordenarClassificacao(lista(h.classificacao).map(c => ({
+            nome: String(c.nome), p: c.p || 0, j: c.j || 0, v: c.v || 0, e: c.e || 0, d: c.d || 0, gp: c.gp || 0, sg: c.sg || 0
+        })));
+        const jogos = lista(h.partidas).map((p, i) => {
+            const ga = Number(p.golsA) || 0, gb = Number(p.golsB) || 0;
+            let extra = '';
+            if (racha) { if (p.vencedor && ga === gb) extra = 'avançou ' + p.vencedor; }
+            else if (ga === gb && (p.penaltisA || p.penaltisB)) extra = 'pên. ' + (p.penaltisA || 0) + ' x ' + (p.penaltisB || 0);
+            return { rotulo: racha ? 'Jogo ' + (p.idPartida || i + 1) : 'Rodada ' + (p.rodada || i + 1), a: nome(p.timeA), b: nome(p.timeB), ga, gb, extra };
+        });
+        const artilharia = Object.entries(h.artilharia || {})
+            .map(([n, g]) => ({ nome: nomeDaChave(n), gols: Number(g) || 0 }))
+            .filter(a => a.gols > 0)
+            .sort((x, y) => (y.gols - x.gols) || x.nome.localeCompare(y.nome));
+        const totalGols = jogos.reduce((a, j) => a + j.ga + j.gb, 0);
+        return {
+            data: String(h.data || ''), modo: racha ? 'Racha Livre' : 'Tabela',
+            campeao: classificacao[0] ? classificacao[0].nome : null,
+            classificacao, jogos, artilharia,
+            times: lista(h.times).map(t => ({ nome: nome(t), jogadores: lista(t.jogadores).map(j => String(j.nome)) })),
+            totalGols, totalJogos: jogos.length,
+            mediaGols: jogos.length ? Math.round((totalGols / jogos.length) * 10) / 10 : 0
+        };
+    }
+    // Texto pronto para colar no WhatsApp (*negrito* do WhatsApp)
+    function textoResumo(r, titulo) {
+        const L = [];
+        L.push('🏁 *' + (titulo || 'RESULTADO DO RACHA').toUpperCase() + '*');
+        if (r.data) L.push('📅 ' + r.data + ' · ' + r.modo);
+        if (r.campeao) L.push('', '🏆 *Campeão: ' + r.campeao + '*');
+        if (r.classificacao.length) {
+            L.push('', '📊 *Classificação*');
+            r.classificacao.forEach((c, i) => L.push((i + 1) + '. ' + c.nome + ' — ' + c.p + ' pts (' + c.v + 'V ' + c.e + 'E ' + c.d + 'D, SG ' + c.sg + ')'));
+        }
+        if (r.artilharia.length) {
+            L.push('', '⚽ *Artilharia*');
+            const med = ['🥇', '🥈', '🥉'];
+            r.artilharia.slice(0, 10).forEach((a, i) => L.push((med[i] || (i + 1) + '.') + ' ' + a.nome + ' — ' + a.gols + (a.gols === 1 ? ' gol' : ' gols')));
+        }
+        if (r.jogos.length) {
+            L.push('', '⚔️ *Confrontos*');
+            r.jogos.forEach(j => L.push(j.rotulo + ': ' + j.a + ' ' + j.ga + ' x ' + j.gb + ' ' + j.b + (j.extra ? ' (' + j.extra + ')' : '')));
+        }
+        L.push('', '🔢 ' + r.totalJogos + ' jogos · ' + r.totalGols + ' gols · média ' + String(r.mediaGols).replace('.', ',') + ' por jogo');
+        L.push('', '_Feito com Cabeção Sorteios Pro ⚽_');
+        return L.join('\n');
+    }
+
     return {
         embaralhar, idUnico, chaveSegura, limparMapa, normalizarTime, compararVersoes,
         filtrarLinhasLote, sortearTimes, gerarPartidas, novaClassificacao,
         aplicarResultado, ordenarClassificacao, montarAoVivo,
         normalizarEstrelas, filtrarPorEstrelas,
-        gravarNoCaminho, lerDoCaminho, diaISO, ultimosDias, resumirMetricas
+        gravarNoCaminho, lerDoCaminho, diaISO, ultimosDias, resumirMetricas,
+        nomeDaChave, resumoCampeonato, textoResumo
     };
 });

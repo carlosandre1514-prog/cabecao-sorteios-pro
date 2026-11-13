@@ -87,3 +87,7 @@ fica em `js/apito.js` e é o mesmo no app e no link. Regras do Firebase: `docs/C
 - **Convite no placar ao vivo**: card "Organiza um racha? Criar meu racha grátis" no `ao-vivo.html`.
 - **Métricas** (`js/metricas.js`): contadores anônimos por dia + painel só para o admin. Regras e funil no fim
   de `docs/COMO-CONFIGURAR-MONETIZACAO.md`.
+- **Resumo do racha** (depois de "Finalizar campeonato" ou ao abrir um campeonato no Histórico):
+  "📸 Enviar resumo em imagem" (campeão, números, classificação, artilharia e confrontos) e
+  "📋 Copiar resumo em texto" para o WhatsApp. Lógica em `Logica.resumoCampeonato` / `Logica.textoResumo`
+  (com testes), desenho em `ImagemTimes.gerarResumo`.
