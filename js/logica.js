@@ -418,12 +418,54 @@
         return L.join('\n');
     }
 
+    // ---------- Lista de presença por link ----------
+    // jogadores: [{id, nome, g (goleiro)}] publicados pelo organizador
+    // respostas: { id: { status: 'vou'|'nao', em, nome?, convidado?, goleiro? } } vindas da página
+    // limite: máx. de jogadores de LINHA (goleiros não contam); 0 = sem limite.
+    // Quem confirmou primeiro fica com a vaga; o resto vai para a lista de espera, em ordem.
+    function resumirPresenca(jogadores, respostas, limite) {
+        jogadores = Object.values(jogadores || {}).filter(Boolean);
+        respostas = respostas || {};
+        limite = Math.max(0, parseInt(limite, 10) || 0);
+        const porId = {};
+        jogadores.forEach(j => { porId[String(j.id)] = j; });
+        const vou = [], naoVao = [], convidados = [];
+        Object.keys(respostas).forEach(id => {
+            const r = respostas[id];
+            if (!r || (r.status !== 'vou' && r.status !== 'nao')) return;
+            const j = porId[id];
+            if (!j && !r.convidado) return;           // jogador apagado do elenco
+            const item = {
+                id, nome: j ? String(j.nome) : String(r.nome || '?'),
+                goleiro: j ? !!(j.g || j.isGoleiro) : !!r.goleiro,
+                convidado: !j, em: Number(r.em) || 0
+            };
+            if (item.convidado) convidados.push(item);
+            (r.status === 'vou' ? vou : naoVao).push(item);
+        });
+        const ordem = (a, b) => (a.em - b.em) || a.nome.localeCompare(b.nome);
+        vou.sort(ordem); naoVao.sort((a, b) => a.nome.localeCompare(b.nome));
+        const confirmados = [], espera = [];
+        let linha = 0;
+        vou.forEach(v => {
+            if (v.goleiro || !limite || linha < limite) { confirmados.push(v); if (!v.goleiro) linha++; }
+            else espera.push(v);
+        });
+        const semResposta = jogadores.filter(j => !respostas[String(j.id)])
+            .map(j => ({ id: String(j.id), nome: String(j.nome), goleiro: !!(j.g || j.isGoleiro) }))
+            .sort((a, b) => a.nome.localeCompare(b.nome));
+        return {
+            confirmados, espera, naoVao, semResposta, convidados: convidados.sort(ordem),
+            linhaConfirmados: linha, goleirosConfirmados: confirmados.filter(c => c.goleiro).length, limite
+        };
+    }
+
     return {
         embaralhar, idUnico, chaveSegura, limparMapa, normalizarTime, compararVersoes,
         filtrarLinhasLote, sortearTimes, gerarPartidas, novaClassificacao,
         aplicarResultado, ordenarClassificacao, montarAoVivo,
         normalizarEstrelas, filtrarPorEstrelas,
         gravarNoCaminho, lerDoCaminho, diaISO, ultimosDias, resumirMetricas,
-        nomeDaChave, resumoCampeonato, textoResumo, proximoTurno
+        nomeDaChave, resumoCampeonato, textoResumo, proximoTurno, resumirPresenca
     };
 });

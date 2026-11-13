@@ -179,3 +179,45 @@ Sem esse nó, o botão abre o `index.html` do mesmo site.
 `Sorteios → Imagens enviadas → Visitas ao placar → Cliques em Criar meu racha → Cadastros`
 mostra se o app está se espalhando sozinho. `Bateram no limite → Abriram o Pro → Clicaram em Assinar`
 mostra onde a venda trava.
+
+---
+
+## Lista de presença por link (`presenca.html?c=CODIGO`)
+
+Na aba **Sorteio**, "📲 Criar lista e enviar no grupo" gera um link. Cada jogador abre, toca no próprio nome e
+responde **Vou** ou **Não vou**, sem login. Quem não está no elenco pode "pedir para entrar". O app do organizador
+escuta as respostas e marca a presença sozinho; se houver limite de vagas na linha, quem confirmou depois vai para a
+lista de espera (goleiros não ocupam vaga).
+
+Acrescente este nó nas regras (mantenha os que já existem):
+
+```json
+"presenca": {
+  "$codigo": {
+    ".read": true,
+    ".write": "auth != null && (!data.exists() || data.child('dono').val() === auth.uid)",
+    "dono": { ".validate": "newData.val() === auth.uid" },
+    "aberta": { ".validate": "newData.isBoolean()" },
+    "limite": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 200" },
+    "respostas": {
+      "$id": {
+        ".write": "root.child('presenca/' + $codigo + '/aberta').val() === true || (auth != null && root.child('presenca/' + $codigo + '/dono').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['status', 'em']) && $id.matches(/^[A-Za-z0-9_-]{1,40}$/)",
+        "status": { ".validate": "newData.val() === 'vou' || newData.val() === 'nao'" },
+        "em": { ".validate": "newData.isNumber()" },
+        "nome": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+        "convidado": { ".validate": "newData.isBoolean()" },
+        "goleiro": { ".validate": "newData.isBoolean()" },
+        "$outro": { ".validate": false }
+      }
+    }
+  }
+}
+```
+
+- Só o dono (organizador logado) cria, fecha, reabre ou apaga a lista e mexe nos nomes.
+- Qualquer pessoa com o link responde, mas só enquanto a lista estiver **aberta**. "Fechar lista" congela as respostas.
+- Não dá para listar todas as listas (não há leitura em `presenca` inteiro); o código tem 8 caracteres sorteados.
+- A página pública mostra **só os nomes** dos jogadores, nunca as estrelas.
+- Limitação conhecida: como não há login na página, alguém com o link poderia responder no lugar de outro.
+  Para um grupo de pelada isso é aceitável; se virar problema, dá para exigir login anônimo do Firebase.

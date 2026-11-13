@@ -16,6 +16,7 @@ js/
   remoto.js           🔌 desligar app / bloquear versão antiga / VERSAO_ATUAL_APP
   js/apito.js         🔔 apito de juiz de fim de partida (6 s), usado no app e no link
   ao-vivo.html        📡 página pública do placar ao vivo (só leitura, sem login)
+  presenca.html       📲 página pública da lista de presença (sem login)
   auth.js             🔐 formulário de login/cadastro/Google/esqueci a senha
   app.js              🖥️ navegação entre telas, salvar/carregar Firebase, telas, cronômetro
   monetizacao.js      ⭐ plano Pro, limites, patrocinador, Pix
@@ -94,3 +95,8 @@ fica em `js/apito.js` e é o mesmo no app e no link. Regras do Firebase: `docs/C
 - **Tabela sem fim** (modo Tabela): quando o turno acaba, o próximo começa sozinho (mandos invertidos nos
   turnos pares; rodadas continuam a contagem). Os jogos só param em "Finalizar campeonato".
   Lógica em `Logica.proximoTurno` (com testes).
+- **Lista de presença por link** (aba Sorteio → "📲 Criar lista e enviar no grupo"): página pública
+  `presenca.html?c=CODIGO`. Cada jogador toca no nome e responde Vou/Não vou; o app marca a presença sozinho
+  (limite de vagas na linha + lista de espera por ordem de confirmação; goleiros não ocupam vaga). Quem não está
+  no elenco pede para entrar e o organizador adiciona com um toque. Lógica em `Logica.resumirPresenca` (com testes).
+  Regras do Firebase no fim de `docs/COMO-CONFIGURAR-MONETIZACAO.md`.

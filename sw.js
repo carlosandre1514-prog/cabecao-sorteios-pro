@@ -8,12 +8,12 @@
 //
 // AO LANÇAR VERSÃO NOVA: troque VERSAO abaixo pelo mesmo ?v= usado no index.html.
 // =====================================================================
-const VERSAO = '20261113c';
+const VERSAO = '20261113d';
 const CACHE = 'cabecao-' + VERSAO;
 const FIREBASE = 'https://www.gstatic.com/firebasejs/11.0.0/';
 
 const PRECACHE = [
-    './', 'index.html', 'ao-vivo.html', 'manifest.json',
+    './', 'index.html', 'ao-vivo.html', 'presenca.html', 'manifest.json',
     'termos-uso.html', 'politica-privacidade.html',
     'img/icon-192.png', 'img/icon-512.png', 'img/icon-512-maskable.png',
     'css/style.css?v=' + VERSAO,

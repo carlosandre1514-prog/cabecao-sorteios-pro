@@ -205,6 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
         aoVivoPendente = null;
         clearTimeout(aoVivoTimer);
         atualizarCardAoVivo();
+        pararEscutaPresenca();
+        presencaCodigo = null; presencaDados = null; presencaAssinatura = '';
+        renderizarCardPresenca();
         dadosCarregados = false;
     }
 
@@ -434,7 +437,208 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     configurarAoVivo();
-    function salvarJogadores() { gravar('jogadores', jogadores); }
+
+    // --- LISTA DE PRESENÇA POR LINK (presenca.html?c=CODIGO, sem login) ---
+    // presenca/<codigo> = { dono, titulo, quando, limite, aberta, criadoEm, jogadores: [{id,nome,g}],
+    //                       respostas: { id: {status:'vou'|'nao', em, nome?, convidado?, goleiro?} },
+    //                       migrados: { idConvidado: idNovoJogador } }
+    // O app escuta as respostas e marca a presença dos jogadores sozinho.
+    let presencaCodigo = null;
+    let presencaDados = null;
+    let presencaParar = null;     // desliga o "escutar" do Firebase
+    let presencaAssinatura = '';  // evita republicar a lista de nomes sem mudança
+    const refPresenca = (sub) => window.firebaseFns.ref(window.firebaseDb, 'presenca/' + presencaCodigo + (sub ? '/' + sub : ''));
+    function linkPresenca() {
+        return new URL('presenca.html', location.href).href.split('#')[0].split('?')[0] + '?c=' + presencaCodigo;
+    }
+    const jogadoresPublicos = () => jogadores.map(j => ({ id: String(j.id), nome: String(j.nome), g: !!j.isGoleiro }));
+    function publicarJogadoresPresenca() {
+        if (!presencaCodigo || !currentUserUid || !dadosCarregados) return;
+        const lista = jogadoresPublicos();
+        const sig = JSON.stringify(lista);
+        if (sig === presencaAssinatura) return;
+        presencaAssinatura = sig;
+        window.firebaseFns.set(refPresenca('jogadores'), lista).catch(e => console.error('Lista de presença:', e));
+    }
+    function pararEscutaPresenca() {
+        if (typeof presencaParar === 'function') { try { presencaParar(); } catch (e) { /* ignora */ } }
+        presencaParar = null;
+    }
+    function escutarPresenca() {
+        pararEscutaPresenca();
+        const f = window.firebaseFns;
+        if (!presencaCodigo || !f || typeof f.onValue !== 'function') { renderizarCardPresenca(); return; }
+        const codigo = presencaCodigo;
+        presencaParar = f.onValue(refPresenca(), (snap) => {
+            if (codigo !== presencaCodigo) return;
+            if (!snap.exists()) {   // encerrado em outro aparelho
+                presencaCodigo = null; presencaDados = null; pararEscutaPresenca();
+                gravar('presenca', null);
+                renderizarCardPresenca();
+                return;
+            }
+            presencaDados = snap.val() || {};
+            aplicarRespostasPresenca();
+            renderizarCardPresenca();
+        }, (e) => console.error('Lista de presença:', e));
+        publicarJogadoresPresenca();
+    }
+    // quem confirmou fica presente; quem está na espera ou não vai fica ausente; sem resposta não mexe
+    function aplicarRespostasPresenca() {
+        if (!presencaDados) return;
+        const r = Logica.resumirPresenca(presencaDados.jogadores, presencaDados.respostas, presencaDados.limite);
+        const vai = new Set(r.confirmados.map(c => c.id));
+        const naoVai = new Set(r.espera.concat(r.naoVao).map(c => c.id));
+        let mudou = false;
+        jogadores.forEach(j => {
+            const id = String(j.id);
+            const quer = vai.has(id) ? true : naoVai.has(id) ? false : null;
+            if (quer !== null && !!j.presente !== quer) { j.presente = quer; mudou = true; }
+        });
+        if (mudou) { salvarJogadores(); renderizarPresenca(); }
+    }
+    function renderizarCardPresenca() {
+        const off = document.getElementById('presenca-off');
+        const on = document.getElementById('presenca-on');
+        if (!off || !on) return;
+        off.classList.toggle('hidden', !!presencaCodigo);
+        on.classList.toggle('hidden', !presencaCodigo);
+        if (!presencaCodigo) return;
+        const campo = document.getElementById('presenca-link');
+        if (campo) campo.value = linkPresenca();
+        const d = presencaDados || {};
+        const r = Logica.resumirPresenca(d.jogadores, d.respostas, d.limite);
+        const resumo = document.getElementById('presenca-resumo');
+        if (resumo) resumo.innerHTML = `
+            ${d.aberta === false ? '<p class="subtext" style="color:var(--verm);font-weight:700;margin:0 0 6px;">🔒 Lista fechada: ninguém consegue mudar a resposta.</p>' : ''}
+            ${d.quando ? `<p class="subtext" style="margin:0 0 6px;">📅 ${escapeHtml(d.quando)}</p>` : ''}
+            <div class="presenca-numeros">
+                <div><strong>${r.linhaConfirmados}${r.limite ? '/' + r.limite : ''}</strong><small>na linha</small></div>
+                <div><strong>${r.goleirosConfirmados}</strong><small>goleiros</small></div>
+                <div><strong>${r.espera.length}</strong><small>na espera</small></div>
+                <div><strong>${r.naoVao.length}</strong><small>não vão</small></div>
+                <div><strong>${r.semResposta.length}</strong><small>pendentes</small></div>
+            </div>
+            <p class="subtext" style="margin:6px 0 10px;">Quem confirma já aparece marcado na lista abaixo.</p>`;
+        const conv = document.getElementById('presenca-convidados');
+        if (conv) {
+            const pedidos = r.convidados.filter(c => r.confirmados.some(x => x.id === c.id) || r.espera.some(x => x.id === c.id));
+            conv.innerHTML = pedidos.length ? `<div class="presenca-pedidos"><p class="subtext" style="margin:0 0 6px;"><strong>Pediram para entrar</strong> (não estão no elenco):</p>
+                ${pedidos.map(c => `<div class="item-jogador"><span>${c.goleiro ? '🧤 ' : ''}${escapeHtml(c.nome)}</span><button type="button" class="btn btn-secondary btn-mini" data-add-conv="${escapeHtml(c.id)}">＋ Adicionar</button></div>`).join('')}</div>` : '';
+        }
+        const bf = document.getElementById('btn-presenca-fechar');
+        if (bf) bf.textContent = d.aberta === false ? '🔓 Reabrir lista' : '🔒 Fechar lista';
+    }
+    async function compartilharPresenca() {
+        if (!presencaCodigo) return;
+        const d = presencaDados || {};
+        const texto = `📋 *Lista do ${d.titulo || tituloRacha()}*${d.quando ? ' — ' + d.quando : ''}\nConfirma aí se vai 👇 (toque no seu nome)`;
+        const url = linkPresenca();
+        if (window.Metricas) Metricas.evento('presenca_enviada');
+        if (navigator.share) {
+            try { await navigator.share({ title: 'Lista do racha', text: texto, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+        }
+        toast(await copiarTexto(texto + '\n' + url) ? 'Mensagem com o link copiada! Cole no grupo.' : 'Copie o link no campo acima.');
+    }
+    function abrirCriarPresenca() {
+        if (!dadosCarregados || !currentUserUid) {
+            mostrarAlerta('Seus dados ainda não carregaram. Espere um instante e tente de novo.', '📲 LISTA DE PRESENÇA');
+            return;
+        }
+        if (!jogadores.length) {
+            mostrarAlerta('Cadastre os jogadores do racha primeiro (aba Jogadores). Quem não estiver no elenco pode pedir para entrar pelo link.', '📲 LISTA DE PRESENÇA');
+            return;
+        }
+        const m = abrirModalHtml(`<h2>📲 Nova lista de presença</h2>
+            <label class="subtext" for="pr-quando">Quando é o racha? (opcional)</label>
+            <input type="text" id="pr-quando" maxlength="60" placeholder="Ex.: Sábado, 16h — Quadra do Zé">
+            <label class="subtext" for="pr-limite" style="margin-top:10px;display:block;">Vagas na linha (opcional)</label>
+            <input type="number" id="pr-limite" min="0" max="200" inputmode="numeric" placeholder="Vazio = sem limite">
+            <p class="subtext" style="margin:4px 0 0;">Goleiros não ocupam vaga. Passou do limite, entra na lista de espera.</p>
+            <label style="display:flex;gap:8px;align-items:center;margin-top:12px;"><input type="checkbox" id="pr-zerar" checked> <span class="subtext" style="margin:0;">Desmarcar todo mundo agora (só fica marcado quem confirmar)</span></label>
+            <div class="modal-actions"><button type="button" class="btn btn-primary" id="pr-criar">Criar e enviar</button><button type="button" class="btn btn-secondary" id="pr-cancelar">Cancelar</button></div>`);
+        m.querySelector('#pr-cancelar').onclick = () => m.remove();
+        m.querySelector('#pr-criar').onclick = async () => {
+            const quando = m.querySelector('#pr-quando').value.trim().slice(0, 60);
+            const limite = Math.max(0, Math.min(200, parseInt(m.querySelector('#pr-limite').value, 10) || 0));
+            const zerar = m.querySelector('#pr-zerar').checked;
+            const codigo = gerarCodigoAoVivo();
+            const f = window.firebaseFns;
+            const dados = { dono: currentUserUid, titulo: tituloRacha(), quando, limite, aberta: true, criadoEm: Date.now(), jogadores: jogadoresPublicos() };
+            m.querySelector('#pr-criar').disabled = true;
+            try {
+                await f.set(f.ref(window.firebaseDb, 'presenca/' + codigo), dados);
+            } catch (e) {
+                m.querySelector('#pr-criar').disabled = false;
+                const cod = String((e && (e.code || e.message)) || 'erro');
+                const dica = /permission/i.test(cod) ? ' O Firebase negou: publique as regras com "presenca" (docs/COMO-CONFIGURAR-MONETIZACAO.md).' : ' Confira a internet.';
+                mostrarAlerta('Não consegui criar a lista.' + dica + ' (Código: ' + cod + ')', '❌ LISTA DE PRESENÇA');
+                return;
+            }
+            m.remove();
+            presencaCodigo = codigo;
+            presencaDados = dados;
+            presencaAssinatura = JSON.stringify(dados.jogadores);
+            gravar('presenca', { codigo });
+            if (zerar) { jogadores.forEach(j => { j.presente = false; }); salvarJogadores(); renderizarPresenca(); }
+            escutarPresenca();
+            renderizarCardPresenca();
+            if (window.Metricas) Metricas.evento('presenca_criada');
+            toast('📲 Lista criada! Agora mande o link no grupo.');
+            compartilharPresenca();
+        };
+    }
+    async function adicionarConvidadoPresenca(idConv) {
+        const d = presencaDados || {};
+        const resp = (d.respostas || {})[idConv];
+        if (!resp || !presencaCodigo) return;
+        if (window.Monetizacao && !window.Monetizacao.checarLimiteJogadores(jogadores.length, 1)) return;
+        const novoId = Logica.idUnico();
+        jogadores.push({ id: novoId, nome: String(resp.nome || 'Convidado').slice(0, 40), isGoleiro: !!resp.goleiro, estrelas: 3.0, presente: resp.status === 'vou' });
+        salvarJogadores();           // também publica o nome novo na lista
+        renderizarElenco();
+        const f = window.firebaseFns;
+        try {
+            // a resposta passa a ser do jogador do elenco (mantém o horário: não perde a vaga)
+            await f.set(refPresenca('respostas/' + novoId), { status: resp.status, em: resp.em || Date.now() });
+            await f.set(refPresenca('migrados/' + idConv), String(novoId));
+            await f.set(refPresenca('respostas/' + idConv), null);
+        } catch (e) { console.error('Lista de presença:', e); }
+        if (window.Metricas) Metricas.evento('presenca_convidado_add');
+        toast(`${resp.nome} entrou no elenco com 3 estrelas. Ajuste na aba Jogadores.`);
+    }
+    function configurarPresenca() {
+        const $ = id => document.getElementById(id);
+        $('btn-presenca-criar')?.addEventListener('click', abrirCriarPresenca);
+        $('btn-presenca-enviar')?.addEventListener('click', compartilharPresenca);
+        $('btn-presenca-copiar')?.addEventListener('click', async () => {
+            toast(await copiarTexto(linkPresenca()) ? 'Link copiado!' : 'Copie o link no campo acima.');
+        });
+        $('btn-presenca-fechar')?.addEventListener('click', async () => {
+            if (!presencaCodigo) return;
+            const abrir = presencaDados && presencaDados.aberta === false;
+            try { await window.firebaseFns.set(refPresenca('aberta'), abrir); toast(abrir ? '🔓 Lista reaberta' : '🔒 Lista fechada'); }
+            catch (e) { toast('Não foi possível mudar a lista', 'erro'); }
+        });
+        $('btn-presenca-encerrar')?.addEventListener('click', async () => {
+            const ok = await mostrarConfirmacao('O link deixa de funcionar e as respostas são apagadas. A presença marcada aqui no app continua. Encerrar a lista?', '📲 ENCERRAR LISTA');
+            if (!ok || !presencaCodigo) return;
+            const ref = refPresenca();
+            pararEscutaPresenca();
+            presencaCodigo = null; presencaDados = null; presencaAssinatura = '';
+            window.firebaseFns.set(ref, null).catch(e => console.error('Lista de presença:', e));
+            gravar('presenca', null);
+            renderizarCardPresenca();
+            toast('Lista encerrada.');
+        });
+        $('presenca-convidados')?.addEventListener('click', (e) => {
+            const b = e.target.closest && e.target.closest('[data-add-conv]');
+            if (b) adicionarConvidadoPresenca(b.dataset.addConv);
+        });
+    }
+    configurarPresenca();
+
+    function salvarJogadores() { gravar('jogadores', jogadores); publicarJogadoresPresenca(); }
     function salvarHistoricoFirebase() { gravar('historico', historico); }
 
     // Firebase devolve listas como array OU objeto, e apaga listas vazias -> sempre normalizamos
@@ -550,7 +754,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             aoVivoCodigo = (base.aoVivo && base.aoVivo.codigo) || null;
+            presencaCodigo = (base.presenca && base.presenca.codigo) || null;
+            presencaAssinatura = '';
             dadosCarregados = true;
+            escutarPresenca();
             renderizarRachas();
             verificarAdmin();
             atualizarCardAoVivo();
@@ -2115,6 +2322,12 @@ document.addEventListener('DOMContentLoaded', () => {
         ['campeonato_finalizado', 'Campeonatos finalizados'],
         ['resumo_imagem', 'Resumos do racha enviados (imagem)'],
         ['resumo_texto', 'Resumos do racha copiados (texto)'],
+        ['presenca_criada', 'Listas de presença criadas'],
+        ['presenca_enviada', 'Listas enviadas no grupo'],
+        ['presenca_visita', 'Visitas à lista de presença'],
+        ['presenca_resposta', 'Respostas na lista (vou/não vou)'],
+        ['presenca_convidado_add', 'Convidados adicionados ao elenco'],
+        ['presenca_cta', 'Cliques em "Criar meu racha" (lista)'],
         ['ao_vivo_ligado', 'Placares ao vivo ligados'],
         ['ao_vivo_visita', 'Visitas ao placar ao vivo'],
         ['ao_vivo_cta', 'Cliques em "Criar meu racha" (ao vivo)'],

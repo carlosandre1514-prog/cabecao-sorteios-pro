@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Lista do racha · Cabeção Sorteios Pro</title>
+    <meta name="description" content="Confirme se você vai no racha.">
+    <link rel="icon" type="image/png" href="img/icon-192.png">
+    <meta name="theme-color" content="#0b0e0c">
+    <link rel="stylesheet" href="css/style.css?v=20261113d">
+    <style>
+        .app-container { padding-bottom: 32px; }
+        main { display: flex; flex-direction: column; gap: 12px; }
+        .aviso-centro { text-align: center; padding: 40px 10px; color: var(--mudo); }
+        .contador { display: flex; align-items: baseline; gap: 8px; }
+        .contador strong { font-size: 2.2rem; color: var(--neon); line-height: 1; }
+        .barra { height: 10px; background: rgba(255, 255, 255, 0.07); border-radius: 99px; overflow: hidden; margin: 10px 0 4px; }
+        .barra > div { height: 100%; background: linear-gradient(90deg, var(--neon), var(--verde)); border-radius: 99px; transition: width .4s; }
+        .tag-fechada { display: inline-block; background: rgba(222, 90, 104, 0.15); color: var(--verm); border-radius: 99px; padding: 3px 10px; font-size: .78rem; font-weight: 800; }
+        .grade-nomes { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+        .grade-nomes button { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--linha); color: var(--txt); border-radius: 12px; padding: 12px 8px; font: inherit; font-weight: 700; cursor: pointer; text-align: center; }
+        .grade-nomes button.vou { border-color: rgba(147, 213, 75, 0.6); }
+        .grade-nomes button.nao { opacity: .55; }
+        .eu { text-align: center; }
+        .eu .nome-eu { font-size: 1.5rem; font-weight: 800; margin: 2px 0 6px; }
+        .eu .estado { font-weight: 800; margin-bottom: 12px; }
+        .estado.vou { color: var(--neon); } .estado.nao { color: var(--verm); } .estado.espera { color: var(--ouro); }
+        .botoes-resposta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .botoes-resposta .btn { margin: 0; }
+        .link-discreto { background: none; border: none; color: var(--mudo); text-decoration: underline; font: inherit; font-size: .85rem; margin-top: 12px; cursor: pointer; }
+        .linha-pessoa { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--linha); }
+        .linha-pessoa:last-child { border-bottom: none; }
+        .linha-pessoa .pos { min-width: 26px; color: var(--mudo); font-weight: 800; font-size: .85rem; }
+        .linha-pessoa .tag { margin-left: auto; font-size: .72rem; color: var(--mudo); }
+        .linha-pessoa.sou-eu { color: var(--neon); font-weight: 800; }
+        .lista-curta { color: var(--mudo); font-size: .9rem; line-height: 1.6; }
+        .entrar-form { display: grid; gap: 8px; }
+        .entrar-form label { display: flex; gap: 8px; align-items: center; color: var(--mudo); font-size: .9rem; }
+        .cta-app { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; border-color: rgba(147, 213, 75, 0.35); }
+        .cta-app .cta-logo { width: 56px; height: 56px; border-radius: 12px; }
+        .cta-app .btn { grid-column: 1 / -1; text-align: center; text-decoration: none; display: block; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-titulos">
+                    <h1 id="titulo">Lista do racha</h1>
+                    <p id="quando">Carregando...</p>
+                </div>
+                <img src="img/icon-192.png" alt="Logo" class="app-logo">
+            </div>
+        </header>
+
+        <main id="conteudo">
+            <div class="aviso-centro"><div class="spinner" style="margin:0 auto 12px;"></div>Abrindo a lista...</div>
+        </main>
+
+        <!-- CONVITE: quem confirma presença também organiza racha -->
+        <div class="card cta-app" style="margin-top:12px;">
+            <img src="img/icon-192.png" alt="" class="cta-logo">
+            <div>
+                <h2 style="margin:0 0 4px;">Organiza um racha?</h2>
+                <p class="subtext" style="margin:0;">Lista de presença por link, sorteio de times equilibrados e placar ao vivo. É grátis.</p>
+            </div>
+            <a id="cta-link" class="btn btn-primary" href="index.html">⚽ Criar meu racha grátis</a>
+        </div>
+        <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro</p>
+    </div>
+
+    <script src="js/logica.js?v=20261113d"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+        import { getDatabase, ref, onValue, get, set, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+        // Mesma configuração do app. Não precisa de login: quem tem o link responde.
+        const app = initializeApp({
+            apiKey: "AIzaSyCt4kqF8LcHkR7bn3gvF-1ZcpjVW3FH8YA",
+            authDomain: "studio-7737408264-35a36.firebaseapp.com",
+            databaseURL: "https://studio-7737408264-35a36-default-rtdb.firebaseio.com",
+            projectId: "studio-7737408264-35a36",
+            storageBucket: "studio-7737408264-35a36.firebasestorage.app",
+            messagingSenderId: "35330544724",
+            appId: "1:35330544724:web:d9e200c94f376a86ae09c1"
+        });
+        const db = getDatabase(app);
+        const $ = id => document.getElementById(id);
+        const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const codigo = (new URLSearchParams(location.search).get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const chaveEu = 'cabecao_presenca_eu_' + codigo;
+        const lerEu = () => { try { return localStorage.getItem(chaveEu); } catch (e) { return null; } };
+        const gravarEu = v => { try { v ? localStorage.setItem(chaveEu, v) : localStorage.removeItem(chaveEu); } catch (e) { /* ignora */ } };
+
+        // ---------- métricas anônimas + link do convite ----------
+        const hoje = Logica.diaISO();
+        const contar = ev => set(ref(db, 'metricas/' + hoje + '/' + ev), increment(1)).catch(() => {});
+        get(ref(db, 'configuracoes/divulgacao/link')).then(s => {
+            const u = String(s.exists() ? s.val() : '');
+            if (/^https?:\/\//i.test(u)) $('cta-link').href = u;
+        }).catch(() => {});
+        $('cta-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            const destino = $('cta-link').href, ir = () => { location.href = destino; };
+            Promise.race([contar('presenca_cta'), new Promise(r => setTimeout(r, 600))]).then(ir, ir);
+        });
+
+        let lista = null;      // presenca/<codigo>
+        let eu = lerEu();      // id do jogador escolhido neste aparelho
+        let trocando = false;  // mostrando a grade de nomes para escolher outro
+
+        function aviso(msg) { $('conteudo').innerHTML = `<div class="card aviso-centro">${msg}</div>`; }
+
+        async function responder(id, status, extra) {
+            if (!lista || !lista.aberta) return;
+            const atual = (lista.respostas || {})[id];
+            // mantém o horário original enquanto continuar "vou" (não perde a vaga ao tocar de novo)
+            const em = (atual && atual.status === 'vou' && status === 'vou') ? atual.em : Date.now();
+            const dados = Object.assign({ status, em }, extra || {});
+            try {
+                await set(ref(db, 'presenca/' + codigo + '/respostas/' + id), dados);
+                contar('presenca_resposta');
+            } catch (e) {
+                alert('Não foi possível salvar. A lista pode ter sido fechada pelo organizador. (' + ((e && e.code) || 'erro') + ')');
+            }
+        }
+
+        function desenhar() {
+            const d = lista;
+            document.title = (d.titulo || 'Lista do racha') + ' · Lista';
+            $('titulo').textContent = d.titulo || 'Lista do racha';
+            $('quando').textContent = d.quando ? '📅 ' + d.quando : 'Confirme se você vai';
+            const r = Logica.resumirPresenca(d.jogadores, d.respostas, d.limite);
+            const jogadores = Object.values(d.jogadores || {}).filter(Boolean);
+            const todos = jogadores.map(j => ({ id: String(j.id), nome: String(j.nome), goleiro: !!j.g }))
+                .concat(r.convidados.map(c => ({ id: c.id, nome: c.nome, goleiro: c.goleiro, convidado: true })));
+            // convidado que o organizador colocou no elenco: passa a ser o jogador novo
+            if (eu && !todos.some(p => p.id === eu) && d.migrados && d.migrados[eu]) { eu = String(d.migrados[eu]); gravarEu(eu); }
+            const meu = todos.find(p => p.id === eu);
+            if (eu && !meu) { eu = null; gravarEu(null); }
+            const resp = d.respostas || {};
+            const estadoDe = id => {
+                if (r.confirmados.some(c => c.id === id)) return 'vou';
+                const ie = r.espera.findIndex(c => c.id === id);
+                if (ie >= 0) return 'espera:' + (ie + 1);
+                if (resp[id] && resp[id].status === 'nao') return 'nao';
+                return '';
+            };
+            let h = '';
+
+            // contador
+            const lim = r.limite;
+            h += `<div class="card">
+                ${d.aberta ? '' : '<span class="tag-fechada">🔒 Lista fechada pelo organizador</span>'}
+                <div class="contador" style="margin-top:${d.aberta ? 0 : 10}px;"><strong>${r.linhaConfirmados}${lim ? '/' + lim : ''}</strong><span class="subtext">na linha confirmados${r.goleirosConfirmados ? ` · 🧤 ${r.goleirosConfirmados} goleiro(s)` : ''}</span></div>
+                ${lim ? `<div class="barra"><div style="width:${Math.min(100, Math.round(r.linhaConfirmados / lim * 100))}%"></div></div>` : ''}
+                <p class="subtext" style="margin:6px 0 0;">${r.espera.length ? `⏳ ${r.espera.length} na lista de espera · ` : ''}${r.naoVao.length} não vão · ${r.semResposta.length} sem resposta</p>
+            </div>`;
+
+            // eu
+            if (meu && !trocando) {
+                const est = estadoDe(meu.id);
+                const txt = est === 'vou' ? '✅ Você está confirmado!' : est.startsWith('espera') ? `⏳ Você está na lista de espera (${est.split(':')[1]}º)` : est === 'nao' ? '❌ Você marcou que não vai' : 'Você ainda não respondeu';
+                const cls = est === 'vou' ? 'vou' : est.startsWith('espera') ? 'espera' : est === 'nao' ? 'nao' : '';
+                h += `<div class="card eu">
+                    <p class="subtext" style="margin:0;">Você é</p>
+                    <div class="nome-eu">${meu.goleiro ? '🧤 ' : ''}${esc(meu.nome)}</div>
+                    <div class="estado ${cls}">${txt}</div>
+                    ${d.aberta ? `<div class="botoes-resposta">
+                        <button class="btn btn-success" data-resp="vou">✅ Vou</button>
+                        <button class="btn btn-danger" data-resp="nao">❌ Não vou</button>
+                    </div>` : '<p class="subtext">A lista foi fechada. Fale com o organizador para mudar.</p>'}
+                    <button class="link-discreto" data-trocar>Não é você? Escolher outro nome</button>
+                </div>`;
+            } else if (d.aberta) {
+                h += `<div class="card">
+                    <h2>👋 Quem é você?</h2>
+                    <p class="subtext">Toque no seu nome para confirmar se vai.</p>
+                    <div class="grade-nomes">${todos.map(p => { const e = estadoDe(p.id); return `<button data-eu="${esc(p.id)}" class="${e === 'vou' ? 'vou' : e === 'nao' ? 'nao' : ''}">${p.goleiro ? '🧤 ' : ''}${esc(p.nome)}</button>`; }).join('') || '<p class="subtext">Nenhum nome na lista.</p>'}</div>
+                    <details style="margin-top:12px;"><summary>Não está na lista? Peça para entrar</summary>
+                        <div class="entrar-form" style="margin-top:10px;">
+                            <input id="novo-nome" maxlength="40" placeholder="Seu nome ou apelido">
+                            <label><input type="checkbox" id="novo-goleiro"> Sou goleiro</label>
+                            <button class="btn btn-primary" data-entrar>Pedir para entrar e confirmar</button>
+                        </div>
+                    </details>
+                    ${trocando && meu ? '<button class="link-discreto" data-cancelar>Cancelar</button>' : ''}
+                </div>`;
+            }
+
+            // listas
+            const linha = (p, i) => `<div class="linha-pessoa ${p.id === eu ? 'sou-eu' : ''}"><span class="pos">${i + 1}</span><span>${p.goleiro ? '🧤 ' : ''}${esc(p.nome)}</span>${p.convidado ? '<span class="tag">convidado</span>' : ''}</div>`;
+            h += `<div class="card"><h2>✅ Confirmados (${r.confirmados.length})</h2>${r.confirmados.length ? r.confirmados.map(linha).join('') : '<p class="subtext">Ninguém confirmou ainda. Seja o primeiro!</p>'}</div>`;
+            if (r.espera.length) h += `<div class="card"><h2>⏳ Lista de espera</h2><p class="subtext">Se alguém desistir, o primeiro da espera entra.</p>${r.espera.map(linha).join('')}</div>`;
+            if (r.naoVao.length) h += `<div class="card"><h2>❌ Não vão (${r.naoVao.length})</h2><p class="lista-curta">${r.naoVao.map(p => esc(p.nome)).join(', ')}</p></div>`;
+            if (r.semResposta.length) h += `<div class="card"><h2>🤔 Ainda não responderam (${r.semResposta.length})</h2><p class="lista-curta">${r.semResposta.map(p => esc(p.nome)).join(', ')}</p></div>`;
+
+            $('conteudo').innerHTML = h;
+        }
+
+        $('conteudo').addEventListener('click', async (e) => {
+            const b = e.target.closest('button');
+            if (!b || !lista) return;
+            if (b.dataset.eu) { eu = b.dataset.eu; gravarEu(eu); trocando = false; desenhar(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+            if (b.dataset.resp && eu) { b.disabled = true; await responder(eu, b.dataset.resp); return; }
+            if (b.hasAttribute('data-trocar')) { trocando = true; desenhar(); return; }
+            if (b.hasAttribute('data-cancelar')) { trocando = false; desenhar(); return; }
+            if (b.hasAttribute('data-entrar')) {
+                const nome = ($('novo-nome').value || '').trim().slice(0, 40);
+                if (!nome) { $('novo-nome').focus(); return; }
+                const id = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+                b.disabled = true;
+                eu = id; gravarEu(id); trocando = false;
+                await responder(id, 'vou', { nome, convidado: true, goleiro: !!$('novo-goleiro').checked });
+            }
+        });
+
+        if (codigo.length !== 8) {
+            $('quando').textContent = 'Link inválido';
+            aviso('Este link não está completo. Peça o link de novo para quem organiza o racha.');
+        } else {
+            contar('presenca_visita');
+            onValue(ref(db, 'presenca/' + codigo), (snap) => {
+                if (!snap.exists()) {
+                    $('quando').textContent = 'Lista encerrada';
+                    aviso('Esta lista não existe mais, ou o organizador encerrou o link.');
+                    return;
+                }
+                lista = snap.val();
+                desenhar();
+            }, () => {
+                $('quando').textContent = 'Sem conexão';
+                aviso('Não foi possível carregar. Confira sua internet — a página tenta de novo sozinha.');
+            });
+        }
+    </script>
+</body>
+</html>

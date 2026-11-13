@@ -240,3 +240,22 @@ t('tabela sem fim: turno 2 continua rodadas/ids e inverte o mando; turno 3 volta
     const tres = times.slice(0, 3), a = L.gerarPartidas(tres);
     assert.strictEqual(L.proximoTurno(tres, a).length, a.length);
 });
+
+t('lista de presença: ordem de chegada, limite só da linha, espera, convidados e sem resposta', () => {
+    const js = [{ id: 1, nome: 'Ana' }, { id: 2, nome: 'Bia' }, { id: 3, nome: 'Caio' }, { id: 4, nome: 'Gol', g: true }, { id: 5, nome: 'Duda' }];
+    const r = L.resumirPresenca(js, {
+        2: { status: 'vou', em: 10 }, 1: { status: 'vou', em: 20 }, 4: { status: 'vou', em: 30 },
+        3: { status: 'vou', em: 40 }, x9: { status: 'vou', em: 50, nome: 'Zé Convidado', convidado: true },
+        99: { status: 'vou', em: 5 },          // jogador apagado: ignorado
+        5: { status: 'nao', em: 1 }
+    }, 2);
+    assert.deepStrictEqual(r.confirmados.map(c => c.nome), ['Bia', 'Ana', 'Gol']);   // goleiro não conta no limite
+    assert.deepStrictEqual(r.espera.map(c => c.nome), ['Caio', 'Zé Convidado']);
+    assert.deepStrictEqual(r.naoVao.map(c => c.nome), ['Duda']);
+    assert.deepStrictEqual(r.semResposta, []);
+    assert.strictEqual(r.convidados[0].id, 'x9');
+    assert.strictEqual(r.linhaConfirmados, 2); assert.strictEqual(r.goleirosConfirmados, 1);
+    const sem = L.resumirPresenca(js, {}, 0);
+    assert.strictEqual(sem.semResposta.length, 5); assert.strictEqual(sem.confirmados.length, 0);
+    assert.strictEqual(L.resumirPresenca(js, { 1: { status: 'vou', em: 1 }, 2: { status: 'vou', em: 2 }, 3: { status: 'vou', em: 3 } }, 0).espera.length, 0);
+});

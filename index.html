@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0b0e0c">
-    <link rel="stylesheet" href="css/style.css?v=20261113c">
+    <link rel="stylesheet" href="css/style.css?v=20261113d">
 </head>
 <body>
     <!-- Projeto: Cabeção Sorteios Pro | Desenvolvedor: Carlos Andre | 2026 -->
@@ -147,6 +147,28 @@
 
         <!-- ABA 2: SORTEIO -->
         <section id="tab-sorteio" class="tab-content">
+            <!-- LISTA DE PRESENÇA POR LINK (cada um confirma no celular; o app marca sozinho) -->
+            <div class="card" id="card-presenca">
+                <h2>📲 Lista de presença por link</h2>
+                <div id="presenca-off">
+                    <p class="subtext">Mande um link no grupo: cada jogador toca no nome e confirma se vai. Quem confirmar já fica marcado aqui embaixo, pronto para o sorteio.</p>
+                    <button id="btn-presenca-criar" class="btn btn-primary">📲 Criar lista e enviar no grupo</button>
+                </div>
+                <div id="presenca-on" class="hidden">
+                    <div id="presenca-resumo"></div>
+                    <input type="text" id="presenca-link" readonly>
+                    <div class="modal-actions">
+                        <button id="btn-presenca-enviar" class="btn btn-success">📤 Enviar no grupo</button>
+                        <button id="btn-presenca-copiar" class="btn btn-secondary">Copiar</button>
+                    </div>
+                    <div id="presenca-convidados"></div>
+                    <div class="modal-actions" style="margin-top:8px;">
+                        <button id="btn-presenca-fechar" class="btn btn-secondary">🔒 Fechar lista</button>
+                        <button id="btn-presenca-encerrar" class="btn btn-danger">Encerrar link</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
                 <h2>1. Quem veio jogar hoje?</h2>
                 <p class="subtext">Marque quem está presente no racha do dia:</p>
@@ -402,15 +424,15 @@
         window.dispatchEvent(new Event('firebase-ready'));
     </script>
     <!-- ordem importa: logica -> remoto -> auth -> app -> monetizacao -->
-    <script src="js/logica.js?v=20261113c"></script>
-    <script src="js/apito.js?v=20261113c"></script>
-    <script src="js/remoto.js?v=20261113c"></script>
-    <script src="js/auth.js?v=20261113c"></script>
-    <script src="js/app.js?v=20261113c"></script>
-    <script src="js/monetizacao.js?v=20261113c"></script>
-    <script src="js/icones.js?v=20261113c"></script>
-    <script src="js/metricas.js?v=20261113c"></script>
-    <script src="js/imagem-times.js?v=20261113c"></script>
+    <script src="js/logica.js?v=20261113d"></script>
+    <script src="js/apito.js?v=20261113d"></script>
+    <script src="js/remoto.js?v=20261113d"></script>
+    <script src="js/auth.js?v=20261113d"></script>
+    <script src="js/app.js?v=20261113d"></script>
+    <script src="js/monetizacao.js?v=20261113d"></script>
+    <script src="js/icones.js?v=20261113d"></script>
+    <script src="js/metricas.js?v=20261113d"></script>
+    <script src="js/imagem-times.js?v=20261113d"></script>
     <script>
         // Funciona sem internet: guarda o app no aparelho (sw.js)
         if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {

@@ -51,7 +51,8 @@ const gravados = [];
 const authCbs = [];
 let falhasGet = 0;      // quantas leituras do banco vão falhar antes de funcionar ("Client is offline")
 let loginErro = null;   // erro que o signIn vai devolver
-let semRede = false;    // true = gravações ficam presas (sem internet)
+let semRede = false;
+const ouvintes = {};    // onValue: caminho -> callback (o teste "empurra" dados do banco)    // true = gravações ficam presas (sem internet)
 win.firebaseAuth = {};
 win.firebaseDb = {};
 win.firebaseFns = {
@@ -60,7 +61,8 @@ win.firebaseFns = {
     signInWithEmailAndPassword: () => loginErro ? Promise.reject(loginErro) : Promise.resolve({}),
     get: caminho => falhasGet-- > 0 ? Promise.reject(Object.assign(new Error('Client is offline'), { code: 'unavailable' })) : Promise.resolve({ exists: () => true, val: () => JSON.parse(JSON.stringify(banco[caminho.split('/').pop()] ? banco[caminho.split('/').pop()] : banco)) }),
     set: (caminho, v) => { gravados.push([caminho, v]); return semRede ? new Promise(() => {}) : Promise.resolve(); },
-    increment: n => ({ '.sv': { increment: n } })
+    increment: n => ({ '.sv': { increment: n } }),
+    onValue: (caminho, cb) => { ouvintes[caminho] = cb; return () => { if (ouvintes[caminho] === cb) delete ouvintes[caminho]; }; }
 };
 win.firebaseReady = true;
 
@@ -159,6 +161,42 @@ assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (a
     const ultimoCamp = gravados.filter(([c]) => c === 'usuarios/u1/campeonatoAtivo').pop();
     assert.ok(ultimoCamp && ultimoCamp[1].partidas.length > 2 && ultimoCamp[1].partidas.some(p => p.turno >= 2 && !p.finalizada), 'deveria gerar o turno 2 em vez de parar a tabela');
     console.log('✅ tabela sem fim: novo turno começa sozinho até finalizar o campeonato');
+
+    // LISTA DE PRESENÇA: cria, publica os nomes e marca a presença conforme as respostas
+    {
+        // o modal "Nova lista" é criado com createElement: os campos dele saem deste mapa
+        const campos = {
+            '#pr-quando': Object.assign(new El('q'), { value: 'Sábado 16h' }),
+            '#pr-limite': Object.assign(new El('l'), { value: '1' }),
+            '#pr-zerar': Object.assign(new El('z'), { checked: true }),
+            '#pr-cancelar': new El('c'), '#pr-criar': new El('cr')
+        };
+        const criarOriginal = document.createElement;
+        document.createElement = t => { const e = new El(t); e.querySelector = sel => campos[sel] || new El(sel); return e; };
+        els['btn-presenca-criar'].fire('click');
+        document.createElement = criarOriginal;
+        await campos['#pr-criar'].onclick();
+        await tick(3);
+    }
+    const gLista = gravados.filter(([c]) => /^presenca\/[2-9A-HJ-NP-Z]{8}$/.test(c)).pop();
+    assert.ok(gLista && gLista[1].dono === 'u1' && gLista[1].aberta === true && gLista[1].limite === 1 && gLista[1].jogadores.some(j => j.nome === 'Ana'), 'deveria criar presenca/<codigo> com dono, limite e nomes');
+    const codLista = gLista[0].split('/')[1];
+    assert.ok(gravados.some(([c, v]) => c === 'usuarios/u1/presenca' && v.codigo === codLista), 'deveria lembrar o código da lista no usuário');
+    assert.ok(els['presenca-link'].value.endsWith('presenca.html?c=' + codLista), 'link da lista deveria aparecer');
+    const ouvinte = ouvintes['presenca/' + codLista];
+    assert.ok(ouvinte, 'app deveria escutar as respostas da lista');
+    // Zeca (convidado) pega a única vaga da linha; Ana confirma depois -> espera; Bia é goleira (não ocupa vaga)
+    const nomes = gLista[1].jogadores; const idDe = n => nomes.find(j => j.nome === n).id;
+    ouvinte({ exists: () => true, val: () => Object.assign({}, gLista[1], { respostas: {
+        cz: { status: 'vou', em: 1, nome: 'Zeca', convidado: true },
+        [idDe('Bia')]: { status: 'vou', em: 2 }, [idDe('Ana')]: { status: 'vou', em: 3 }
+    } }) });
+    await tick(3);
+    const ultJog = gravados.filter(([c]) => c === 'usuarios/u1/jogadores').pop()[1];
+    const pres = n => ultJog.find(j => j.nome === n).presente;
+    assert.ok(pres('Bia') && !pres('Ana'), 'goleira confirmada presente; Ana na espera fica ausente');
+    assert.ok(els['presenca-convidados'].innerHTML.includes('Zeca') && els['presenca-convidados'].innerHTML.includes('data-add-conv="cz"'), 'convidado deveria aparecer para adicionar');
+    console.log('✅ lista de presença: cria link, publica nomes e marca quem confirmou (com limite/espera)');
 
     // métricas: sorteio conta +1 em metricas/<dia>/sorteio
     assert.ok(gravados.some(([c, v]) => /^metricas\/\d{4}-\d{2}-\d{2}\/sorteio$/.test(c) && v['.sv']), 'sorteio deveria contar nas métricas');
