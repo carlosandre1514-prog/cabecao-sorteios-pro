@@ -1,8 +1,14 @@
 {
   "rules": {
-    "configuracoes": { ".read": true, ".write": false },
+    "configuracoes": {
+      ".read": true,
+      ".write": false
+    },
     "planos": {
-      "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": false }
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": false
+      }
     },
     "testes": {
       "$uid": {
@@ -11,9 +17,15 @@
         ".validate": "newData.hasChildren(['inicio']) && newData.child('inicio').val() === now"
       }
     },
-    "pagamentos_mp": { ".read": false, ".write": false },
+    "pagamentos_mp": {
+      ".read": false,
+      ".write": false
+    },
     "usuarios": {
-      "$uid": { ".read": "auth != null && auth.uid === $uid", ".write": "auth != null && auth.uid === $uid" }
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
     },
     "ao_vivo": {
       "$codigo": {
@@ -51,22 +63,53 @@
       "$codigo": {
         ".read": true,
         ".write": "auth != null && (!data.exists() || data.child('dono').val() === auth.uid)",
-        "dono": { ".validate": "newData.val() === auth.uid" },
-        "aberta": { ".validate": "newData.isBoolean()" },
-        "limite": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 200" },
-        "pagos": { "$id": { ".validate": "newData.val() === true" } },
+        "dono": {
+          ".validate": "newData.val() === auth.uid"
+        },
+        "aberta": {
+          ".validate": "newData.isBoolean()"
+        },
+        "limite": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 200"
+        },
+        "pagos": {
+          "$id": {
+            ".validate": "newData.val() === true"
+          }
+        },
         "respostas": {
           "$id": {
             ".write": "root.child('presenca/' + $codigo + '/aberta').val() === true || (auth != null && root.child('presenca/' + $codigo + '/dono').val() === auth.uid)",
             ".validate": "newData.hasChildren(['status', 'em']) && $id.matches(/^[A-Za-z0-9_-]{1,40}$/)",
-            "status": { ".validate": "newData.val() === 'vou' || newData.val() === 'nao'" },
-            "em": { ".validate": "newData.isNumber()" },
-            "nome": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
-            "convidado": { ".validate": "newData.isBoolean()" },
-            "goleiro": { ".validate": "newData.isBoolean()" },
-            "removido": { ".validate": "newData.isBoolean()" },
-            "paguei": { ".validate": "newData.isNumber()" },
-            "$outro": { ".validate": false }
+            "status": {
+              ".validate": "newData.val() === 'vou' || newData.val() === 'nao'"
+            },
+            "em": {
+              ".validate": "newData.isNumber()"
+            },
+            "nome": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40"
+            },
+            "convidado": {
+              ".validate": "newData.isBoolean()"
+            },
+            "goleiro": {
+              ".validate": "newData.isBoolean()"
+            },
+            "removido": {
+              ".validate": "newData.isBoolean()"
+            },
+            "paguei": {
+              ".validate": "newData.isNumber()"
+            },
+            "$outro": {
+              ".validate": false
+            }
+          }
+        },
+        "promovidos": {
+          "$id": {
+            ".validate": "newData.isNumber()"
           }
         }
       }

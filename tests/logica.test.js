@@ -400,3 +400,26 @@ t('dinheiro: milhar com ponto e negativo com sinal antes do R$', () => {
     assert.strictEqual(L.reais(-115), '−R$ 115,00');
     assert.strictEqual(L.reais(0), 'R$ 0,00');
 });
+
+t('lista: organizador escolhe qual suplente sobe (vaga garantida) e quem sai vira suplente', () => {
+    const js = ['A', 'B', 'C', 'D', 'E'].map((n, i) => ({ id: n, nome: n }));
+    const resp = {}; js.forEach((j, k) => { resp[j.id] = { status: 'vou', em: k + 1 }; });
+    // limite 3: A, B, C com vaga; D, E suplentes
+    let r = L.resumirPresenca(js, resp, 3);
+    assert.deepStrictEqual(r.confirmados.map(c => c.id), ['A', 'B', 'C']);
+    assert.deepStrictEqual(r.espera.map(c => c.id), ['D', 'E']);
+    // tira B e o organizador escolhe E (não o primeiro da fila)
+    resp.B = { status: 'nao', em: 99, removido: true };
+    r = L.resumirPresenca(js, resp, 3, { promovidos: { E: 100 } });
+    assert.deepStrictEqual(r.confirmados.map(c => c.id), ['A', 'C', 'E']);
+    assert.deepStrictEqual(r.espera.map(c => c.id), ['D']);
+    assert.ok(r.confirmados.find(c => c.id === 'E').promovido);
+    // subir D com a lista cheia: quem confirmou por último sem estar garantido (C) vira suplente
+    r = L.resumirPresenca(js, resp, 3, { promovidos: { E: 100, D: 101 } });
+    assert.deepStrictEqual(r.confirmados.map(c => c.id), ['A', 'D', 'E']);
+    assert.deepStrictEqual(r.espera.map(c => c.id), ['C']);
+    // promovido que desistiu não ocupa vaga
+    resp.E = { status: 'nao', em: 200 };
+    r = L.resumirPresenca(js, resp, 3, { promovidos: { E: 100, D: 101 } });
+    assert.deepStrictEqual(r.confirmados.map(c => c.id), ['A', 'C', 'D']);
+});

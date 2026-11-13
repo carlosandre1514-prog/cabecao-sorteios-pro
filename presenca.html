@@ -8,8 +8,8 @@
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0f1214">
     <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="css/style.css?v=d8c3d00851">
-    <link rel="stylesheet" href="css/base.css?v=d8c3d00851">
+    <link rel="stylesheet" href="css/style.css?v=c2f1dce462">
+    <link rel="stylesheet" href="css/base.css?v=c2f1dce462">
     <style>
         .app-container { padding-bottom: 32px; }
         body { background-image: radial-gradient(ellipse 90% 30% at 50% -10%, rgba(var(--verde-rgb), 0.14), transparent 70%); }
@@ -117,8 +117,8 @@
         <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro</p>
     </div>
 
-    <script src="js/logica.js?v=d8c3d00851"></script>
-    <script src="js/vendor/qrcode.js?v=d8c3d00851"></script>
+    <script src="js/logica.js?v=c2f1dce462"></script>
+    <script src="js/vendor/qrcode.js?v=c2f1dce462"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getDatabase, ref, onValue, get, set, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
@@ -269,7 +269,7 @@
             $('chips').innerHTML = (d.quando ? `<span class="chip">${esc(d.quando)}</span>` : '')
                 + (d.times ? `<span class="chip">${d.times} times de ${d.porTime} + goleiro</span>` : '')
                 + (d.aberta ? '' : '<span class="chip fechada">Lista fechada</span>');
-            const r = Logica.resumirPresenca(d.jogadores, d.respostas, d.limite, { vagasGoleiro: d.vagasGoleiro, pagos: d.pagos, prazo: d.prazo });
+            const r = Logica.resumirPresenca(d.jogadores, d.respostas, d.limite, { vagasGoleiro: d.vagasGoleiro, pagos: d.pagos, prazo: d.prazo, promovidos: d.promovidos });
             const fmtPrazo = ms => new Date(ms).toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
             const jogadores = Object.values(d.jogadores || {}).filter(Boolean);
             const todos = jogadores.map(j => ({ id: String(j.id), nome: String(j.nome), goleiro: !!j.g }))

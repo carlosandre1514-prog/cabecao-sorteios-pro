@@ -492,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
         publicarJogadoresPresenca();
     }
     // quem confirmou fica presente; quem está na espera ou não vai fica ausente; sem resposta não mexe
-    const opcoesPresenca = d => ({ vagasGoleiro: d.vagasGoleiro, pagos: d.pagos, prazo: d.prazo });
+    const opcoesPresenca = d => ({ vagasGoleiro: d.vagasGoleiro, pagos: d.pagos, prazo: d.prazo, promovidos: d.promovidos });
     const resumoPresencaAtual = () => {
         const d = presencaDados || {};
         return Logica.resumirPresenca(d.jogadores, d.respostas, d.limite, opcoesPresenca(d));
@@ -563,8 +563,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (conv) {
             const linhaPessoa = (c, i, suplente) => `<div class="pessoa-lista ${c.atrasado ? 'atrasado' : ''}">
                 <span class="pos">${i + 1}</span>
-                <span class="nome">${c.goleiro && window.UI ? UI.icone('glove', 'i-sm') + ' ' : ''}${escapeHtml(c.nome)}${c.convidado ? ' <small class="tag-conv">convidado</small>' : ''}</span>
-                ${suplente ? '' : `<button type="button" class="btn-pag ${c.pago ? 'pago' : c.aConfirmar ? 'aconfirmar' : ''}" data-pago="${escapeHtml(c.id)}">${c.pago ? 'Pago' : c.aConfirmar ? 'Confirmar' : c.atrasado ? 'Não pagou' : 'A pagar'}</button>`}
+                <span class="nome">${c.goleiro && window.UI ? UI.icone('glove', 'i-sm') + ' ' : ''}${escapeHtml(c.nome)}${c.convidado ? ' <small class="tag-conv">convidado</small>' : ''}${c.promovido && !suplente ? ' <small class="tag-conv">colocado por você</small>' : ''}</span>
+                ${suplente ? `<button type="button" class="btn-pag subir" data-subir="${escapeHtml(c.id)}">Subir</button>` : `<button type="button" class="btn-pag ${c.pago ? 'pago' : c.aConfirmar ? 'aconfirmar' : ''}" data-pago="${escapeHtml(c.id)}">${c.pago ? 'Pago' : c.aConfirmar ? 'Confirmar' : c.atrasado ? 'Não pagou' : 'A pagar'}</button>`}
                 <button type="button" class="btn-tirar" data-tirar="${escapeHtml(c.id)}" aria-label="Tirar da lista">${window.UI ? UI.icone('x', 'i-sm') : '✕'}</button>
             </div>`;
             const pedidos = r.convidados.filter(c => r.confirmados.some(x => x.id === c.id) || r.espera.some(x => x.id === c.id));
@@ -572,7 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <details class="presenca-gestao" open><summary>Confirmados <span>${r.confirmados.length}</span></summary>
                     ${r.confirmados.length ? r.confirmados.map((c, i) => linhaPessoa(c, i, false)).join('') : '<p class="subtext">Ninguém confirmou ainda.</p>'}
                 </details>
-                ${r.espera.length ? `<details class="presenca-gestao" open><summary>Suplentes <span>${r.espera.length}</span></summary><p class="dica">Sobem sozinhos quando alguém sai da lista.</p>
+                ${r.espera.length ? `<details class="presenca-gestao" open><summary>Suplentes <span>${r.espera.length}</span></summary><p class="dica">Quando alguém sai, você escolhe quem entra. Ou toque em Subir para colocar na lista.</p>
                     ${r.espera.map((c, i) => linhaPessoa(c, i, true)).join('')}</details>` : ''}
                 ${pedidos.length ? `<div class="presenca-pedidos"><p class="rotulo">Convidados (fora do elenco)</p>
                     ${pedidos.map(c => `<div class="item-jogador"><span>${c.goleiro && window.UI ? UI.icone('glove', 'i-sm') + ' ' : ''}${escapeHtml(c.nome)}</span><button type="button" class="btn btn-secondary btn-mini" data-add-conv="${escapeHtml(c.id)}">Pôr no elenco</button></div>`).join('')}</div>` : ''}`;
@@ -732,18 +732,76 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
     // Organizador tira alguém da lista (desistiu ou não pagou): o primeiro suplente sobe sozinho
-    async function tirarDaLista(ids) {
+    // tira da lista; `quemSobe` (opcional) é o suplente escolhido pelo organizador para a vaga
+    async function tirarDaLista(ids, quemSobe) {
         const d = presencaDados || {};
         const f = window.firebaseFns;
+        if (quemSobe) await f.set(refPresenca('promovidos/' + quemSobe), Date.now()).catch(e => console.error('Lista de presença:', e));
         await Promise.all(ids.map(id => {
             const atual = (d.respostas || {})[id] || {};
             const conv = atual.convidado ? { nome: atual.nome, convidado: true, goleiro: !!atual.goleiro } : {};
             return Promise.all([
                 f.set(refPresenca('respostas/' + id), Object.assign({ status: 'nao', em: Date.now(), removido: true }, conv)),
-                f.set(refPresenca('pagos/' + id), null)
+                f.set(refPresenca('pagos/' + id), null),
+                f.set(refPresenca('promovidos/' + id), null)
             ]);
         })).catch(e => { console.error('Lista de presença:', e); toast('Não foi possível tirar da lista', 'erro'); });
         if (window.Metricas) Metricas.evento('presenca_removido');
+    }
+    // ✕ de um confirmado: o organizador escolhe qual suplente entra no lugar (mesma posição: linha ou goleiro)
+    async function escolherTirada(id) {
+        const r = resumoPresencaAtual();
+        const sai = r.confirmados.find(c => c.id === id) || r.espera.find(c => c.id === id);
+        if (!sai) return;
+        const ehSuplente = r.espera.some(c => c.id === id);
+        const opcoes = ehSuplente ? [] : r.espera.filter(c => c.goleiro === sai.goleiro);
+        if (!opcoes.length) {
+            const ok = await mostrarConfirmacao(ehSuplente ? 'Sai da fila de suplentes.' : 'A vaga fica livre para quem confirmar.', `Tirar ${sai.nome} da lista?`, { ok: 'Tirar', perigo: true });
+            if (ok) { await tirarDaLista([id]); toast(`${sai.nome} saiu da lista`); }
+            return;
+        }
+        const m = abrirModalHtml(`<h2>Tirar ${escapeHtml(sai.nome)}</h2>
+            <p class="dica-painel">Quem entra no lugar?</p>
+            <div class="lista escolha-suplente">${opcoes.map((c, i) => `<label class="lista-item">
+                <input type="radio" name="quem-sobe" value="${escapeHtml(c.id)}" ${i === 0 ? 'checked' : ''}>
+                ${avatarHtml(c.nome)}<span class="li-txt"><span class="li-titulo">${escapeHtml(c.nome)}</span><span class="li-sub">${i + 1}º da fila${c.convidado ? ' · convidado' : ''}</span></span>
+                <span class="radio-marca" aria-hidden="true"></span></label>`).join('')}</div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-perigo" id="tirar-ok">Tirar e colocar ${escapeHtml(opcoes[0].nome)}</button>
+                <button type="button" class="btn btn-secondary" id="tirar-cancelar">Cancelar</button>
+            </div>`);
+        const ok = m.querySelector('#tirar-ok');
+        m.querySelector('.escolha-suplente').addEventListener('change', () => {
+            const sel = m.querySelector('input[name="quem-sobe"]:checked');
+            const c = opcoes.find(x => x.id === (sel && sel.value));
+            if (c) ok.textContent = 'Tirar e colocar ' + c.nome;
+        });
+        m.querySelector('#tirar-cancelar').onclick = () => m.remove();
+        ok.onclick = async () => {
+            const sel = m.querySelector('input[name="quem-sobe"]:checked');
+            const quem = opcoes.find(x => x.id === (sel && sel.value)) || opcoes[0];
+            ok.disabled = true;
+            // o primeiro da fila sobe sozinho; só marca como "colocado" se o organizador escolheu outro
+            await tirarDaLista([id], quem.id === opcoes[0].id ? null : quem.id);
+            m.remove();
+            toast(`${sai.nome} saiu · ${quem.nome} entrou`);
+        };
+    }
+    // "Subir" de um suplente: entra na lista; se estiver cheia, quem confirmou por último vira suplente
+    async function subirSuplente(id) {
+        const d = presencaDados || {};
+        const antes = resumoPresencaAtual();
+        const quem = antes.espera.find(c => c.id === id);
+        if (!quem) return;
+        const agora = Date.now();
+        const depois = Logica.resumirPresenca(d.jogadores, d.respostas, d.limite, Object.assign(opcoesPresenca(d), { promovidos: Object.assign({}, d.promovidos, { [id]: agora }) }));
+        const caem = antes.confirmados.filter(c => !depois.confirmados.some(x => x.id === c.id));
+        const ok = await mostrarConfirmacao(caem.length ? `${caem.map(c => c.nome).join(', ')} ${caem.length > 1 ? 'viram suplentes' : 'vira suplente'} para abrir a vaga.` : 'Ele entra na vaga livre.',
+            `Colocar ${quem.nome} na lista?`, { ok: 'Colocar' });
+        if (!ok) return;
+        try { await window.firebaseFns.set(refPresenca('promovidos/' + id), agora); toast(`${quem.nome} entrou na lista`); }
+        catch (e) { toast('Não foi possível mudar a lista', 'erro'); }
+        if (window.Metricas) Metricas.evento('presenca_subiu');
     }
     async function adicionarConvidadoPresenca(idConv) {
         const d = presencaDados || {};
@@ -809,12 +867,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 b.disabled = false;
                 return;
             }
-            if ((b = alvo('[data-tirar]'))) {
-                const id = b.dataset.tirar;
-                const ok = await mostrarConfirmacao(r.espera.length ? `O primeiro suplente (${r.espera[0].nome}) sobe para a vaga.` : 'A vaga fica livre para quem confirmar.', `Tirar ${nomeDe(id)} da lista?`, { ok: 'Tirar', perigo: true });
-                if (ok) { await tirarDaLista([id]); toast(`${nomeDe(id)} saiu da lista.`); }
-                return;
-            }
+            if ((b = alvo('[data-tirar]'))) { escolherTirada(b.dataset.tirar); return; }
+            if ((b = alvo('[data-subir]'))) { subirSuplente(b.dataset.subir); return; }
         });
     }
     configurarPresenca();

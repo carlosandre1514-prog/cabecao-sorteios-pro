@@ -484,3 +484,11 @@ body.com-sheet .barra-acao { display: none !important; }
 .aviso-versao .btn-texto { color: var(--c-destaque); padding: 6px 4px; }
 .aviso-versao .icon-btn { width: 32px; height: 32px; background: none; border: 0; }
 .cx-tudo-pago { display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+/* escolher quem sobe (lista de presença) */
+.escolha-suplente .lista-item { cursor: pointer; }
+.escolha-suplente input { position: absolute; opacity: 0; pointer-events: none; }
+.radio-marca { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--c-linha-forte); flex: none; }
+.escolha-suplente input:checked ~ .radio-marca { border: 7px solid var(--c-destaque-forte); }
+.escolha-suplente input:checked ~ .li-txt .li-titulo { color: var(--c-destaque); }
+.btn-pag.subir { color: var(--c-destaque); border-color: rgba(var(--verde-rgb), 0.45); }

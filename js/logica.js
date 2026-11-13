@@ -425,6 +425,8 @@
     // limite: vagas na LINHA (times x jogadores de linha); 0 = sem limite.
     // opcoes.vagasGoleiro: vagas de goleiro (1 por time); 0/ausente = sem limite.
     // opcoes.pagos: { id: true } CONFIRMADOS pelo organizador; opcoes.prazo: ms do prazo de pagamento.
+    // opcoes.promovidos: { id: ms } suplentes que o ORGANIZADOR colocou na lista: têm a vaga garantida
+    //   (entram antes da ordem de chegada; se a lista estiver cheia, quem confirmou por último vira suplente).
     // respostas[id].paguei (ms): o próprio jogador disse "já paguei" -> fica "a confirmar" até o organizador confirmar.
     // Quem confirmou primeiro fica com a vaga; o resto vira SUPLENTE, em ordem de confirmação.
     // Quando alguém sai (não vai / removido), o primeiro suplente sobe sozinho.
@@ -456,13 +458,20 @@
         });
         const ordem = (a, b) => (a.em - b.em) || a.nome.localeCompare(b.nome);
         vou.sort(ordem); naoVao.sort((a, b) => a.nome.localeCompare(b.nome));
-        const confirmados = [], espera = [];
+        const promovidos = opcoes.promovidos || {};
+        vou.forEach(v => { v.promovido = !!promovidos[v.id]; });
+        // quem o organizador subiu pega a vaga primeiro; depois, ordem de chegada
+        const prioridade = vou.filter(v => v.promovido).sort((a, b) => (Number(promovidos[a.id]) || 0) - (Number(promovidos[b.id]) || 0))
+            .concat(vou.filter(v => !v.promovido));
+        const comVaga = new Set();
         let linha = 0, gols = 0;
-        vou.forEach(v => {
+        prioridade.forEach(v => {
             const cabe = v.goleiro ? (!vagasGol || gols < vagasGol) : (!limite || linha < limite);
-            if (cabe) { confirmados.push(v); if (v.goleiro) gols++; else linha++; }
-            else espera.push(v);
+            if (cabe) { comVaga.add(v.id); if (v.goleiro) gols++; else linha++; }
         });
+        // as listas continuam na ordem de chegada
+        const confirmados = vou.filter(v => comVaga.has(v.id));
+        const espera = vou.filter(v => !comVaga.has(v.id));
         // pagamento (só de quem está com vaga)
         // quem disse que pagou e espera confirmação NÃO conta como atrasado (o organizador confere antes)
         confirmados.forEach(c => {
