@@ -91,3 +91,6 @@ fica em `js/apito.js` e é o mesmo no app e no link. Regras do Firebase: `docs/C
   "📸 Enviar resumo em imagem" (campeão, números, classificação, artilharia e confrontos) e
   "📋 Copiar resumo em texto" para o WhatsApp. Lógica em `Logica.resumoCampeonato` / `Logica.textoResumo`
   (com testes), desenho em `ImagemTimes.gerarResumo`.
+- **Tabela sem fim** (modo Tabela): quando o turno acaba, o próximo começa sozinho (mandos invertidos nos
+  turnos pares; rodadas continuam a contagem). Os jogos só param em "Finalizar campeonato".
+  Lógica em `Logica.proximoTurno` (com testes).

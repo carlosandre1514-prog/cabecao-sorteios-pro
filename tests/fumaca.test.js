@@ -148,6 +148,18 @@ assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (a
     assert.ok(els['sub-racha'].textContent.includes('Racha principal'), 'deveria voltar ao racha principal');
     console.log('✅ rachas: listar, trocar, gravar no caminho certo e voltar ao principal');
 
+    // modo Tabela: depois do último jogo do turno, um novo turno começa sozinho
+    authCbs.forEach(cb => cb(null));
+    els['btn-finalizar-partida'].listeners = {};   // só o botão da tela atual
+    authCbs.forEach(cb => cb({ uid: 'u1', email: 'a@b.com' }));
+    await tick(10);
+    els['gols-a'].value = '1'; els['gols-b'].value = '0';
+    els['btn-finalizar-partida'].fire('click');
+    await tick(10);
+    const ultimoCamp = gravados.filter(([c]) => c === 'usuarios/u1/campeonatoAtivo').pop();
+    assert.ok(ultimoCamp && ultimoCamp[1].partidas.length > 2 && ultimoCamp[1].partidas.some(p => p.turno >= 2 && !p.finalizada), 'deveria gerar o turno 2 em vez de parar a tabela');
+    console.log('✅ tabela sem fim: novo turno começa sozinho até finalizar o campeonato');
+
     // métricas: sorteio conta +1 em metricas/<dia>/sorteio
     assert.ok(gravados.some(([c, v]) => /^metricas\/\d{4}-\d{2}-\d{2}\/sorteio$/.test(c) && v['.sv']), 'sorteio deveria contar nas métricas');
     assert.ok(gravados.some(([c, v]) => /^metricas_ativos\/\d{4}-\d{2}-\d{2}\/u1$/.test(c) && v === true), 'deveria contar usuário ativo');

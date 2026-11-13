@@ -225,3 +225,18 @@ t('resumo do racha: campeão, jogos, artilharia e texto do WhatsApp', () => {
     assert.strictEqual(livre.jogos[0].extra, 'avançou B');
     assert.strictEqual(L.resumoCampeonato({}).campeao, null);
 });
+
+t('tabela sem fim: turno 2 continua rodadas/ids e inverte o mando; turno 3 volta', () => {
+    const times = [1, 2, 3, 4].map(id => ({ id, nome: 'Time ' + id }));
+    const t1 = L.gerarPartidas(times);
+    const t2 = L.proximoTurno(times, t1);
+    assert.strictEqual(t2.length, t1.length);
+    assert.strictEqual(t2[0].rodada, 4); assert.strictEqual(t2[0].idPartida, 7); assert.strictEqual(t2[0].turno, 2);
+    assert.strictEqual(t2[0].timeA.id, t1[0].timeB.id); assert.strictEqual(t2[0].timeB.id, t1[0].timeA.id);
+    assert.ok(t2.every(p => !p.finalizada && p.golsA === 0));
+    const t3 = L.proximoTurno(times, t1.concat(t2));
+    assert.strictEqual(t3[0].turno, 3); assert.strictEqual(t3[0].rodada, 7); assert.strictEqual(t3[0].timeA.id, t1[0].timeA.id);
+    // 3 times (com folga): também funciona
+    const tres = times.slice(0, 3), a = L.gerarPartidas(tres);
+    assert.strictEqual(L.proximoTurno(tres, a).length, a.length);
+});

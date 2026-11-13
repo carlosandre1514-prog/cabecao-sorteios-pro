@@ -197,6 +197,26 @@
         return partidas;
     }
 
+    // Tabela sem fim: quando o turno acaba, gera o próximo (mesmos confrontos, mandos invertidos
+    // nos turnos pares). Rodadas e ids continuam a contagem; só para quando o racha for encerrado.
+    function proximoTurno(times, partidasExistentes) {
+        const existentes = partidasExistentes || [];
+        const base = gerarPartidas(times);
+        if (!base.length) return [];
+        const rodadasPorTurno = Math.max(...base.map(p => p.rodada));
+        const ultimaRodada = existentes.reduce((m, p) => Math.max(m, Number(p.rodada) || 0), 0);
+        const ultimoId = existentes.reduce((m, p) => Math.max(m, Number(p.idPartida) || 0), 0);
+        const turno = Math.floor(ultimaRodada / rodadasPorTurno) + 1;
+        const inverter = turno % 2 === 0;
+        return base.map((p, i) => Object.assign({}, p, {
+            idPartida: ultimoId + i + 1,
+            rodada: ultimaRodada + p.rodada,
+            turno,
+            timeA: inverter ? p.timeB : p.timeA,
+            timeB: inverter ? p.timeA : p.timeB
+        }));
+    }
+
     function novaClassificacao(times) {
         const c = {};
         times.forEach(t => { c[t.id] = { nome: t.nome, p: 0, j: 0, v: 0, e: 0, d: 0, gp: 0, sg: 0 }; });
@@ -404,6 +424,6 @@
         aplicarResultado, ordenarClassificacao, montarAoVivo,
         normalizarEstrelas, filtrarPorEstrelas,
         gravarNoCaminho, lerDoCaminho, diaISO, ultimosDias, resumirMetricas,
-        nomeDaChave, resumoCampeonato, textoResumo
+        nomeDaChave, resumoCampeonato, textoResumo, proximoTurno
     };
 });

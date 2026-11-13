@@ -1496,8 +1496,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // acabou o turno: os confrontos continuam (novo turno) até você finalizar o campeonato
+        // aponta sempre para um jogo que ainda não foi jogado
+        if (!partidas[partidaAtualIndex] || partidas[partidaAtualIndex].finalizada) {
+            const pendente = partidas.findIndex(x => !x.finalizada);
+            partidaAtualIndex = pendente === -1 ? partidas.length : pendente;
+        }
         if (partidaAtualIndex >= partidas.length) {
-            container.innerHTML = '<h3 style="text-align:center;">✅ Todos os jogos da tabela foram realizados!</h3><p class="subtext" style="text-align:center; margin-top:4px;">Clique em "Finalizar Campeonato" abaixo para salvar no histórico.</p>';
+            const novos = Logica.proximoTurno(timesSorteados, partidas);
+            if (!novos.length) return;
+            partidas = partidas.concat(novos);
+            partidaAtualIndex = partidas.findIndex(x => !x.finalizada);
+            salvarCampeonatoAtivo();
+            toast(`🔁 Turno ${novos[0].turno} começou! Os jogos seguem até você finalizar o campeonato.`);
+            renderizarCampeonato();
             return;
         }
 
@@ -1508,7 +1520,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         container.innerHTML = `
             <p class="subtext" style="text-align:center; margin-bottom: 6px; font-size: 0.8rem;">
-               <strong>Rodada ${p.rodada}</strong> - Escolha os times que vão jogar abaixo:
+               <strong>Rodada ${p.rodada}</strong>${p.turno > 1 ? ` · ${p.turno}º turno` : ''} - Escolha os times que vão jogar abaixo:
             </p>
             <div class="placar-box" style="gap:10px;">
                 <div class="time-placar" style="flex:1;">
