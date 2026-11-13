@@ -111,8 +111,7 @@
                 ${d.prazo ? `<span class="${r.prazoVencido ? 'vencido' : ''}">Pagamento até ${escapeHtml(fmtPrazo(d.prazo))}${r.prazoVencido ? ' · vencido' : ''}</span>` : ''}
             </div>` : ''}
             ${r.aConfirmar.length ? `<p class="aviso-faixa ouro"><strong>${r.aConfirmar.length}</strong> ${r.aConfirmar.length === 1 ? 'avisou que pagou' : 'avisaram que pagaram'}: ${r.aConfirmar.map(c => escapeHtml(c.nome)).join(', ')}. Confira o Pix e toque em Confirmar.</p>` : ''}
-            ${r.prazoVencido && r.atrasados.length ? `<div class="aviso-faixa perigo"><span><strong>${r.atrasados.length} ${r.atrasados.length === 1 ? 'jogador' : 'jogadores'}</strong> sem pagamento confirmado</span>
-                <button type="button" class="btn-texto perigo" id="btn-tirar-atrasados">Tirar e subir suplentes</button></div>` : ''}`;
+            ${r.prazoVencido && r.atrasados.length ? `<div class="aviso-faixa perigo"><span><strong>${r.atrasados.length} ${r.atrasados.length === 1 ? 'jogador' : 'jogadores'}</strong> sem pagamento confirmado</span></div>` : ''}`;
         const conv = document.getElementById('presenca-convidados');
         if (conv) {
             const linhaPessoa = (c, i, suplente) => `<div class="pessoa-lista ${c.atrasado ? 'atrasado' : ''}">
@@ -365,15 +364,9 @@
             }
             if ((b = alvo('[data-tirar]'))) {
                 const id = b.dataset.tirar;
-                const ok = await mostrarConfirmacao(`Tirar ${nomeDe(id)} da lista?${r.espera.length ? ' O primeiro suplente sobe para a vaga.' : ''}`, '✕ TIRAR DA LISTA');
+                const ok = await mostrarConfirmacao(r.espera.length ? `O primeiro suplente (${r.espera[0].nome}) sobe para a vaga.` : 'A vaga fica livre para quem confirmar.', `Tirar ${nomeDe(id)} da lista?`, { ok: 'Tirar', perigo: true });
                 if (ok) { await tirarDaLista([id]); toast(`${nomeDe(id)} saiu da lista.`); }
                 return;
-            }
-            if (alvo('#btn-tirar-atrasados')) {
-                const ids = r.atrasados.map(a => a.id);
-                if (!ids.length) return;
-                const ok = await mostrarConfirmacao(`${ids.length === 1 ? 'Sai da lista' : 'Saem da lista'}: ${r.atrasados.map(a => a.nome).join(', ')}. Os suplentes sobem para as vagas.`, `Tirar ${ids.length} ${ids.length === 1 ? 'jogador' : 'jogadores'} sem pagamento confirmado?`, { ok: 'Tirar', perigo: true });
-                if (ok) { await tirarDaLista(ids); toast('Pronto: quem não pagou saiu e os suplentes subiram.'); }
             }
         });
     }
