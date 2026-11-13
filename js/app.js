@@ -58,7 +58,8 @@ async function fazerLogout() {
     try {
         if (window.firebaseAuth && window.firebaseFns) {
             await window.firebaseFns.signOut(window.firebaseAuth);
-            toggleDrawer();
+            const d = document.getElementById('side-drawer');
+            if (d && d.classList.contains('open')) toggleDrawer();
         } else {
             console.warn("Módulo de autenticação do Firebase não encontrado.");
         }
@@ -1082,21 +1083,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // O placar digitado não pode sumir quando a tela é redesenhada ao trocar de aba
     const IDS_PLACAR = ['gols-a', 'gols-b', 'racha-gols-a', 'racha-gols-b'];
 
-    function irParaAba(id, semHistorico) {
-        const btn = document.querySelector(`.tab-btn[data-tab="${id}"]`);
+    // Telas: as 5 do menu de baixo + as que ficam "dentro" de outra (data-pai), que mostram o botão voltar
+    function abaRaiz(id) {
+        let el = document.getElementById(id), n = 0;
+        while (el && el.dataset && el.dataset.pai && n++ < 5) el = document.getElementById(el.dataset.pai);
+        return el ? el.id : id;
+    }
+    function irParaAba(id, semHistorico, titulo) {
         const alvo = document.getElementById(id);
-        if (!btn || !alvo) return;
+        if (!alvo) return;
+        const btn = document.querySelector(`.tab-btn[data-tab="${abaRaiz(id)}"]`);
         const mudou = id !== abaAtual;
 
         tabBtns.forEach(b => b.classList.toggle('active', b === btn));
         tabContents.forEach(c => c.classList.toggle('active', c === alvo));
-        if (tituloTela) tituloTela.textContent = btn.dataset.title || '';
+        if (tituloTela) tituloTela.textContent = titulo || (alvo.dataset && alvo.dataset.title) || (btn ? btn.textContent.trim() : '');
+        const temPai = !!(alvo.dataset && alvo.dataset.pai);
+        const bv = document.getElementById('btn-voltar'), bm = document.getElementById('btn-menu');
+        if (bv) bv.classList.toggle('hidden', !temPai);
+        if (bm) bm.classList.toggle('hidden', temPai);
         abaAtual = id;
         if (document.body && document.body.dataset) document.body.dataset.aba = id;
 
         if (id === 'tab-sorteio') renderizarPresenca();
         if (id === 'tab-historico') renderizarHistorico();
         if (id === 'tab-ranking') renderizarRanking();
+        if (id === 'tab-mais') atualizarTelaMais();
         if (id === 'tab-financeiro') renderizarCaixa();
         if (id === 'tab-campeonato') {
             const placar = IDS_PLACAR.map(i => [i, document.getElementById(i)]).filter(([, el]) => el).map(([i, el]) => [i, el.value]);
@@ -1678,7 +1690,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const logo = document.querySelector('.app-header .app-logo');
         if (logo && 'src' in logo) logo.src = visualRacha.escudo || 'img/icon-192.png';
         const sub = document.getElementById('sub-racha');
-        if (sub) sub.textContent = '⚽ ' + (visualRacha.nome || nomeRachaAtivo());
+        if (sub) sub.textContent = visualRacha.nome || nomeRachaAtivo();
     }
     const podeVisualPro = () => !window.Monetizacao || window.Monetizacao.isPro();
     // Logo do racha: aceita PNG transparente ou foto com fundo.
@@ -2609,16 +2621,42 @@ document.addEventListener('DOMContentLoaded', () => {
         if (d && d.classList.contains('open')) toggleDrawer();
     }
     // Telas que não têm botão no menu de baixo (detalhe do histórico, caixa do suporte)
-    function irParaTelaExtra(id, titulo) {
-        const alvo = document.getElementById(id);
-        if (!alvo) return;
-        tabBtns.forEach(b => b.classList.remove('active'));
-        tabContents.forEach(c => c.classList.toggle('active', c === alvo));
-        if (tituloTela) tituloTela.textContent = titulo || '';
-        abaAtual = id;
-        if (document.body && document.body.dataset) document.body.dataset.aba = id;
-        if (typeof window.scrollTo === 'function') window.scrollTo({ top: 0 });
+    function irParaTelaExtra(id, titulo) { irParaAba(id, false, titulo); }
+
+    // ---------- TELA "MAIS" ----------
+    function atualizarTelaMais() {
+        const $ = id => document.getElementById(id);
+        if ($('mais-racha-ativo')) $('mais-racha-ativo').textContent = (visualRacha && visualRacha.nome) || nomeRachaAtivo();
+        if ($('mais-email')) $('mais-email').textContent = emailUsuario || '';
+        if ($('mais-versao')) $('mais-versao').textContent = typeof VERSAO_ATUAL_APP !== 'undefined' ? VERSAO_ATUAL_APP : '';
+        const st = window.Monetizacao ? window.Monetizacao.status() : null;
+        if ($('mais-plano')) $('mais-plano').textContent = !st ? '' : st.origem === 'plano' ? 'Pro' + (st.ate ? ' até ' + new Date(st.ate).toLocaleDateString('pt-BR') : '')
+            : st.origem === 'teste' ? `Teste grátis · ${st.diasTeste} dia${st.diasTeste > 1 ? 's' : ''}` : 'Plano grátis';
     }
+    (function ligarNavegacao() {
+        const $ = id => document.getElementById(id);
+        $('btn-menu')?.addEventListener('click', () => toggleDrawer());
+        $('btn-fechar-menu')?.addEventListener('click', () => toggleDrawer());
+        $('drawer-overlay')?.addEventListener('click', () => toggleDrawer());
+        $('btn-voltar')?.addEventListener('click', () => {
+            const alvo = $(abaAtual);
+            const pai = alvo && alvo.dataset ? alvo.dataset.pai : '';
+            if (history.state && history.state.aba && history.length > 1) history.back();
+            else irParaAba(pai || 'tab-mais');
+        });
+        $('tab-mais')?.addEventListener('click', (e) => {
+            const ir = e.target.closest('[data-ir]');
+            if (ir) { irParaAba(ir.dataset.ir); if (ir.dataset.ir === 'tab-caixa') carregarCaixa(); if (ir.dataset.ir === 'tab-metricas') carregarMetricas(); return; }
+            const b = e.target.closest('[data-mais]');
+            if (!b) return;
+            const a = b.dataset.mais;
+            if (a === 'personalizar') abrirPersonalizar();
+            if (a === 'rachas') toggleDrawer();
+            if (a === 'plano' && window.Monetizacao) window.Monetizacao.abrirModal();
+            if (a === 'suporte') abrirSuporte();
+            if (a === 'sair') mostrarConfirmacao('Você vai precisar entrar de novo para ver seus rachas.', 'Sair da conta?', { ok: 'Sair', perigo: true }).then(ok => { if (ok) fazerLogout(); });
+        });
+    })();
 
     // ---------- PERFIS DE RACHA ----------
     function nomeRachaAtivo() {
@@ -2627,16 +2665,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function renderizarRachas() {
         const sub = document.getElementById('sub-racha');
-        if (sub) sub.textContent = '⚽ ' + (visualRacha.nome || nomeRachaAtivo());
+        if (sub) sub.textContent = visualRacha.nome || nomeRachaAtivo();
         const box = document.getElementById('lista-rachas');
         if (!box) return;
         box.innerHTML = rachas.map(r => {
             const ativo = String(r.id) === String(rachaAtivo);
             const info = ativo ? { j: jogadores.length, h: historico.length } : (resumoRachas[r.id] || { j: 0, h: 0 });
             return `<button type="button" class="racha-item${ativo ? ' on' : ''}" data-racha="${escapeHtml(String(r.id))}">
-                <span class="racha-ic">⚽</span>
+                <span class="racha-ic">${window.UI ? UI.icone("ball") : ""}</span>
                 <span class="racha-txt"><b>${escapeHtml(r.nome)}</b><small>${info.j} jogadores · ${info.h} campeonatos</small></span>
-                ${ativo ? '<span class="racha-tag">ATIVO</span>' : ''}
+                ${ativo ? '<span class="racha-tag">Ativo</span>' : ''}
             </button>`;
         }).join('');
     }
@@ -2683,6 +2721,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (b) b.classList.toggle('hidden', !souAdmin);
         const m = document.getElementById('btn-metricas');
         if (m) m.classList.toggle('hidden', !souAdmin);
+        ['mais-caixa-suporte', 'mais-metricas'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.toggle('hidden', !souAdmin); });
     }
     async function verificarAdmin() {
         souAdmin = false;
@@ -3197,7 +3236,7 @@ document.addEventListener('DOMContentLoaded', () => {
             img.classList.toggle('hidden', !tem);
             svg.classList.toggle('hidden', tem);
         }
-        if (btn) btn.textContent = ((perfil && perfil.apelido) || 'Definir apelido') + ' ✏️';
+        if (btn) btn.textContent = (perfil && perfil.apelido) || 'Definir apelido';
     }
     function salvarPerfil() { gravar('perfil', perfil, true); renderizarPerfil(); }
 

@@ -219,3 +219,30 @@ body.com-sheet .fab { display: none !important; }
 .sheet .filtro-estrelas .filtro-resumo { display: none; }
 
 body.com-sheet { overflow: hidden; }
+
+/* ---------- Navegação ---------- */
+.header-content > .icon-btn { width: 40px; height: 40px; }
+.header-titulos h1 { font-size: var(--t-xl); font-weight: 700; letter-spacing: -0.4px; }
+.tab-btn .i { width: 24px; height: 24px; }
+.li-seta { color: var(--c-texto-3); margin-left: auto; }
+.lista-item > .i:first-child { color: var(--c-texto-2); }
+a.lista-item { text-decoration: none; }
+#tab-mais { gap: var(--e-3); }
+#tab-mais .lista-rotulo { margin-top: var(--e-3); }
+.rodape-versao { text-align: center; font-size: var(--t-xs); color: var(--c-texto-3); margin: var(--e-4) 0; }
+
+/* ---------- Menu lateral ---------- */
+.side-drawer { background: var(--c-sup-1); border-right: 1px solid var(--c-linha); }
+.drawer-header { background: none; border-bottom: 1px solid var(--c-linha); }
+.drawer-close-btn { position: absolute; top: calc(12px + env(safe-area-inset-top)); right: 12px; width: 36px; height: 36px; border-radius: 50%; background: var(--c-sup-2); border: 0; }
+.drawer-profile-icon { width: 56px; height: 56px; border: 1px solid var(--c-linha-forte); background: var(--c-sup-2); color: var(--c-texto-2); }
+.perfil-apelido { font-size: var(--t-lg); font-weight: 700; }
+.drawer-user-info { font-size: var(--t-xs); color: var(--c-texto-3); font-weight: 500; }
+.drawer-section h4 { font-size: var(--t-xs); font-weight: 600; color: var(--c-texto-3); letter-spacing: 0.6px; }
+.racha-item { background: var(--c-sup-2); border: 1px solid var(--c-linha); border-radius: var(--r-md); }
+.racha-item.on { border-color: var(--c-destaque-forte); background: rgba(var(--verde-rgb), 0.08); }
+.racha-ic { background: var(--c-sup-3); }
+.racha-tag { background: none; color: var(--c-destaque); padding: 0; font-weight: 700; }
+#drawer-rachas .btn { margin-top: var(--e-2); }
+#drawer-rachas .btn-texto { width: 100%; justify-content: center; }
+.plano-status { border-radius: var(--r-md); }
