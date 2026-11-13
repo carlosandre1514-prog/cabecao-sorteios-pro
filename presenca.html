@@ -7,7 +7,7 @@
     <meta name="description" content="Confirme se você vai no racha.">
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0b0e0c">
-    <link rel="stylesheet" href="css/style.css?v=20261113d">
+    <link rel="stylesheet" href="css/style.css?v=20261113e">
     <style>
         .app-container { padding-bottom: 32px; }
         main { display: flex; flex-direction: column; gap: 12px; }
@@ -17,10 +17,6 @@
         .barra { height: 10px; background: rgba(255, 255, 255, 0.07); border-radius: 99px; overflow: hidden; margin: 10px 0 4px; }
         .barra > div { height: 100%; background: linear-gradient(90deg, var(--neon), var(--verde)); border-radius: 99px; transition: width .4s; }
         .tag-fechada { display: inline-block; background: rgba(222, 90, 104, 0.15); color: var(--verm); border-radius: 99px; padding: 3px 10px; font-size: .78rem; font-weight: 800; }
-        .grade-nomes { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
-        .grade-nomes button { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--linha); color: var(--txt); border-radius: 12px; padding: 12px 8px; font: inherit; font-weight: 700; cursor: pointer; text-align: center; }
-        .grade-nomes button.vou { border-color: rgba(147, 213, 75, 0.6); }
-        .grade-nomes button.nao { opacity: .55; }
         .eu { text-align: center; }
         .eu .nome-eu { font-size: 1.5rem; font-weight: 800; margin: 2px 0 6px; }
         .eu .estado { font-weight: 800; margin-bottom: 12px; }
@@ -36,6 +32,10 @@
         .lista-curta { color: var(--mudo); font-size: .9rem; line-height: 1.6; }
         .entrar-form { display: grid; gap: 8px; }
         .entrar-form label { display: flex; gap: 8px; align-items: center; color: var(--mudo); font-size: .9rem; }
+        .dica-nome { min-height: 1.2em; margin: 0; font-size: .85rem; color: var(--mudo); }
+        .dica-nome.achou { color: var(--neon); font-weight: 700; }
+        #meu-nome { font-size: 1.1rem; padding: 14px; }
+        .hidden { display: none !important; }
         .cta-app { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; border-color: rgba(147, 213, 75, 0.35); }
         .cta-app .cta-logo { width: 56px; height: 56px; border-radius: 12px; }
         .cta-app .btn { grid-column: 1 / -1; text-align: center; text-decoration: none; display: block; }
@@ -69,7 +69,7 @@
         <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro</p>
     </div>
 
-    <script src="js/logica.js?v=20261113d"></script>
+    <script src="js/logica.js?v=20261113e"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getDatabase, ref, onValue, get, set, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
@@ -116,7 +116,9 @@
             const atual = (lista.respostas || {})[id];
             // mantém o horário original enquanto continuar "vou" (não perde a vaga ao tocar de novo)
             const em = (atual && atual.status === 'vou' && status === 'vou') ? atual.em : Date.now();
-            const dados = Object.assign({ status, em }, extra || {});
+            // convidado mudando a resposta: mantém o nome (senão ele some da lista)
+            const doConvidado = (atual && atual.convidado) ? { nome: atual.nome, convidado: true, goleiro: !!atual.goleiro } : {};
+            const dados = Object.assign({ status, em }, doConvidado, extra || {});
             try {
                 await set(ref(db, 'presenca/' + codigo + '/respostas/' + id), dados);
                 contar('presenca_resposta');
@@ -170,20 +172,22 @@
                         <button class="btn btn-success" data-resp="vou">✅ Vou</button>
                         <button class="btn btn-danger" data-resp="nao">❌ Não vou</button>
                     </div>` : '<p class="subtext">A lista foi fechada. Fale com o organizador para mudar.</p>'}
-                    <button class="link-discreto" data-trocar>Não é você? Escolher outro nome</button>
+                    <button class="link-discreto" data-trocar>Não é você? Digitar outro nome</button>
                 </div>`;
             } else if (d.aberta) {
                 h += `<div class="card">
-                    <h2>👋 Quem é você?</h2>
-                    <p class="subtext">Toque no seu nome para confirmar se vai.</p>
-                    <div class="grade-nomes">${todos.map(p => { const e = estadoDe(p.id); return `<button data-eu="${esc(p.id)}" class="${e === 'vou' ? 'vou' : e === 'nao' ? 'nao' : ''}">${p.goleiro ? '🧤 ' : ''}${esc(p.nome)}</button>`; }).join('') || '<p class="subtext">Nenhum nome na lista.</p>'}</div>
-                    <details style="margin-top:12px;"><summary>Não está na lista? Peça para entrar</summary>
-                        <div class="entrar-form" style="margin-top:10px;">
-                            <input id="novo-nome" maxlength="40" placeholder="Seu nome ou apelido">
-                            <label><input type="checkbox" id="novo-goleiro"> Sou goleiro</label>
-                            <button class="btn btn-primary" data-entrar>Pedir para entrar e confirmar</button>
+                    <h2>✍️ Confirme sua presença</h2>
+                    <p class="subtext">Digite seu nome e toque em <strong>Vou</strong> ou <strong>Não vou</strong>.</p>
+                    <div class="entrar-form">
+                        <input id="meu-nome" list="nomes-elenco" maxlength="40" placeholder="Seu nome ou apelido" autocomplete="off" enterkeyhint="done">
+                        <datalist id="nomes-elenco">${todos.map(p => `<option value="${esc(p.nome)}">`).join('')}</datalist>
+                        <p id="dica-nome" class="dica-nome"></p>
+                        <label id="linha-goleiro" class="hidden"><input type="checkbox" id="meu-goleiro"> Sou goleiro</label>
+                        <div class="botoes-resposta">
+                            <button class="btn btn-success" data-digitado="vou">✅ Vou</button>
+                            <button class="btn btn-danger" data-digitado="nao">❌ Não vou</button>
                         </div>
-                    </details>
+                    </div>
                     ${trocando && meu ? '<button class="link-discreto" data-cancelar>Cancelar</button>' : ''}
                 </div>`;
             }
@@ -195,24 +199,56 @@
             if (r.naoVao.length) h += `<div class="card"><h2>❌ Não vão (${r.naoVao.length})</h2><p class="lista-curta">${r.naoVao.map(p => esc(p.nome)).join(', ')}</p></div>`;
             if (r.semResposta.length) h += `<div class="card"><h2>🤔 Ainda não responderam (${r.semResposta.length})</h2><p class="lista-curta">${r.semResposta.map(p => esc(p.nome)).join(', ')}</p></div>`;
 
+            const antes = $('meu-nome') ? { nome: $('meu-nome').value, gol: $('meu-goleiro').checked, foco: document.activeElement === $('meu-nome') } : null;
             $('conteudo').innerHTML = h;
+            if (antes && $('meu-nome')) {
+                $('meu-nome').value = antes.nome; $('meu-goleiro').checked = antes.gol;
+                if (antes.foco) $('meu-nome').focus();
+            }
+            todasPessoas = todos;
+            atualizarDica();
+        }
+
+        // mostra se o nome digitado já está na lista (evita nome repetido) ou se entra como convidado
+        let todasPessoas = [];
+        function atualizarDica() {
+            const campo = $('meu-nome'), dica = $('dica-nome');
+            if (!campo || !dica) return;
+            const nome = campo.value.trim();
+            const achou = Logica.acharPorNome(todasPessoas, nome);
+            $('linha-goleiro').classList.toggle('hidden', !nome || !!achou);
+            dica.className = 'dica-nome' + (achou ? ' achou' : '');
+            dica.textContent = !nome ? '' : achou ? `✔ Você está na lista: ${achou.nome}` : 'Nome novo: você entra como convidado do racha.';
+        }
+        async function enviarDigitado(status, botao) {
+            const nome = ($('meu-nome').value || '').trim().replace(/\s+/g, ' ').slice(0, 40);
+            if (!nome) { $('meu-nome').focus(); $('dica-nome').textContent = 'Digite seu nome primeiro 👆'; return; }
+            botao.disabled = true;
+            const achou = Logica.acharPorNome(todasPessoas, nome);
+            if (achou) {
+                eu = achou.id; gravarEu(eu); trocando = false;
+                await responder(achou.id, status);
+            } else {
+                const id = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+                eu = id; gravarEu(id); trocando = false;
+                await responder(id, status, { nome, convidado: true, goleiro: !!$('meu-goleiro').checked });
+            }
+            botao.disabled = false;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         $('conteudo').addEventListener('click', async (e) => {
             const b = e.target.closest('button');
             if (!b || !lista) return;
-            if (b.dataset.eu) { eu = b.dataset.eu; gravarEu(eu); trocando = false; desenhar(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+            if (b.dataset.digitado) { await enviarDigitado(b.dataset.digitado, b); return; }
             if (b.dataset.resp && eu) { b.disabled = true; await responder(eu, b.dataset.resp); return; }
             if (b.hasAttribute('data-trocar')) { trocando = true; desenhar(); return; }
             if (b.hasAttribute('data-cancelar')) { trocando = false; desenhar(); return; }
-            if (b.hasAttribute('data-entrar')) {
-                const nome = ($('novo-nome').value || '').trim().slice(0, 40);
-                if (!nome) { $('novo-nome').focus(); return; }
-                const id = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-                b.disabled = true;
-                eu = id; gravarEu(id); trocando = false;
-                await responder(id, 'vou', { nome, convidado: true, goleiro: !!$('novo-goleiro').checked });
-            }
+        });
+
+        $('conteudo').addEventListener('input', (e) => { if (e.target.id === 'meu-nome') atualizarDica(); });
+        $('conteudo').addEventListener('keydown', (e) => {
+            if (e.target.id === 'meu-nome' && e.key === 'Enter') { e.preventDefault(); const b = document.querySelector('[data-digitado="vou"]'); if (b) b.click(); }
         });
 
         if (codigo.length !== 8) {

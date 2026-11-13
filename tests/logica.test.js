@@ -259,3 +259,12 @@ t('lista de presença: ordem de chegada, limite só da linha, espera, convidados
     assert.strictEqual(sem.semResposta.length, 5); assert.strictEqual(sem.confirmados.length, 0);
     assert.strictEqual(L.resumirPresenca(js, { 1: { status: 'vou', em: 1 }, 2: { status: 'vou', em: 2 }, 3: { status: 'vou', em: 3 } }, 0).espera.length, 0);
 });
+
+t('lista por nome digitado: acha o jogador ignorando acento, maiúscula e espaços', () => {
+    const ps = [{ id: '1', nome: 'Zé Pereira' }, { id: '2', nome: 'João' }, { id: 'c9', nome: 'Zeca' }];
+    assert.strictEqual(L.acharPorNome(ps, '  ze   PEREIRA ').id, '1');
+    assert.strictEqual(L.acharPorNome(ps, 'joao').id, '2');
+    assert.strictEqual(L.acharPorNome(ps, 'zeca').id, 'c9');
+    assert.strictEqual(L.acharPorNome(ps, 'Zé'), null);      // nome parcial não confunde com outro
+    assert.strictEqual(L.acharPorNome(ps, '   '), null);
+});

@@ -460,12 +460,25 @@
         };
     }
 
+    // Nome digitado na lista -> jogador. Ignora maiúsculas, acentos e espaços a mais
+    // ("ze  pereira" acha "Zé Pereira"). pessoas: [{id, nome}]. Devolve a pessoa ou null.
+    function normalizarNome(n) {
+        return String(n == null ? '' : n).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+    function acharPorNome(pessoas, nome) {
+        const alvo = normalizarNome(nome);
+        if (!alvo) return null;
+        return (pessoas || []).find(p => p && normalizarNome(p.nome) === alvo) || null;
+    }
+
     return {
         embaralhar, idUnico, chaveSegura, limparMapa, normalizarTime, compararVersoes,
         filtrarLinhasLote, sortearTimes, gerarPartidas, novaClassificacao,
         aplicarResultado, ordenarClassificacao, montarAoVivo,
         normalizarEstrelas, filtrarPorEstrelas,
         gravarNoCaminho, lerDoCaminho, diaISO, ultimosDias, resumirMetricas,
-        nomeDaChave, resumoCampeonato, textoResumo, proximoTurno, resumirPresenca
+        nomeDaChave, resumoCampeonato, textoResumo, proximoTurno, resumirPresenca,
+        normalizarNome, acharPorNome
     };
 });

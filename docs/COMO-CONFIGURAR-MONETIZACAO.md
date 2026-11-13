@@ -184,7 +184,7 @@ mostra onde a venda trava.
 
 ## Lista de presença por link (`presenca.html?c=CODIGO`)
 
-Na aba **Sorteio**, "📲 Criar lista e enviar no grupo" gera um link. Cada jogador abre, toca no próprio nome e
+Na aba **Sorteio**, "📲 Criar lista e enviar no grupo" gera um link. Cada jogador abre, digita o próprio nome e
 responde **Vou** ou **Não vou**, sem login. Quem não está no elenco pode "pedir para entrar". O app do organizador
 escuta as respostas e marca a presença sozinho; se houver limite de vagas na linha, quem confirmou depois vai para a
 lista de espera (goleiros não ocupam vaga).

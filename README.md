@@ -96,7 +96,8 @@ fica em `js/apito.js` e é o mesmo no app e no link. Regras do Firebase: `docs/C
   turnos pares; rodadas continuam a contagem). Os jogos só param em "Finalizar campeonato".
   Lógica em `Logica.proximoTurno` (com testes).
 - **Lista de presença por link** (aba Sorteio → "📲 Criar lista e enviar no grupo"): página pública
-  `presenca.html?c=CODIGO`. Cada jogador toca no nome e responde Vou/Não vou; o app marca a presença sozinho
+  `presenca.html?c=CODIGO`. Cada jogador DIGITA o nome e aperta Vou/Não vou (o nome é reconhecido sem ligar
+  para acento/maiúscula: `Logica.acharPorNome`; nome novo entra como convidado); o app marca a presença sozinho
   (limite de vagas na linha + lista de espera por ordem de confirmação; goleiros não ocupam vaga). Quem não está
   no elenco pede para entrar e o organizador adiciona com um toque. Lógica em `Logica.resumirPresenca` (com testes).
   Regras do Firebase no fim de `docs/COMO-CONFIGURAR-MONETIZACAO.md`.
