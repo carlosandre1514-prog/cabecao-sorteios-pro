@@ -99,5 +99,8 @@ fica em `js/apito.js` e é o mesmo no app e no link. Regras do Firebase: `docs/C
   `presenca.html?c=CODIGO`. Cada jogador DIGITA o nome e aperta Vou/Não vou (o nome é reconhecido sem ligar
   para acento/maiúscula: `Logica.acharPorNome`; nome novo entra como convidado); o app marca a presença sozinho
   (limite de vagas na linha + lista de espera por ordem de confirmação; goleiros não ocupam vaga). Quem não está
-  no elenco pede para entrar e o organizador adiciona com um toque. Lógica em `Logica.resumirPresenca` (com testes).
+  no elenco pede para entrar e o organizador adiciona com um toque.
+  Configuração por **times x jogadores de linha** (vagas = times x linha, + 1 goleiro por time; o sorteio recebe os
+  mesmos números), **suplentes** que sobem sozinhos quando o organizador tira alguém (✕), e **pagamento**: o organizador
+  marca quem pagou, define prazo e "como pagar"; depois do prazo pode tirar quem não pagou de uma vez. Lógica em `Logica.resumirPresenca` (com testes).
   Regras do Firebase no fim de `docs/COMO-CONFIGURAR-MONETIZACAO.md`.

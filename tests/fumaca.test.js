@@ -167,7 +167,8 @@ assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (a
         // o modal "Nova lista" é criado com createElement: os campos dele saem deste mapa
         const campos = {
             '#pr-quando': Object.assign(new El('q'), { value: 'Sábado 16h' }),
-            '#pr-limite': Object.assign(new El('l'), { value: '1' }),
+            '#pr-times': Object.assign(new El('t'), { value: '2' }),
+            '#pr-linha': Object.assign(new El('l'), { value: '1' }),     // 2 times x 1 = 2 vagas na linha + 2 goleiros
             '#pr-zerar': Object.assign(new El('z'), { checked: true }),
             '#pr-cancelar': new El('c'), '#pr-criar': new El('cr')
         };
@@ -179,16 +180,17 @@ assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (a
         await tick(3);
     }
     const gLista = gravados.filter(([c]) => /^presenca\/[2-9A-HJ-NP-Z]{8}$/.test(c)).pop();
-    assert.ok(gLista && gLista[1].dono === 'u1' && gLista[1].aberta === true && gLista[1].limite === 1 && gLista[1].jogadores.some(j => j.nome === 'Ana'), 'deveria criar presenca/<codigo> com dono, limite e nomes');
+    assert.ok(gLista && gLista[1].dono === 'u1' && gLista[1].aberta === true && gLista[1].limite === 2 && gLista[1].vagasGoleiro === 2 && gLista[1].jogadores.some(j => j.nome === 'Ana'), 'deveria criar presenca/<codigo> com dono, limite e nomes');
     const codLista = gLista[0].split('/')[1];
     assert.ok(gravados.some(([c, v]) => c === 'usuarios/u1/presenca' && v.codigo === codLista), 'deveria lembrar o código da lista no usuário');
     assert.ok(els['presenca-link'].value.endsWith('presenca.html?c=' + codLista), 'link da lista deveria aparecer');
     const ouvinte = ouvintes['presenca/' + codLista];
     assert.ok(ouvinte, 'app deveria escutar as respostas da lista');
-    // Zeca (convidado) pega a única vaga da linha; Ana confirma depois -> espera; Bia é goleira (não ocupa vaga)
+    // Zeca e Yuri (convidados) pegam as 2 vagas da linha; Ana confirma depois -> suplente; Bia é goleira
     const nomes = gLista[1].jogadores; const idDe = n => nomes.find(j => j.nome === n).id;
     ouvinte({ exists: () => true, val: () => Object.assign({}, gLista[1], { respostas: {
         cz: { status: 'vou', em: 1, nome: 'Zeca', convidado: true },
+        cy: { status: 'vou', em: 1.5, nome: 'Yuri', convidado: true },
         [idDe('Bia')]: { status: 'vou', em: 2 }, [idDe('Ana')]: { status: 'vou', em: 3 }
     } }) });
     await tick(3);
@@ -196,7 +198,13 @@ assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (a
     const pres = n => ultJog.find(j => j.nome === n).presente;
     assert.ok(pres('Bia') && !pres('Ana'), 'goleira confirmada presente; Ana na espera fica ausente');
     assert.ok(els['presenca-convidados'].innerHTML.includes('Zeca') && els['presenca-convidados'].innerHTML.includes('data-add-conv="cz"'), 'convidado deveria aparecer para adicionar');
-    console.log('✅ lista de presença: cria link, publica nomes e marca quem confirmou (com limite/espera)');
+    assert.ok(els['qtd-times'].value === '2' && els['qtd-por-time'].value === '1', 'configuração da lista deveria ir para o sorteio');
+    // organizador marca pago e tira alguém (o suplente sobe)
+    const antesAcoes = gravados.length;
+    els['card-presenca'].fire('click', { target: { closest: sel => sel === '[data-pago]' ? { dataset: { pago: 'cz' } } : null } });
+    await tick(3);
+    assert.ok(gravados.slice(antesAcoes).some(([c, v]) => c === 'presenca/' + codLista + '/pagos/cz' && v === true), 'deveria marcar pago');
+    console.log('✅ lista de presença: times x linha viram vagas, sorteio recebe a configuração e o organizador marca pago');
 
     // métricas: sorteio conta +1 em metricas/<dia>/sorteio
     assert.ok(gravados.some(([c, v]) => /^metricas\/\d{4}-\d{2}-\d{2}\/sorteio$/.test(c) && v['.sv']), 'sorteio deveria contar nas métricas');

@@ -478,15 +478,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             presencaDados = snap.val() || {};
+            sincronizarSorteioComLista();
             aplicarRespostasPresenca();
             renderizarCardPresenca();
         }, (e) => console.error('Lista de presença:', e));
         publicarJogadoresPresenca();
     }
     // quem confirmou fica presente; quem está na espera ou não vai fica ausente; sem resposta não mexe
+    const opcoesPresenca = d => ({ vagasGoleiro: d.vagasGoleiro, pagos: d.pagos, prazo: d.prazo });
+    const resumoPresencaAtual = () => {
+        const d = presencaDados || {};
+        return Logica.resumirPresenca(d.jogadores, d.respostas, d.limite, opcoesPresenca(d));
+    };
+    const fmtPrazo = ms => new Date(ms).toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    // o sorteio usa os mesmos times x jogadores de linha da lista (só quando a configuração da lista muda)
+    let cfgListaAplicada = '';
+    function sincronizarSorteioComLista() {
+        const d = presencaDados || {};
+        if (!d.times || !d.porTime) return;
+        const cfg = d.times + 'x' + d.porTime;
+        if (cfg === cfgListaAplicada) return;
+        cfgListaAplicada = cfg;
+        const qt = document.getElementById('qtd-times'), qp = document.getElementById('qtd-por-time');
+        if (qt) qt.value = String(d.times);
+        if (qp) qp.value = String(d.porTime);
+    }
     function aplicarRespostasPresenca() {
         if (!presencaDados) return;
-        const r = Logica.resumirPresenca(presencaDados.jogadores, presencaDados.respostas, presencaDados.limite);
+        const r = resumoPresencaAtual();
         const vai = new Set(r.confirmados.map(c => c.id));
         const naoVai = new Set(r.espera.concat(r.naoVao).map(c => c.id));
         let mudou = false;
@@ -507,24 +526,39 @@ document.addEventListener('DOMContentLoaded', () => {
         const campo = document.getElementById('presenca-link');
         if (campo) campo.value = linkPresenca();
         const d = presencaDados || {};
-        const r = Logica.resumirPresenca(d.jogadores, d.respostas, d.limite);
+        const r = resumoPresencaAtual();
         const resumo = document.getElementById('presenca-resumo');
+        const cfg = d.times ? `${d.times} times · ${d.porTime} na linha + goleiro` : (d.limite ? `${d.limite} vagas na linha` : 'Sem limite de vagas');
         if (resumo) resumo.innerHTML = `
             ${d.aberta === false ? '<p class="subtext" style="color:var(--verm);font-weight:700;margin:0 0 6px;">🔒 Lista fechada: ninguém consegue mudar a resposta.</p>' : ''}
-            ${d.quando ? `<p class="subtext" style="margin:0 0 6px;">📅 ${escapeHtml(d.quando)}</p>` : ''}
+            <p class="subtext" style="margin:0 0 6px;">${d.quando ? '📅 ' + escapeHtml(d.quando) + ' · ' : ''}⚽ ${cfg} <button type="button" class="link-discreto" id="btn-presenca-config">⚙️ Ajustar</button></p>
             <div class="presenca-numeros">
                 <div><strong>${r.linhaConfirmados}${r.limite ? '/' + r.limite : ''}</strong><small>na linha</small></div>
-                <div><strong>${r.goleirosConfirmados}</strong><small>goleiros</small></div>
-                <div><strong>${r.espera.length}</strong><small>na espera</small></div>
-                <div><strong>${r.naoVao.length}</strong><small>não vão</small></div>
-                <div><strong>${r.semResposta.length}</strong><small>pendentes</small></div>
+                <div><strong>${r.goleirosConfirmados}${r.vagasGoleiro ? '/' + r.vagasGoleiro : ''}</strong><small>goleiros</small></div>
+                <div><strong>${r.espera.length}</strong><small>suplentes</small></div>
+                <div><strong>${r.pagos}</strong><small>pagos</small></div>
+                <div><strong>${r.pendentes}</strong><small>a pagar</small></div>
             </div>
-            <p class="subtext" style="margin:6px 0 10px;">Quem confirma já aparece marcado na lista abaixo.</p>`;
+            ${d.prazo ? `<p class="subtext prazo-pag ${r.prazoVencido ? 'vencido' : ''}">💰 Prazo do pagamento: <strong>${escapeHtml(fmtPrazo(d.prazo))}</strong>${r.prazoVencido ? ' (vencido)' : ''}</p>` : ''}
+            ${r.prazoVencido && r.atrasados.length ? `<div class="presenca-alerta">⚠️ <strong>${r.atrasados.length}</strong> com vaga ainda não pagaram e o prazo acabou.
+                <button type="button" class="btn btn-danger btn-mini" id="btn-tirar-atrasados" style="margin-top:8px !important;">Tirar quem não pagou e subir suplentes</button></div>` : ''}`;
         const conv = document.getElementById('presenca-convidados');
         if (conv) {
+            const linhaPessoa = (c, i, suplente) => `<div class="pessoa-lista ${c.atrasado ? 'atrasado' : ''}">
+                <span class="pos">${i + 1}</span>
+                <span class="nome">${c.goleiro ? '🧤 ' : ''}${escapeHtml(c.nome)}${c.convidado ? ' <small class="tag-conv">convidado</small>' : ''}</span>
+                ${suplente ? '' : `<button type="button" class="btn-pag ${c.pago ? 'pago' : ''}" data-pago="${escapeHtml(c.id)}">${c.pago ? '💰 Pago' : c.atrasado ? '⚠️ Não pagou' : '⏳ A pagar'}</button>`}
+                <button type="button" class="btn-tirar" data-tirar="${escapeHtml(c.id)}" aria-label="Tirar da lista">✕</button>
+            </div>`;
             const pedidos = r.convidados.filter(c => r.confirmados.some(x => x.id === c.id) || r.espera.some(x => x.id === c.id));
-            conv.innerHTML = pedidos.length ? `<div class="presenca-pedidos"><p class="subtext" style="margin:0 0 6px;"><strong>Pediram para entrar</strong> (não estão no elenco):</p>
-                ${pedidos.map(c => `<div class="item-jogador"><span>${c.goleiro ? '🧤 ' : ''}${escapeHtml(c.nome)}</span><button type="button" class="btn btn-secondary btn-mini" data-add-conv="${escapeHtml(c.id)}">＋ Adicionar</button></div>`).join('')}</div>` : '';
+            conv.innerHTML = `
+                <details class="presenca-gestao" open><summary>✅ Confirmados (${r.confirmados.length}) — toque em "A pagar" quando a pessoa pagar</summary>
+                    ${r.confirmados.length ? r.confirmados.map((c, i) => linhaPessoa(c, i, false)).join('') : '<p class="subtext">Ninguém confirmou ainda.</p>'}
+                </details>
+                ${r.espera.length ? `<details class="presenca-gestao" open><summary>⏳ Suplentes (${r.espera.length}) — sobem sozinhos quando alguém sai</summary>
+                    ${r.espera.map((c, i) => linhaPessoa(c, i, true)).join('')}</details>` : ''}
+                ${pedidos.length ? `<div class="presenca-pedidos"><p class="subtext" style="margin:0 0 6px;"><strong>Convidados</strong> (não estão no elenco):</p>
+                    ${pedidos.map(c => `<div class="item-jogador"><span>${c.goleiro ? '🧤 ' : ''}${escapeHtml(c.nome)}</span><button type="button" class="btn btn-secondary btn-mini" data-add-conv="${escapeHtml(c.id)}">＋ Pôr no elenco</button></div>`).join('')}</div>` : ''}`;
         }
         const bf = document.getElementById('btn-presenca-fechar');
         if (bf) bf.textContent = d.aberta === false ? '🔓 Reabrir lista' : '🔒 Fechar lista';
@@ -532,7 +566,9 @@ document.addEventListener('DOMContentLoaded', () => {
     async function compartilharPresenca() {
         if (!presencaCodigo) return;
         const d = presencaDados || {};
-        const texto = `📋 *Lista do ${d.titulo || tituloRacha()}*${d.quando ? ' — ' + d.quando : ''}\nConfirma aí se vai 👇 (toque no seu nome)`;
+        const vagas = d.times ? `\n⚽ ${d.times} times de ${d.porTime} + goleiro (${d.limite} na linha)` : '';
+        const pag = (d.pagamento ? `\n💰 ${d.pagamento}` : '') + (d.prazo ? `\n⏰ Pagar até ${fmtPrazo(d.prazo)}` : '');
+        const texto = `📋 *Lista do ${d.titulo || tituloRacha()}*${d.quando ? ' — ' + d.quando : ''}${vagas}${pag}\nDigite seu nome e confirme 👇`;
         const url = linkPresenca();
         if (window.Metricas) Metricas.evento('presenca_enviada');
         if (navigator.share) {
@@ -540,36 +576,76 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         toast(await copiarTexto(texto + '\n' + url) ? 'Mensagem com o link copiada! Cole no grupo.' : 'Copie o link no campo acima.');
     }
-    function abrirCriarPresenca() {
+    // datetime-local <-> ms (hora do aparelho)
+    const paraCampoData = ms => { if (!ms) return ''; const d = new Date(ms), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+    // Criar (editar = false) ou ajustar (editar = true) a lista
+    function abrirConfigPresenca(editar) {
         if (!dadosCarregados || !currentUserUid) {
             mostrarAlerta('Seus dados ainda não carregaram. Espere um instante e tente de novo.', '📲 LISTA DE PRESENÇA');
             return;
         }
-        if (!jogadores.length) {
-            mostrarAlerta('Cadastre os jogadores do racha primeiro (aba Jogadores). Quem não estiver no elenco pode pedir para entrar pelo link.', '📲 LISTA DE PRESENÇA');
+        if (!editar && !jogadores.length) {
+            mostrarAlerta('Cadastre os jogadores do racha primeiro (aba Jogadores). Quem não estiver no elenco pode entrar pelo link como convidado.', '📲 LISTA DE PRESENÇA');
             return;
         }
-        const m = abrirModalHtml(`<h2>📲 Nova lista de presença</h2>
+        const d = editar ? (presencaDados || {}) : {};
+        const times0 = d.times || parseInt(document.getElementById('qtd-times')?.value, 10) || 4;
+        const linha0 = d.porTime || parseInt(document.getElementById('qtd-por-time')?.value, 10) || 4;
+        const m = abrirModalHtml(`<h2>${editar ? '⚙️ Ajustar lista' : '📲 Nova lista de presença'}</h2>
+            <div class="form-group-row"><label for="pr-times">Quantidade de times</label><input type="number" id="pr-times" min="2" max="8" value="${times0}"></div>
+            <div class="form-group-row"><label for="pr-linha">Jogadores de linha por time</label><input type="number" id="pr-linha" min="1" max="12" value="${linha0}"></div>
+            <p class="subtext" id="pr-conta" style="margin:2px 0 10px;"></p>
             <label class="subtext" for="pr-quando">Quando é o racha? (opcional)</label>
-            <input type="text" id="pr-quando" maxlength="60" placeholder="Ex.: Sábado, 16h — Quadra do Zé">
-            <label class="subtext" for="pr-limite" style="margin-top:10px;display:block;">Vagas na linha (opcional)</label>
-            <input type="number" id="pr-limite" min="0" max="200" inputmode="numeric" placeholder="Vazio = sem limite">
-            <p class="subtext" style="margin:4px 0 0;">Goleiros não ocupam vaga. Passou do limite, entra na lista de espera.</p>
-            <label style="display:flex;gap:8px;align-items:center;margin-top:12px;"><input type="checkbox" id="pr-zerar" checked> <span class="subtext" style="margin:0;">Desmarcar todo mundo agora (só fica marcado quem confirmar)</span></label>
-            <div class="modal-actions"><button type="button" class="btn btn-primary" id="pr-criar">Criar e enviar</button><button type="button" class="btn btn-secondary" id="pr-cancelar">Cancelar</button></div>`);
+            <input type="text" id="pr-quando" maxlength="60" placeholder="Ex.: Sábado, 16h — Quadra do Zé" value="${escapeHtml(d.quando || '')}">
+            <label class="subtext" for="pr-pag" style="margin-top:10px;display:block;">Como pagar (opcional)</label>
+            <input type="text" id="pr-pag" maxlength="80" placeholder="Ex.: R$ 15 no Pix 11 99999-9999" value="${escapeHtml(d.pagamento || '')}">
+            <label class="subtext" for="pr-prazo" style="margin-top:10px;display:block;">Prazo para pagar (opcional)</label>
+            <input type="datetime-local" id="pr-prazo" value="${paraCampoData(d.prazo)}">
+            <p class="subtext" style="margin:4px 0 0;">Quem não for marcado como pago até o prazo fica pendente, e você pode tirar da lista para subir os suplentes.</p>
+            ${editar ? '' : '<label style="display:flex;gap:8px;align-items:center;margin-top:12px;"><input type="checkbox" id="pr-zerar" checked> <span class="subtext" style="margin:0;">Desmarcar todo mundo agora (só fica marcado quem confirmar)</span></label>'}
+            <div class="modal-actions"><button type="button" class="btn btn-primary" id="pr-criar">${editar ? 'Salvar' : 'Criar e enviar'}</button><button type="button" class="btn btn-secondary" id="pr-cancelar">Cancelar</button></div>`);
+        const ler = () => {
+            const times = Math.max(2, Math.min(8, parseInt(m.querySelector('#pr-times').value, 10) || 2));
+            const porTime = Math.max(1, Math.min(12, parseInt(m.querySelector('#pr-linha').value, 10) || 1));
+            return { times, porTime, limite: times * porTime, vagasGoleiro: times };
+        };
+        const conta = () => {
+            const c = ler(), el = m.querySelector('#pr-conta');
+            if (el) el.textContent = `= ${c.limite} vagas na linha + ${c.vagasGoleiro} goleiros (1 por time). Passou disso, vira suplente.`;
+        };
+        ['#pr-times', '#pr-linha'].forEach(sel => { const el = m.querySelector(sel); if (el && el.addEventListener) el.addEventListener('input', conta); });
+        conta();
         m.querySelector('#pr-cancelar').onclick = () => m.remove();
         m.querySelector('#pr-criar').onclick = async () => {
-            const quando = m.querySelector('#pr-quando').value.trim().slice(0, 60);
-            const limite = Math.max(0, Math.min(200, parseInt(m.querySelector('#pr-limite').value, 10) || 0));
+            const c = ler();
+            const prazoTxt = m.querySelector('#pr-prazo').value;
+            const prazo = prazoTxt ? new Date(prazoTxt).getTime() || 0 : 0;
+            const cfg = Object.assign(c, {
+                quando: m.querySelector('#pr-quando').value.trim().slice(0, 60),
+                pagamento: m.querySelector('#pr-pag').value.trim().slice(0, 80),
+                prazo
+            });
+            // o sorteio usa a mesma configuração
+            const qt = document.getElementById('qtd-times'), qp = document.getElementById('qtd-por-time');
+            if (qt) qt.value = String(c.times);
+            if (qp) qp.value = String(c.porTime);
+            const f = window.firebaseFns;
+            const btn = m.querySelector('#pr-criar');
+            btn.disabled = true;
+            if (editar) {
+                try { await Promise.all(Object.entries(cfg).map(([k, v]) => f.set(refPresenca(k), v))); }
+                catch (e) { btn.disabled = false; toast('Não foi possível salvar (' + ((e && e.code) || 'erro') + ')', 'erro'); return; }
+                m.remove();
+                toast('Lista ajustada. Os suplentes sobem ou descem sozinhos.');
+                return;
+            }
             const zerar = m.querySelector('#pr-zerar').checked;
             const codigo = gerarCodigoAoVivo();
-            const f = window.firebaseFns;
-            const dados = { dono: currentUserUid, titulo: tituloRacha(), quando, limite, aberta: true, criadoEm: Date.now(), jogadores: jogadoresPublicos() };
-            m.querySelector('#pr-criar').disabled = true;
+            const dados = Object.assign({ dono: currentUserUid, titulo: tituloRacha(), aberta: true, criadoEm: Date.now(), jogadores: jogadoresPublicos() }, cfg);
             try {
                 await f.set(f.ref(window.firebaseDb, 'presenca/' + codigo), dados);
             } catch (e) {
-                m.querySelector('#pr-criar').disabled = false;
+                btn.disabled = false;
                 const cod = String((e && (e.code || e.message)) || 'erro');
                 const dica = /permission/i.test(cod) ? ' O Firebase negou: publique as regras com "presenca" (docs/COMO-CONFIGURAR-MONETIZACAO.md).' : ' Confira a internet.';
                 mostrarAlerta('Não consegui criar a lista.' + dica + ' (Código: ' + cod + ')', '❌ LISTA DE PRESENÇA');
@@ -588,6 +664,20 @@ document.addEventListener('DOMContentLoaded', () => {
             compartilharPresenca();
         };
     }
+    // Organizador tira alguém da lista (desistiu ou não pagou): o primeiro suplente sobe sozinho
+    async function tirarDaLista(ids) {
+        const d = presencaDados || {};
+        const f = window.firebaseFns;
+        await Promise.all(ids.map(id => {
+            const atual = (d.respostas || {})[id] || {};
+            const conv = atual.convidado ? { nome: atual.nome, convidado: true, goleiro: !!atual.goleiro } : {};
+            return Promise.all([
+                f.set(refPresenca('respostas/' + id), Object.assign({ status: 'nao', em: Date.now(), removido: true }, conv)),
+                f.set(refPresenca('pagos/' + id), null)
+            ]);
+        })).catch(e => { console.error('Lista de presença:', e); toast('Não foi possível tirar da lista', 'erro'); });
+        if (window.Metricas) Metricas.evento('presenca_removido');
+    }
     async function adicionarConvidadoPresenca(idConv) {
         const d = presencaDados || {};
         const resp = (d.respostas || {})[idConv];
@@ -599,8 +689,9 @@ document.addEventListener('DOMContentLoaded', () => {
         renderizarElenco();
         const f = window.firebaseFns;
         try {
-            // a resposta passa a ser do jogador do elenco (mantém o horário: não perde a vaga)
+            // a resposta (e o pagamento) passa a ser do jogador do elenco; mantém o horário: não perde a vaga
             await f.set(refPresenca('respostas/' + novoId), { status: resp.status, em: resp.em || Date.now() });
+            if (d.pagos && d.pagos[idConv]) { await f.set(refPresenca('pagos/' + novoId), true); await f.set(refPresenca('pagos/' + idConv), null); }
             await f.set(refPresenca('migrados/' + idConv), String(novoId));
             await f.set(refPresenca('respostas/' + idConv), null);
         } catch (e) { console.error('Lista de presença:', e); }
@@ -609,7 +700,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function configurarPresenca() {
         const $ = id => document.getElementById(id);
-        $('btn-presenca-criar')?.addEventListener('click', abrirCriarPresenca);
+        $('btn-presenca-criar')?.addEventListener('click', () => abrirConfigPresenca(false));
         $('btn-presenca-enviar')?.addEventListener('click', compartilharPresenca);
         $('btn-presenca-copiar')?.addEventListener('click', async () => {
             toast(await copiarTexto(linkPresenca()) ? 'Link copiado!' : 'Copie o link no campo acima.');
@@ -631,9 +722,36 @@ document.addEventListener('DOMContentLoaded', () => {
             renderizarCardPresenca();
             toast('Lista encerrada.');
         });
-        $('presenca-convidados')?.addEventListener('click', (e) => {
-            const b = e.target.closest && e.target.closest('[data-add-conv]');
-            if (b) adicionarConvidadoPresenca(b.dataset.addConv);
+        // botões dentro do card (são redesenhados a cada resposta)
+        $('card-presenca')?.addEventListener('click', async (e) => {
+            const alvo = sel => e.target.closest && e.target.closest(sel);
+            if (!presencaCodigo) return;
+            const r = resumoPresencaAtual();
+            const nomeDe = id => ((r.confirmados.concat(r.espera).find(c => c.id === id)) || {}).nome || 'essa pessoa';
+            let b;
+            if ((b = alvo('[data-add-conv]'))) { adicionarConvidadoPresenca(b.dataset.addConv); return; }
+            if (alvo('#btn-presenca-config')) { abrirConfigPresenca(true); return; }
+            if ((b = alvo('[data-pago]'))) {
+                const id = b.dataset.pago;
+                const pago = !((presencaDados.pagos || {})[id]);
+                b.disabled = true;
+                try { await window.firebaseFns.set(refPresenca('pagos/' + id), pago ? true : null); if (window.Metricas && pago) Metricas.evento('presenca_pago'); }
+                catch (er) { toast('Não foi possível marcar', 'erro'); }
+                b.disabled = false;
+                return;
+            }
+            if ((b = alvo('[data-tirar]'))) {
+                const id = b.dataset.tirar;
+                const ok = await mostrarConfirmacao(`Tirar ${nomeDe(id)} da lista?${r.espera.length ? ' O primeiro suplente sobe para a vaga.' : ''}`, '✕ TIRAR DA LISTA');
+                if (ok) { await tirarDaLista([id]); toast(`${nomeDe(id)} saiu da lista.`); }
+                return;
+            }
+            if (alvo('#btn-tirar-atrasados')) {
+                const ids = r.atrasados.map(a => a.id);
+                if (!ids.length) return;
+                const ok = await mostrarConfirmacao(`Tirar ${ids.length} pessoa(s) que não pagaram até o prazo (${r.atrasados.map(a => a.nome).join(', ')})? Os suplentes sobem para as vagas.`, '💰 PRAZO VENCIDO');
+                if (ok) { await tirarDaLista(ids); toast('Pronto: quem não pagou saiu e os suplentes subiram.'); }
+            }
         });
     }
     configurarPresenca();
@@ -2327,6 +2445,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ['presenca_visita', 'Visitas à lista de presença'],
         ['presenca_resposta', 'Respostas na lista (vou/não vou)'],
         ['presenca_convidado_add', 'Convidados adicionados ao elenco'],
+        ['presenca_pago', 'Pagamentos marcados na lista'],
+        ['presenca_removido', 'Tirados da lista pelo organizador'],
         ['presenca_cta', 'Cliques em "Criar meu racha" (lista)'],
         ['ao_vivo_ligado', 'Placares ao vivo ligados'],
         ['ao_vivo_visita', 'Visitas ao placar ao vivo'],

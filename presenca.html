@@ -7,7 +7,7 @@
     <meta name="description" content="Confirme se você vai no racha.">
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0b0e0c">
-    <link rel="stylesheet" href="css/style.css?v=20261113e">
+    <link rel="stylesheet" href="css/style.css?v=20261113f">
     <style>
         .app-container { padding-bottom: 32px; }
         main { display: flex; flex-direction: column; gap: 12px; }
@@ -32,6 +32,11 @@
         .lista-curta { color: var(--mudo); font-size: .9rem; line-height: 1.6; }
         .entrar-form { display: grid; gap: 8px; }
         .entrar-form label { display: flex; gap: 8px; align-items: center; color: var(--mudo); font-size: .9rem; }
+        .linha-pessoa .tag.pago { color: var(--neon); font-weight: 700; }
+        .linha-pessoa .tag.atrasado { color: var(--verm); font-weight: 700; }
+        .pag-eu { margin: -4px 0 12px; font-size: .9rem; color: var(--ouro); font-weight: 700; }
+        .pag-eu.ok { color: var(--neon); } .pag-eu.atrasado { color: var(--verm); }
+        .card-pag { border-color: rgba(221, 180, 60, 0.4); }
         .dica-nome { min-height: 1.2em; margin: 0; font-size: .85rem; color: var(--mudo); }
         .dica-nome.achou { color: var(--neon); font-weight: 700; }
         #meu-nome { font-size: 1.1rem; padding: 14px; }
@@ -69,7 +74,7 @@
         <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro</p>
     </div>
 
-    <script src="js/logica.js?v=20261113e"></script>
+    <script src="js/logica.js?v=20261113f"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getDatabase, ref, onValue, get, set, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
@@ -132,7 +137,8 @@
             document.title = (d.titulo || 'Lista do racha') + ' · Lista';
             $('titulo').textContent = d.titulo || 'Lista do racha';
             $('quando').textContent = d.quando ? '📅 ' + d.quando : 'Confirme se você vai';
-            const r = Logica.resumirPresenca(d.jogadores, d.respostas, d.limite);
+            const r = Logica.resumirPresenca(d.jogadores, d.respostas, d.limite, { vagasGoleiro: d.vagasGoleiro, pagos: d.pagos, prazo: d.prazo });
+            const fmtPrazo = ms => new Date(ms).toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
             const jogadores = Object.values(d.jogadores || {}).filter(Boolean);
             const todos = jogadores.map(j => ({ id: String(j.id), nome: String(j.nome), goleiro: !!j.g }))
                 .concat(r.convidados.map(c => ({ id: c.id, nome: c.nome, goleiro: c.goleiro, convidado: true })));
@@ -154,20 +160,32 @@
             const lim = r.limite;
             h += `<div class="card">
                 ${d.aberta ? '' : '<span class="tag-fechada">🔒 Lista fechada pelo organizador</span>'}
-                <div class="contador" style="margin-top:${d.aberta ? 0 : 10}px;"><strong>${r.linhaConfirmados}${lim ? '/' + lim : ''}</strong><span class="subtext">na linha confirmados${r.goleirosConfirmados ? ` · 🧤 ${r.goleirosConfirmados} goleiro(s)` : ''}</span></div>
+                ${d.times ? `<p class="subtext" style="margin:0 0 6px;">⚽ ${d.times} times de ${d.porTime} na linha + goleiro</p>` : ''}
+                <div class="contador" style="margin-top:${d.aberta ? 0 : 10}px;"><strong>${r.linhaConfirmados}${lim ? '/' + lim : ''}</strong><span class="subtext">na linha${r.vagasGoleiro || r.goleirosConfirmados ? ` · 🧤 ${r.goleirosConfirmados}${r.vagasGoleiro ? '/' + r.vagasGoleiro : ''} goleiro(s)` : ''}</span></div>
                 ${lim ? `<div class="barra"><div style="width:${Math.min(100, Math.round(r.linhaConfirmados / lim * 100))}%"></div></div>` : ''}
-                <p class="subtext" style="margin:6px 0 0;">${r.espera.length ? `⏳ ${r.espera.length} na lista de espera · ` : ''}${r.naoVao.length} não vão · ${r.semResposta.length} sem resposta</p>
+                <p class="subtext" style="margin:6px 0 0;">${r.espera.length ? `⏳ ${r.espera.length} suplente(s) · ` : ''}${r.naoVao.length} não vão · ${r.semResposta.length} sem resposta</p>
+            </div>`;
+            if (d.pagamento || d.prazo) h += `<div class="card card-pag">
+                <h2 style="margin-bottom:6px;">💰 Pagamento</h2>
+                ${d.pagamento ? `<p style="margin:0 0 4px;font-weight:700;">${esc(d.pagamento)}</p>` : ''}
+                ${d.prazo ? `<p class="subtext" style="margin:0;${r.prazoVencido ? 'color:var(--verm);' : ''}">⏰ Pagar até <strong>${esc(fmtPrazo(d.prazo))}</strong>${r.prazoVencido ? ' — prazo encerrado' : ''}. Quem não pagar pode perder a vaga para o suplente.</p>` : ''}
             </div>`;
 
             // eu
             if (meu && !trocando) {
                 const est = estadoDe(meu.id);
-                const txt = est === 'vou' ? '✅ Você está confirmado!' : est.startsWith('espera') ? `⏳ Você está na lista de espera (${est.split(':')[1]}º)` : est === 'nao' ? '❌ Você marcou que não vai' : 'Você ainda não respondeu';
+                const removido = resp[meu.id] && resp[meu.id].removido && est === 'nao';
+                const txt = est === 'vou' ? '✅ Você está confirmado!' : est.startsWith('espera') ? `⏳ Você é suplente (${est.split(':')[1]}º da fila)` : removido ? '❌ O organizador tirou você da lista' : est === 'nao' ? '❌ Você marcou que não vai' : 'Você ainda não respondeu';
+                const minhaVaga = r.confirmados.find(c => c.id === meu.id);
+                const pagTxt = !minhaVaga || !(d.prazo || d.pagamento || (d.pagos && Object.keys(d.pagos).length)) ? ''
+                    : minhaVaga.pago ? '<p class="pag-eu ok">💰 Pagamento confirmado pelo organizador</p>'
+                    : `<p class="pag-eu ${minhaVaga.atrasado ? 'atrasado' : ''}">⏳ Pagamento pendente${d.prazo ? ' — até ' + esc(fmtPrazo(d.prazo)) : ''}</p>`;
                 const cls = est === 'vou' ? 'vou' : est.startsWith('espera') ? 'espera' : est === 'nao' ? 'nao' : '';
                 h += `<div class="card eu">
                     <p class="subtext" style="margin:0;">Você é</p>
                     <div class="nome-eu">${meu.goleiro ? '🧤 ' : ''}${esc(meu.nome)}</div>
                     <div class="estado ${cls}">${txt}</div>
+                    ${pagTxt}
                     ${d.aberta ? `<div class="botoes-resposta">
                         <button class="btn btn-success" data-resp="vou">✅ Vou</button>
                         <button class="btn btn-danger" data-resp="nao">❌ Não vou</button>
@@ -193,10 +211,13 @@
             }
 
             // listas
-            const linha = (p, i) => `<div class="linha-pessoa ${p.id === eu ? 'sou-eu' : ''}"><span class="pos">${i + 1}</span><span>${p.goleiro ? '🧤 ' : ''}${esc(p.nome)}</span>${p.convidado ? '<span class="tag">convidado</span>' : ''}</div>`;
+            const temPag = !!(d.prazo || d.pagamento || (d.pagos && Object.keys(d.pagos).length));
+            const tagPag = p => p.pago === undefined || !temPag ? (p.convidado ? '<span class="tag">convidado</span>' : '')
+                : p.pago ? '<span class="tag pago">💰 pago</span>' : `<span class="tag ${p.atrasado ? 'atrasado' : ''}">${p.atrasado ? '⚠️ não pagou' : '⏳ a pagar'}</span>`;
+            const linha = (p, i) => `<div class="linha-pessoa ${p.id === eu ? 'sou-eu' : ''}"><span class="pos">${i + 1}</span><span>${p.goleiro ? '🧤 ' : ''}${esc(p.nome)}</span>${tagPag(p)}</div>`;
             h += `<div class="card"><h2>✅ Confirmados (${r.confirmados.length})</h2>${r.confirmados.length ? r.confirmados.map(linha).join('') : '<p class="subtext">Ninguém confirmou ainda. Seja o primeiro!</p>'}</div>`;
-            if (r.espera.length) h += `<div class="card"><h2>⏳ Lista de espera</h2><p class="subtext">Se alguém desistir, o primeiro da espera entra.</p>${r.espera.map(linha).join('')}</div>`;
-            if (r.naoVao.length) h += `<div class="card"><h2>❌ Não vão (${r.naoVao.length})</h2><p class="lista-curta">${r.naoVao.map(p => esc(p.nome)).join(', ')}</p></div>`;
+            if (r.espera.length) h += `<div class="card"><h2>⏳ Suplentes (${r.espera.length})</h2><p class="subtext">Se alguém desistir ou não pagar, o primeiro suplente entra.</p>${r.espera.map(linha).join('')}</div>`;
+            if (r.naoVao.length) h += `<div class="card"><h2>❌ Não vão (${r.naoVao.length})</h2><p class="lista-curta">${r.naoVao.map(p => esc(p.nome) + (p.removido ? ' (retirado)' : '')).join(', ')}</p></div>`;
             if (r.semResposta.length) h += `<div class="card"><h2>🤔 Ainda não responderam (${r.semResposta.length})</h2><p class="lista-curta">${r.semResposta.map(p => esc(p.nome)).join(', ')}</p></div>`;
 
             const antes = $('meu-nome') ? { nome: $('meu-nome').value, gol: $('meu-goleiro').checked, foco: document.activeElement === $('meu-nome') } : null;

@@ -268,3 +268,29 @@ t('lista por nome digitado: acha o jogador ignorando acento, maiúscula e espaç
     assert.strictEqual(L.acharPorNome(ps, 'Zé'), null);      // nome parcial não confunde com outro
     assert.strictEqual(L.acharPorNome(ps, '   '), null);
 });
+
+t('lista: 4 times x 4 na linha + 1 goleiro por time, suplentes, saída sobe o suplente e pagamento', () => {
+    const js = [];
+    for (let i = 1; i <= 18; i++) js.push({ id: String(i), nome: 'L' + i });
+    for (let i = 1; i <= 5; i++) js.push({ id: 'g' + i, nome: 'G' + i, g: true });
+    const resp = {};
+    js.forEach((j, k) => { resp[j.id] = { status: 'vou', em: k + 1 }; });
+    const cfg = { vagasGoleiro: 4, pagos: { 1: true, 2: true }, prazo: 1000, agora: 500 };
+    const r = L.resumirPresenca(js, resp, 16, cfg);
+    assert.strictEqual(r.linhaConfirmados, 16); assert.strictEqual(r.goleirosConfirmados, 4);
+    assert.deepStrictEqual(r.espera.map(e => e.nome), ['L17', 'L18', 'G5']);   // suplentes em ordem
+    assert.strictEqual(r.pagos, 2); assert.strictEqual(r.pendentes, 18); assert.strictEqual(r.atrasados.length, 0);
+    // L3 desiste (organizador tira): L17 sobe
+    resp['3'] = { status: 'nao', em: 99, removido: true };
+    const r2 = L.resumirPresenca(js, resp, 16, cfg);
+    assert.ok(r2.confirmados.some(c => c.nome === 'L17') && !r2.confirmados.some(c => c.nome === 'L3'));
+    assert.deepStrictEqual(r2.espera.map(e => e.nome), ['L18', 'G5']);
+    assert.ok(r2.naoVao.find(n => n.nome === 'L3').removido);
+    // passou do prazo: quem não pagou fica "atrasado"
+    const r3 = L.resumirPresenca(js, resp, 16, Object.assign({}, cfg, { agora: 2000 }));
+    assert.ok(r3.prazoVencido); assert.strictEqual(r3.atrasados.length, 18);
+    assert.ok(!r3.atrasados.some(a => a.id === '1' || a.id === '2'));
+    // menos goleiros que times: tudo bem, ninguém fica de fora
+    const poucos = L.resumirPresenca([{ id: 'g1', nome: 'G1', g: true }], { g1: { status: 'vou', em: 1 } }, 16, { vagasGoleiro: 4 });
+    assert.strictEqual(poucos.goleirosConfirmados, 1); assert.strictEqual(poucos.espera.length, 0);
+});

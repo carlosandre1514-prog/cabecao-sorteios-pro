@@ -199,6 +199,7 @@ Acrescente este nó nas regras (mantenha os que já existem):
     "dono": { ".validate": "newData.val() === auth.uid" },
     "aberta": { ".validate": "newData.isBoolean()" },
     "limite": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 200" },
+    "pagos": { "$id": { ".validate": "newData.val() === true" } },
     "respostas": {
       "$id": {
         ".write": "root.child('presenca/' + $codigo + '/aberta').val() === true || (auth != null && root.child('presenca/' + $codigo + '/dono').val() === auth.uid)",
@@ -208,6 +209,7 @@ Acrescente este nó nas regras (mantenha os que já existem):
         "nome": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
         "convidado": { ".validate": "newData.isBoolean()" },
         "goleiro": { ".validate": "newData.isBoolean()" },
+        "removido": { ".validate": "newData.isBoolean()" },
         "$outro": { ".validate": false }
       }
     }
@@ -215,7 +217,14 @@ Acrescente este nó nas regras (mantenha os que já existem):
 }
 ```
 
-- Só o dono (organizador logado) cria, fecha, reabre ou apaga a lista e mexe nos nomes.
+- Só o dono (organizador logado) cria, fecha, reabre, ajusta ou apaga a lista, mexe nos nomes e marca quem **pagou**
+  (`pagos/<id>`). Ninguém pela página consegue se marcar como pago.
+- **Vagas:** o organizador escolhe quantos times e quantos de linha por time (ex.: 4 x 4 = 16 na linha + 4 goleiros,
+  1 por time, igual ao sorteio). Passou disso, vira **suplente**, em ordem de confirmação. Se tiver menos goleiros que
+  times, tudo bem (o sorteio já reparte os goleiros do Time 1 para baixo).
+- **Desistência / falta de pagamento:** o organizador toca no ✕ ao lado do nome (ou em "Tirar quem não pagou" depois
+  do prazo) e o primeiro suplente sobe sozinho. A pessoa vê "O organizador tirou você da lista"; se confirmar de novo,
+  volta para o fim da fila de suplentes.
 - Qualquer pessoa com o link responde, mas só enquanto a lista estiver **aberta**. "Fechar lista" congela as respostas.
 - Não dá para listar todas as listas (não há leitura em `presenca` inteiro); o código tem 8 caracteres sorteados.
 - A página pública mostra **só os nomes** dos jogadores, nunca as estrelas.
