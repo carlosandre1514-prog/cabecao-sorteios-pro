@@ -8,9 +8,29 @@
         crypto.getRandomValues(b);
         return Array.from(b, x => ALFABETO_CODIGO[x % ALFABETO_CODIGO.length]).join('');
     }
-    function linkAoVivo() {
-        return new URL('ao-vivo.html', location.href).href.split('#')[0].split('?')[0] + '?c=' + aoVivoCodigo;
+    // ---------- ENDEREÇO PÚBLICO dos links (lista de presença e placar ao vivo) ----------
+    // Dentro do APK o app roda dos arquivos do aparelho: um link "daqui" não abre no celular dos outros.
+    // Então os links usam o site público: configuracoes/divulgacao/url_publica (Firebase) ou o GitHub Pages.
+    const URL_PUBLICA_PADRAO = 'https://carlosandre1514-prog.github.io/cabecao-sorteios-pro/';
+    let urlPublicaConfig = '';
+    (function lerUrlPublica() {
+        const ler = () => {
+            try {
+                const f = window.firebaseFns;
+                f.get(f.ref(window.firebaseDb, 'configuracoes/divulgacao/url_publica'))
+                    .then(s => { const v = String(s && s.exists && s.exists() ? s.val() : ''); if (/^https:\/\//i.test(v)) urlPublicaConfig = v; })
+                    .catch(() => {});
+            } catch (e) { /* sem Firebase: fica o padrão */ }
+        };
+        if (window.firebaseReady) ler(); else window.addEventListener('firebase-ready', ler, { once: true });
+    })();
+    function basePublica() {
+        if (urlPublicaConfig) return urlPublicaConfig.replace(/\/?$/, '/');
+        const local = !/^https?:$/.test(location.protocol || '') || /^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname || '');
+        return local ? URL_PUBLICA_PADRAO : new URL('.', String(location.href).split('#')[0].split('?')[0]).href;
     }
+    function linkPublico(pagina, codigo) { return basePublica() + pagina + '?c=' + codigo; }
+    function linkAoVivo() { return linkPublico('ao-vivo.html', aoVivoCodigo); }
     function atualizarCardAoVivo() {
         const off = document.getElementById('ao-vivo-off');
         const on = document.getElementById('ao-vivo-on');

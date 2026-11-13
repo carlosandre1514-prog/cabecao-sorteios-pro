@@ -8,9 +8,7 @@
     let presencaParar = null;     // desliga o "escutar" do Firebase
     let presencaAssinatura = '';  // evita republicar a lista de nomes sem mudança
     const refPresenca = (sub) => window.firebaseFns.ref(window.firebaseDb, 'presenca/' + presencaCodigo + (sub ? '/' + sub : ''));
-    function linkPresenca() {
-        return new URL('presenca.html', location.href).href.split('#')[0].split('?')[0] + '?c=' + presencaCodigo;
-    }
+    function linkPresenca() { return linkPublico('presenca.html', presencaCodigo); }
     const jogadoresPublicos = () => jogadores.map(j => ({ id: String(j.id), nome: String(j.nome), g: !!j.isGoleiro }));
     function publicarJogadoresPresenca() {
         if (!presencaCodigo || !currentUserUid || !dadosCarregados) return;
