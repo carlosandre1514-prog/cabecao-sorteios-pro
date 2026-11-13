@@ -492,3 +492,15 @@ body.com-sheet .barra-acao { display: none !important; }
 .escolha-suplente input:checked ~ .radio-marca { border: 7px solid var(--c-destaque-forte); }
 .escolha-suplente input:checked ~ .li-txt .li-titulo { color: var(--c-destaque); }
 .btn-pag.subir { color: var(--c-destaque); border-color: rgba(var(--verde-rgb), 0.45); }
+
+/* painel do administrador */
+#tab-admin, .adm { display: flex; flex-direction: column; gap: var(--e-3); }
+.adm .card { display: flex; flex-direction: column; gap: 0; }
+.adm-chave { position: relative; display: flex; align-items: center; justify-content: space-between; gap: var(--e-3); padding-bottom: var(--e-4); margin-bottom: var(--e-2); border-bottom: 1px solid var(--c-linha); cursor: pointer; }
+.adm-chave span:first-child { display: flex; flex-direction: column; gap: 2px; }
+.adm-chave small { color: var(--c-texto-3); font-size: var(--t-xs); }
+.adm-chave .chk-presenca:checked + .switch { background: var(--c-destaque-forte); }
+.adm-chave .chk-presenca:checked + .switch::after { transform: translateX(18px); }
+.adm-grade { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-3); margin: var(--e-3) 0 var(--e-4); }
+.adm-grade .campo + .campo { margin-top: 0; }
+#adm-plano-atual:empty { display: none; }

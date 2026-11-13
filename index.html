@@ -8,8 +8,8 @@
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0f1214">
     <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="css/style.css?v=2006402d9a">
-    <link rel="stylesheet" href="css/base.css?v=2006402d9a">
+    <link rel="stylesheet" href="css/style.css?v=95f21c47d2">
+    <link rel="stylesheet" href="css/base.css?v=95f21c47d2">
 </head>
 <body data-aba="tab-jogadores">
     <!-- ÍCONES (um traço só, 24px). Uso: <svg class="i"><use href="#i-nome"/></svg> -->
@@ -247,6 +247,48 @@
             <div id="lista-caixa"></div>
         </section>
 
+        <!-- PAINEL DO ADMINISTRADOR (só o e-mail de configuracoes/admin_email) -->
+        <section id="tab-admin" class="tab-content" data-title="Administrador" data-pai="tab-mais">
+            <form id="form-admin" class="adm" novalidate>
+                <p class="lista-rotulo">Cobrança do Pro</p>
+                <div class="card">
+                    <label class="adm-chave"><span><b>Cobrança ligada</b><small>Desligada, todo mundo usa tudo de graça.</small></span>
+                        <input type="checkbox" id="adm-ativo" class="chk-presenca"><span class="switch" aria-hidden="true"></span></label>
+                    <div class="adm-grade">
+                        <div class="campo"><label for="adm-mensal">Mensal (R$)</label><input type="text" id="adm-mensal" min="0" inputmode="decimal"></div>
+                        <div class="campo"><label for="adm-anual">Anual (R$)</label><input type="text" id="adm-anual" min="0" inputmode="decimal"></div>
+                        <div class="campo"><label for="adm-teste">Teste grátis (dias)</label><input type="number" id="adm-teste" min="0" max="60" inputmode="numeric"></div>
+                        <div class="campo"><label for="adm-lim-jog">Jogadores no grátis</label><input type="number" id="adm-lim-jog" min="1" inputmode="numeric"></div>
+                        <div class="campo"><label for="adm-lim-hist">Campeonatos no grátis</label><input type="number" id="adm-lim-hist" min="0" inputmode="numeric"></div>
+                    </div>
+                    <div class="campo"><label for="adm-pix">Sua chave Pix (para receber o Pro)</label><input type="text" id="adm-pix" autocomplete="off"></div>
+                    <div class="campo"><label for="adm-pix-nome">Nome que aparece no Pix</label><input type="text" id="adm-pix-nome" maxlength="40"></div>
+                    <div class="campo"><label for="adm-zap">WhatsApp do suporte</label><input type="text" id="adm-zap" inputmode="numeric" placeholder="5511999999999"><span class="dica">Só números, com 55 e o DDD. É para onde vai o "Já paguei, enviar comprovante".</span></div>
+                    <div class="campo"><label for="adm-checkout">Link de pagamento (opcional)</label><input type="text" id="adm-checkout" inputmode="url" placeholder="https://"><span class="dica">Ex.: link do Mercado Pago. Sem ele, o Pro é pago no Pix e você libera aqui embaixo.</span></div>
+                </div>
+                <p class="lista-rotulo">Links</p>
+                <div class="card">
+                    <div class="campo"><label for="adm-url">Endereço público do app</label><input type="text" id="adm-url" inputmode="url"><span class="dica">Os links da lista de presença e do placar ao vivo usam este endereço.</span></div>
+                    <div class="campo"><label for="adm-link">Botão "Criar meu racha grátis"</label><input type="text" id="adm-link" inputmode="url" placeholder="Link da Play Store"><span class="dica">Aparece para quem abre a lista ou o placar ao vivo.</span></div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="adm-salvar">Salvar configurações</button>
+            </form>
+
+            <p class="lista-rotulo">Liberar o Pro</p>
+            <div class="card">
+                <p class="dica-painel">Quando alguém pagar no Pix, cole o ID que veio na mensagem do comprovante.</p>
+                <div class="campo"><label for="adm-uid">ID do usuário</label><input type="text" id="adm-uid" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+                <div class="campo"><label for="adm-plano">Plano</label>
+                    <select id="adm-plano"><option value="mensal">Mensal (31 dias)</option><option value="anual">Anual (366 dias)</option><option value="vitalicio">Sem prazo</option></select></div>
+                <p class="dica" id="adm-plano-atual"></p>
+                <div class="dois-botoes">
+                    <button type="button" class="btn btn-secondary" id="adm-ver">Ver plano atual</button>
+                    <button type="button" class="btn btn-primary" id="adm-liberar">Liberar Pro</button>
+                </div>
+            </div>
+            <p class="rodape-versao">Seu ID: <span id="adm-meu-uid" class="num"></span></p>
+        </section>
+
         <section id="tab-metricas" class="tab-content" data-title="Métricas" data-pai="tab-mais">
             <div class="card">
                 <h2>Métricas do app</h2>
@@ -281,6 +323,7 @@
             <div class="lista">
                 <button type="button" class="lista-item" data-mais="suporte"><svg class="i"><use href="#i-chat"/></svg><span class="li-txt"><span class="li-titulo">Falar com o suporte</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></button>
                 <button type="button" class="lista-item admin hidden" data-ir="tab-caixa" id="mais-caixa-suporte"><svg class="i"><use href="#i-doc"/></svg><span class="li-txt"><span class="li-titulo">Caixa do suporte</span><span class="li-sub">Só administrador</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></button>
+                <button type="button" class="lista-item admin hidden" data-ir="tab-admin" id="mais-admin"><svg class="i"><use href="#i-sliders"/></svg><span class="li-txt"><span class="li-titulo">Painel do administrador</span><span class="li-sub">Preços, Pix, links e liberar Pro</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></button>
                 <button type="button" class="lista-item admin hidden" data-ir="tab-metricas" id="mais-metricas"><svg class="i"><use href="#i-podium"/></svg><span class="li-txt"><span class="li-titulo">Métricas do app</span><span class="li-sub">Só administrador</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></button>
                 <a class="lista-item" href="termos-uso.html"><svg class="i"><use href="#i-doc"/></svg><span class="li-txt"><span class="li-titulo">Termos de uso</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></a>
                 <a class="lista-item" href="politica-privacidade.html"><svg class="i"><use href="#i-lock"/></svg><span class="li-txt"><span class="li-titulo">Política de privacidade</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></a>
@@ -640,15 +683,15 @@
         window.dispatchEvent(new Event('firebase-ready'));
     </script>
     <!-- ordem importa: logica -> remoto -> auth -> app -> monetizacao -->
-    <script src="js/logica.js?v=2006402d9a"></script>
-    <script src="js/ui.js?v=2006402d9a"></script>
-    <script src="js/apito.js?v=2006402d9a"></script>
-    <script src="js/remoto.js?v=2006402d9a"></script>
-    <script src="js/auth.js?v=2006402d9a"></script>
-    <script src="js/app.js?v=2006402d9a"></script>
-    <script src="js/monetizacao.js?v=2006402d9a"></script>
-    <script src="js/metricas.js?v=2006402d9a"></script>
-    <script src="js/imagem-times.js?v=2006402d9a"></script>
+    <script src="js/logica.js?v=95f21c47d2"></script>
+    <script src="js/ui.js?v=95f21c47d2"></script>
+    <script src="js/apito.js?v=95f21c47d2"></script>
+    <script src="js/remoto.js?v=95f21c47d2"></script>
+    <script src="js/auth.js?v=95f21c47d2"></script>
+    <script src="js/app.js?v=95f21c47d2"></script>
+    <script src="js/monetizacao.js?v=95f21c47d2"></script>
+    <script src="js/metricas.js?v=95f21c47d2"></script>
+    <script src="js/imagem-times.js?v=95f21c47d2"></script>
     <script>
         // Funciona sem internet: guarda o app no aparelho (sw.js)
         if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {

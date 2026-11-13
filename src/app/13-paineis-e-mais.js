@@ -58,7 +58,7 @@
         });
         $('tab-mais')?.addEventListener('click', (e) => {
             const ir = e.target.closest('[data-ir]');
-            if (ir) { irParaAba(ir.dataset.ir); if (ir.dataset.ir === 'tab-caixa') carregarCaixa(); if (ir.dataset.ir === 'tab-metricas') carregarMetricas(); return; }
+            if (ir) { irParaAba(ir.dataset.ir); if (ir.dataset.ir === 'tab-caixa') carregarCaixa(); if (ir.dataset.ir === 'tab-metricas') carregarMetricas(); if (ir.dataset.ir === 'tab-admin') abrirPainelAdmin(); return; }
             const b = e.target.closest('[data-mais]');
             if (!b) return;
             const a = b.dataset.mais;

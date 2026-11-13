@@ -113,7 +113,7 @@
         const dataPadrao = `${hoje.getFullYear()}-${p2(hoje.getMonth() + 1)}-${p2(hoje.getDate())}`;
         const m = abrirModalHtml(`<h2>${tipo === 'entrada' ? 'Nova entrada' : 'Nova saída'}</h2>
             <label class="subtext" for="cx-valor">Valor (R$)</label>
-            <input type="number" id="cx-valor" min="0" step="0.01" inputmode="decimal" placeholder="0,00" value="${tipo === 'entrada' && r.config.diaria ? r.config.diaria : ''}">
+            <input type="text" id="cx-valor" min="0" inputmode="decimal" placeholder="0,00" value="${tipo === 'entrada' && r.config.diaria ? r.config.diaria : ''}">
             <label class="subtext" for="cx-cat" style="display:block;margin-top:10px;">Tipo</label>
             <select id="cx-cat">${cats.map(c => `<option value="${c}">${CATEGORIAS_CAIXA[c][1]}</option>`).join('')}</select>
             ${tipo === 'entrada' ? `<label class="subtext" for="cx-jog" style="display:block;margin-top:10px;">De quem? (opcional)</label>
@@ -151,8 +151,8 @@
     function abrirValoresCaixa() {
         const cfg = Object.assign({ mensalidade: '', diaria: '', vencimento: 10 }, caixa.config || {});
         const m = abrirModalHtml(`<h2>⚙️ Valores do caixa</h2>
-            <div class="form-group-row"><label for="cx-mens">Mensalidade (R$)</label><input type="number" id="cx-mens" min="0" step="0.5" inputmode="decimal" value="${cfg.mensalidade || ''}" placeholder="50"></div>
-            <div class="form-group-row"><label for="cx-dia">Diária (R$)</label><input type="number" id="cx-dia" min="0" step="0.5" inputmode="decimal" value="${cfg.diaria || ''}" placeholder="15"></div>
+            <div class="form-group-row"><label for="cx-mens">Mensalidade (R$)</label><input type="text" id="cx-mens" min="0" inputmode="decimal" value="${cfg.mensalidade || ''}" placeholder="50"></div>
+            <div class="form-group-row"><label for="cx-dia">Diária (R$)</label><input type="text" id="cx-dia" min="0" inputmode="decimal" value="${cfg.diaria || ''}" placeholder="15"></div>
             <div class="form-group-row"><label for="cx-venc">Vence todo dia</label><input type="number" id="cx-venc" min="1" max="31" value="${cfg.vencimento || 10}"></div>
             <div class="modal-actions"><button type="button" class="btn btn-primary" id="cx-ok">Salvar</button><button type="button" class="btn btn-secondary" id="cx-cancelar">Cancelar</button></div>`);
         m.querySelector('#cx-cancelar').onclick = () => m.remove();

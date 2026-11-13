@@ -61,7 +61,7 @@
         if (b) b.classList.toggle('hidden', !souAdmin);
         const m = document.getElementById('btn-metricas');
         if (m) m.classList.toggle('hidden', !souAdmin);
-        ['mais-caixa-suporte', 'mais-metricas'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.toggle('hidden', !souAdmin); });
+        ['mais-caixa-suporte', 'mais-metricas', 'mais-admin'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.toggle('hidden', !souAdmin); });
     }
     async function verificarAdmin() {
         souAdmin = false;
@@ -99,7 +99,7 @@
             box.innerHTML = lista.length ? lista.map(m => `<div class="msg-suporte">
                 <b>${escapeHtml(m.de || '')}</b> ${m.ok ? '<span class="tag-ok">resolvido</span>' : '<span class="tag-novo">novo</span>'}
                 <div class="msg-texto">${escapeHtml(m.texto || '')}</div>
-                <small>${escapeHtml(m.email || '')} · ${escapeHtml(m.racha || '')} · ${new Date(m.em || 0).toLocaleString('pt-BR')}</small>
+                <small>${escapeHtml(m.email || '')} · ${escapeHtml(m.racha || '')} · ${new Date(m.em || 0).toLocaleString('pt-BR')}<br>ID: <span class="num" style="user-select:all">${escapeHtml(m.uid || '')}</span></small>
                 ${m.ok ? '' : `<button type="button" class="btn btn-secondary" data-resolver="${escapeHtml(m.id)}" style="margin-top:8px;">Marcar como resolvido</button>`}
             </div>`).join('') : '<p class="subtext">Nenhuma mensagem.</p>';
         } catch (e) {

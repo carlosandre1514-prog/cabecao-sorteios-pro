@@ -2,12 +2,18 @@
   "rules": {
     "configuracoes": {
       ".read": true,
-      ".write": false
+      ".write": false,
+      "monetizacao": {
+        ".write": "auth != null && auth.token.email === root.child('configuracoes/admin_email').val()"
+      },
+      "divulgacao": {
+        ".write": "auth != null && auth.token.email === root.child('configuracoes/admin_email').val()"
+      }
     },
     "planos": {
       "$uid": {
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": false
+        ".read": "auth != null && (auth.uid === $uid || auth.token.email === root.child('configuracoes/admin_email').val())",
+        ".write": "auth != null && auth.token.email === root.child('configuracoes/admin_email').val()"
       }
     },
     "testes": {

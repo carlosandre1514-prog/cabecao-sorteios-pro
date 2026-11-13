@@ -650,7 +650,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <input type="text" id="pr-pix-nome" maxlength="25" placeholder="Nome de quem recebe" value="${escapeHtml(pix0.nome || '')}">
                     <input type="text" id="pr-pix-cidade" maxlength="15" placeholder="Cidade" value="${escapeHtml(pix0.cidade || '')}">
                 </div>
-                <div class="form-group-row" style="margin:8px 0 0;"><label for="pr-pix-valor">Valor por pessoa (R$)</label><input type="number" id="pr-pix-valor" min="0" step="0.5" inputmode="decimal" placeholder="15" value="${pix0.valor || ''}"></div>
+                <div class="form-group-row" style="margin:8px 0 0;"><label for="pr-pix-valor">Valor por pessoa (R$)</label><input type="text" id="pr-pix-valor" min="0" inputmode="decimal" placeholder="15" value="${pix0.valor || ''}"></div>
             </div>
             <label class="subtext" for="pr-prazo" style="margin-top:10px;display:block;">Prazo para pagar (opcional)</label>
             <input type="datetime-local" id="pr-prazo" value="${paraCampoData(d.prazo)}">
@@ -2754,7 +2754,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         $('tab-mais')?.addEventListener('click', (e) => {
             const ir = e.target.closest('[data-ir]');
-            if (ir) { irParaAba(ir.dataset.ir); if (ir.dataset.ir === 'tab-caixa') carregarCaixa(); if (ir.dataset.ir === 'tab-metricas') carregarMetricas(); return; }
+            if (ir) { irParaAba(ir.dataset.ir); if (ir.dataset.ir === 'tab-caixa') carregarCaixa(); if (ir.dataset.ir === 'tab-metricas') carregarMetricas(); if (ir.dataset.ir === 'tab-admin') abrirPainelAdmin(); return; }
             const b = e.target.closest('[data-mais]');
             if (!b) return;
             const a = b.dataset.mais;
@@ -2829,7 +2829,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (b) b.classList.toggle('hidden', !souAdmin);
         const m = document.getElementById('btn-metricas');
         if (m) m.classList.toggle('hidden', !souAdmin);
-        ['mais-caixa-suporte', 'mais-metricas'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.toggle('hidden', !souAdmin); });
+        ['mais-caixa-suporte', 'mais-metricas', 'mais-admin'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.toggle('hidden', !souAdmin); });
     }
     async function verificarAdmin() {
         souAdmin = false;
@@ -2867,7 +2867,7 @@ document.addEventListener('DOMContentLoaded', () => {
             box.innerHTML = lista.length ? lista.map(m => `<div class="msg-suporte">
                 <b>${escapeHtml(m.de || '')}</b> ${m.ok ? '<span class="tag-ok">resolvido</span>' : '<span class="tag-novo">novo</span>'}
                 <div class="msg-texto">${escapeHtml(m.texto || '')}</div>
-                <small>${escapeHtml(m.email || '')} · ${escapeHtml(m.racha || '')} · ${new Date(m.em || 0).toLocaleString('pt-BR')}</small>
+                <small>${escapeHtml(m.email || '')} · ${escapeHtml(m.racha || '')} · ${new Date(m.em || 0).toLocaleString('pt-BR')}<br>ID: <span class="num" style="user-select:all">${escapeHtml(m.uid || '')}</span></small>
                 ${m.ok ? '' : `<button type="button" class="btn btn-secondary" data-resolver="${escapeHtml(m.id)}" style="margin-top:8px;">Marcar como resolvido</button>`}
             </div>`).join('') : '<p class="subtext">Nenhuma mensagem.</p>';
         } catch (e) {
@@ -2962,6 +2962,104 @@ document.addEventListener('DOMContentLoaded', () => {
         irParaTelaExtra('tab-metricas', 'Métricas');
         carregarMetricas();
     }
+
+    // ---------- PAINEL DO ADMINISTRADOR (só o e-mail de configuracoes/admin_email) ----------
+    // Ajusta configuracoes/monetizacao e configuracoes/divulgacao e libera o Pro (planos/<uid>) pelo app,
+    // sem precisar do site do Firebase. As regras só deixam o administrador gravar esses caminhos.
+    const DIA_MS = 24 * 60 * 60 * 1000;
+    async function abrirPainelAdmin() {
+        if (!souAdmin) return;
+        const $ = id => document.getElementById(id);
+        const f = window.firebaseFns, db = window.firebaseDb;
+        if ($('adm-meu-uid')) $('adm-meu-uid').textContent = currentUserUid || '';
+        try {
+            const s = await f.get(f.ref(db, 'configuracoes'));
+            const c = (s.exists() ? s.val() : {}) || {};
+            const m = c.monetizacao || {}, dv = c.divulgacao || {};
+            $('adm-ativo').checked = m.ativo !== false;
+            const virgula = v => Number(v).toFixed(2).replace('.', ',');
+            $('adm-mensal').value = virgula(m.preco_mensal != null ? m.preco_mensal : 9.9);
+            $('adm-anual').value = virgula(m.preco_anual != null ? m.preco_anual : 59.9);
+            $('adm-teste').value = m.dias_teste != null ? m.dias_teste : 7;
+            $('adm-lim-jog').value = m.limite_jogadores_gratis != null ? m.limite_jogadores_gratis : 25;
+            $('adm-lim-hist').value = m.limite_historico_gratis != null ? m.limite_historico_gratis : 3;
+            $('adm-pix').value = m.chave_pix || '';
+            $('adm-pix-nome').value = m.nome_pix || '';
+            $('adm-zap').value = m.whatsapp_suporte || '';
+            $('adm-checkout').value = m.link_checkout || '';
+            $('adm-url').value = dv.url_publica || basePublica();
+            $('adm-link').value = dv.link || '';
+        } catch (e) { toast('Não foi possível ler as configurações.', 'erro'); }
+    }
+    (function ligarPainelAdmin() {
+        const $ = id => document.getElementById(id);
+        const form = $('form-admin');
+        if (!form) return;
+        const num = (id, padrao) => { const v = parseFloat(String($(id).value).replace(',', '.')); return isFinite(v) && v >= 0 ? Math.round(v * 100) / 100 : padrao; };
+        const url = id => { const v = String($(id).value || '').trim(); return /^https?:\/\//i.test(v) ? v : ''; };
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!souAdmin) return;
+            const f = window.firebaseFns, db = window.firebaseDb;
+            const mon = {
+                ativo: $('adm-ativo').checked,
+                preco_mensal: num('adm-mensal', 9.9), preco_anual: num('adm-anual', 59.9),
+                dias_teste: Math.round(num('adm-teste', 7)),
+                limite_jogadores_gratis: Math.max(1, Math.round(num('adm-lim-jog', 25))),
+                limite_historico_gratis: Math.round(num('adm-lim-hist', 3)),
+                chave_pix: String($('adm-pix').value || '').trim(),
+                nome_pix: String($('adm-pix-nome').value || '').trim(),
+                whatsapp_suporte: (d => d.length === 10 || d.length === 11 ? '55' + d : d)(String($('adm-zap').value || '').replace(/\D/g, '')),   // completa o 55 do Brasil
+                link_checkout: url('adm-checkout')
+            };
+            const div = { url_publica: url('adm-url'), link: url('adm-link') };
+            const btn = $('adm-salvar'); btn.disabled = true;
+            try {
+                // campo a campo: não apaga o que não está na tela (patrocinador, checkout_api...)
+                await Promise.all([
+                    ...Object.entries(mon).map(([k, v]) => f.set(f.ref(db, 'configuracoes/monetizacao/' + k), v)),
+                    ...Object.entries(div).map(([k, v]) => f.set(f.ref(db, 'configuracoes/divulgacao/' + k), v || null))
+                ]);
+                if (div.url_publica) urlPublicaConfig = div.url_publica;
+                toast('Configurações salvas. Valem na próxima vez que o app abrir.');
+            } catch (er) {
+                const cod = String((er && (er.code || er.message)) || 'erro');
+                mostrarAlerta(/permission/i.test(cod) ? 'O Firebase não deixou salvar. Publique as regras novas (database.rules.json) e confira se o seu e-mail em configuracoes/admin_email está em letras minúsculas.' : 'Não foi possível salvar. Confira a internet. (' + cod + ')', 'Configurações');
+            } finally { btn.disabled = false; }
+        });
+        const uidValido = () => { const u = String($('adm-uid').value || '').trim(); return /^[A-Za-z0-9_-]{6,128}$/.test(u) ? u : ''; };
+        $('adm-ver')?.addEventListener('click', async () => {
+            const uid = uidValido(), alvo = $('adm-plano-atual');
+            if (!uid) { toast('Cole o ID do usuário.', 'erro'); return; }
+            try {
+                const s = await window.firebaseFns.get(window.firebaseFns.ref(window.firebaseDb, 'planos/' + uid));
+                const p = s.exists() ? s.val() : null;
+                alvo.textContent = !p || !p.ativo ? 'Esse usuário está no plano grátis.'
+                    : 'Pro ' + (p.ate ? (p.ate > Date.now() ? 'até ' : 'vencido em ') + new Date(p.ate).toLocaleDateString('pt-BR') : 'sem prazo') + (p.origem ? ' · ' + p.origem : '');
+            } catch (e) { alvo.textContent = 'Não foi possível consultar.'; }
+        });
+        $('adm-liberar')?.addEventListener('click', async () => {
+            const uid = uidValido();
+            if (!uid) { toast('Cole o ID do usuário.', 'erro'); return; }
+            const plano = $('adm-plano').value;
+            const f = window.firebaseFns, ref = f.ref(window.firebaseDb, 'planos/' + uid);
+            let atual = null;
+            try { const s = await f.get(ref); atual = s.exists() ? s.val() : null; } catch (e) { /* segue */ }
+            // renovação soma ao que ainda falta, igual ao pagamento automático
+            const base = Math.max(Date.now(), atual && atual.ativo && atual.ate ? Number(atual.ate) : 0);
+            const dados = { ativo: true, plano, origem: 'manual' };
+            if (plano !== 'vitalicio') dados.ate = base + (plano === 'anual' ? 366 : 31) * DIA_MS;
+            const ok = await mostrarConfirmacao(`O usuário ${uid.slice(0, 8)}… fica Pro ${dados.ate ? 'até ' + new Date(dados.ate).toLocaleDateString('pt-BR') : 'sem prazo'}.`, 'Liberar o Pro?', { ok: 'Liberar' });
+            if (!ok) return;
+            try {
+                await f.set(ref, dados);
+                $('adm-plano-atual').textContent = 'Liberado: Pro ' + (dados.ate ? 'até ' + new Date(dados.ate).toLocaleDateString('pt-BR') : 'sem prazo') + '.';
+                toast('Pro liberado. Aparece na hora para a pessoa.');
+            } catch (er) {
+                mostrarAlerta('O Firebase não deixou liberar. Publique as regras novas (database.rules.json).', 'Liberar o Pro');
+            }
+        });
+    })();
 
     // ---------- CAIXA DO RACHA (Pro): mensalistas, diárias, gastos e saldo ----------
     // Fica em usuarios/<uid>/[rachas/<id>/]caixa (formato em Logica.resumoCaixa).
@@ -3078,7 +3176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dataPadrao = `${hoje.getFullYear()}-${p2(hoje.getMonth() + 1)}-${p2(hoje.getDate())}`;
         const m = abrirModalHtml(`<h2>${tipo === 'entrada' ? 'Nova entrada' : 'Nova saída'}</h2>
             <label class="subtext" for="cx-valor">Valor (R$)</label>
-            <input type="number" id="cx-valor" min="0" step="0.01" inputmode="decimal" placeholder="0,00" value="${tipo === 'entrada' && r.config.diaria ? r.config.diaria : ''}">
+            <input type="text" id="cx-valor" min="0" inputmode="decimal" placeholder="0,00" value="${tipo === 'entrada' && r.config.diaria ? r.config.diaria : ''}">
             <label class="subtext" for="cx-cat" style="display:block;margin-top:10px;">Tipo</label>
             <select id="cx-cat">${cats.map(c => `<option value="${c}">${CATEGORIAS_CAIXA[c][1]}</option>`).join('')}</select>
             ${tipo === 'entrada' ? `<label class="subtext" for="cx-jog" style="display:block;margin-top:10px;">De quem? (opcional)</label>
@@ -3116,8 +3214,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function abrirValoresCaixa() {
         const cfg = Object.assign({ mensalidade: '', diaria: '', vencimento: 10 }, caixa.config || {});
         const m = abrirModalHtml(`<h2>⚙️ Valores do caixa</h2>
-            <div class="form-group-row"><label for="cx-mens">Mensalidade (R$)</label><input type="number" id="cx-mens" min="0" step="0.5" inputmode="decimal" value="${cfg.mensalidade || ''}" placeholder="50"></div>
-            <div class="form-group-row"><label for="cx-dia">Diária (R$)</label><input type="number" id="cx-dia" min="0" step="0.5" inputmode="decimal" value="${cfg.diaria || ''}" placeholder="15"></div>
+            <div class="form-group-row"><label for="cx-mens">Mensalidade (R$)</label><input type="text" id="cx-mens" min="0" inputmode="decimal" value="${cfg.mensalidade || ''}" placeholder="50"></div>
+            <div class="form-group-row"><label for="cx-dia">Diária (R$)</label><input type="text" id="cx-dia" min="0" inputmode="decimal" value="${cfg.diaria || ''}" placeholder="15"></div>
             <div class="form-group-row"><label for="cx-venc">Vence todo dia</label><input type="number" id="cx-venc" min="1" max="31" value="${cfg.vencimento || 10}"></div>
             <div class="modal-actions"><button type="button" class="btn btn-primary" id="cx-ok">Salvar</button><button type="button" class="btn btn-secondary" id="cx-cancelar">Cancelar</button></div>`);
         m.querySelector('#cx-cancelar').onclick = () => m.remove();

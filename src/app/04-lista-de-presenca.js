@@ -183,7 +183,7 @@
                     <input type="text" id="pr-pix-nome" maxlength="25" placeholder="Nome de quem recebe" value="${escapeHtml(pix0.nome || '')}">
                     <input type="text" id="pr-pix-cidade" maxlength="15" placeholder="Cidade" value="${escapeHtml(pix0.cidade || '')}">
                 </div>
-                <div class="form-group-row" style="margin:8px 0 0;"><label for="pr-pix-valor">Valor por pessoa (R$)</label><input type="number" id="pr-pix-valor" min="0" step="0.5" inputmode="decimal" placeholder="15" value="${pix0.valor || ''}"></div>
+                <div class="form-group-row" style="margin:8px 0 0;"><label for="pr-pix-valor">Valor por pessoa (R$)</label><input type="text" id="pr-pix-valor" min="0" inputmode="decimal" placeholder="15" value="${pix0.valor || ''}"></div>
             </div>
             <label class="subtext" for="pr-prazo" style="margin-top:10px;display:block;">Prazo para pagar (opcional)</label>
             <input type="datetime-local" id="pr-prazo" value="${paraCampoData(d.prazo)}">
