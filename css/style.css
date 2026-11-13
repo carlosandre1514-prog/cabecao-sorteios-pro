@@ -590,3 +590,7 @@ input[type="text"], input[type="number"], input[type="password"], input[type="em
 .hist-txt span { color: var(--ouro); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; }
 .hist-abrir { margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--linha); font-size: 0.82rem; color: var(--neon); font-weight: 700; }
 .item-presenca { position: relative; }
+.vis-modo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.vis-modo button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 6px; border-radius: 12px; cursor: pointer; font: inherit; font-size: 0.85rem; font-weight: 800; color: var(--txt); background: rgba(0,0,0,0.3); border: 1px solid var(--linha); }
+.vis-modo button small { font-size: 0.68rem; font-weight: 600; color: var(--mudo); }
+.vis-modo button.on { border-color: var(--neon); background: rgba(var(--neon-rgb),0.1); }
