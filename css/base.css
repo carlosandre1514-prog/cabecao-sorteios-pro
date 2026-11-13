@@ -400,7 +400,7 @@ body.com-sheet .barra-acao { display: none !important; }
 .art-gols { font-size: var(--t-lg); font-variant-numeric: tabular-nums; }
 .jogo-meio { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .jogo-pen { grid-column: auto; margin: 0; font-size: 0.6875rem; }
-.sheet-dinamico .modal-actions { display: flex; flex-direction: column-reverse; gap: var(--e-2); margin-top: var(--e-6); }
+.sheet-dinamico .modal-actions { display: flex; flex-direction: column; gap: var(--e-2); margin-top: var(--e-6); }
 .sheet-dinamico .modal-actions .btn { width: 100%; }
 .sheet-dinamico label.subtext { display: block; font-size: var(--t-sm); font-weight: 600; color: var(--c-texto-2); margin: var(--e-4) 0 6px; }
 .sheet-dinamico .form-group-row { margin: var(--e-3) 0 0; }
@@ -446,3 +446,33 @@ body.com-sheet .barra-acao { display: none !important; }
 .barra-rank { display: block; height: 4px; border-radius: 99px; background: var(--c-sup-3); overflow: hidden; }
 .barra-rank span { display: block; height: 100%; background: var(--c-destaque-forte); border-radius: 99px; }
 .btn-olho { font-size: var(--t-sm); font-weight: 600; color: var(--c-texto-2); }
+
+/* configuração do Pix no painel: um campo por linha */
+.pix-config { background: var(--c-sup-2); border-color: var(--c-linha); border-radius: var(--r-md); }
+.pix-titulo { color: var(--c-texto); }
+.pix-config .dica-pix + .pix-linha { grid-template-columns: 1fr; }
+.vis-preview { border-color: var(--c-linha); }
+
+/* ---------- Entrada (login) ---------- */
+.auth-screen { background: var(--c-fundo); background-image: none; }
+.auth-card h2 { font-size: var(--t-2xl); font-weight: 750; letter-spacing: -0.6px; }
+.auth-card h2 span { color: var(--c-texto); }
+.auth-logo { width: 64px; height: 64px; border-radius: 16px; border: 1px solid var(--c-linha); }
+.btn-google { background: #fff; color: #1f1f1f; border: 0; }
+.auth-divisor { color: var(--c-texto-3); font-size: var(--t-xs); }
+.auth-aviso { border-radius: var(--r-md); }
+
+/* ---------- Páginas públicas (lista e placar ao vivo) ---------- */
+.hero-kicker { color: var(--c-texto-3); letter-spacing: 1.2px; }
+.chip.fechada { color: var(--c-perigo); }
+.vaga-box strong, .contador strong { color: var(--c-texto); }
+.status-vagas.lotado { color: var(--c-ouro); }
+.cta-app { border-color: var(--c-linha); }
+.btn-pagar { background: var(--c-ouro); color: #231b05; }
+.pix-box { background: var(--c-sup-2); border-color: var(--c-linha-forte); }
+.pix-logo { color: var(--c-texto); }
+.btn-pix { background: var(--c-texto); color: var(--c-fundo); }
+.card-pag { border-color: var(--c-linha); }
+.cron-card .timer-display { color: var(--c-texto); text-shadow: none; }
+.placar-vivo { color: var(--c-texto); }
+.tabela-classificacao tbody tr:first-child td:first-child { color: var(--c-texto); }

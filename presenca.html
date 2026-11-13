@@ -6,13 +6,15 @@
     <title>Lista do racha · Cabeção Sorteios Pro</title>
     <meta name="description" content="Confirme se você vai no racha.">
     <link rel="icon" type="image/png" href="img/icon-192.png">
-    <meta name="theme-color" content="#0b0e0c">
+    <meta name="theme-color" content="#0f1214">
+    <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="css/style.css?v=20261113l">
+    <link rel="stylesheet" href="css/base.css?v=20261113l">
     <style>
         .app-container { padding-bottom: 32px; }
-        body { background-image: radial-gradient(ellipse 90% 40% at 50% -8%, rgba(var(--verde-rgb), 0.38), transparent 72%); }
+        body { background-image: radial-gradient(ellipse 90% 30% at 50% -10%, rgba(var(--verde-rgb), 0.14), transparent 70%); }
         .hero { display: flex; align-items: center; gap: 14px; padding: calc(22px + env(safe-area-inset-top)) 6px 14px; animation: entra .45s ease both; }
-        .hero-escudo { width: 76px; height: 76px; border-radius: 20px; object-fit: contain; flex: none; background: rgba(0,0,0,.35); border: 1px solid rgba(var(--neon-rgb), .35); padding: 4px; box-shadow: 0 8px 26px rgba(var(--verde-rgb), .3); }
+        .hero-escudo { width: 76px; height: 76px; border-radius: 20px; object-fit: contain; flex: none; background: rgba(0,0,0,.35); border: 1px solid rgba(var(--neon-rgb), .35); padding: 4px; box-shadow: none; }
         .hero-txt { min-width: 0; }
         .hero-kicker { color: var(--neon); font-weight: 900; font-size: .7rem; letter-spacing: 1.6px; }
         .hero h1 { font-size: 1.65rem; line-height: 1.1; font-weight: 900; letter-spacing: -.4px; margin: 2px 0 8px; overflow-wrap: anywhere; }
@@ -110,7 +112,7 @@
                 <h2 style="margin:0 0 4px;">Organiza um racha?</h2>
                 <p class="subtext" style="margin:0;">Lista de presença por link, sorteio de times equilibrados e placar ao vivo. É grátis.</p>
             </div>
-            <a id="cta-link" class="btn btn-primary" href="index.html">⚽ Criar meu racha grátis</a>
+            <a id="cta-link" class="btn btn-primary" href="index.html">Criar meu racha grátis</a>
         </div>
         <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro</p>
     </div>
@@ -133,6 +135,11 @@
         });
         const db = getDatabase(app);
         const $ = id => document.getElementById(id);
+        // texto da página sem emoji (o goleiro vira o ícone de luva)
+        const RE_EMOJI = /[\u{1F000}-\u{1FAFF}\u{2300}-\u{23FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu;
+        const LUVA = '<svg class="i i-sm" viewBox="0 0 24 24" aria-label="goleiro" role="img" style="vertical-align:-3px;margin-right:4px"><path d="M7.5 12.5V7a1.5 1.5 0 0 1 3 0v4M10.5 10.5V5.2a1.5 1.5 0 0 1 3 0v5.3M13.5 10.5V6.2a1.5 1.5 0 0 1 3 0v6M16.5 12.2V9.5a1.5 1.5 0 0 1 3 0v4.3a6.7 6.7 0 0 1-6.7 6.7h-.6a5.3 5.3 0 0 1-4.3-2.2l-2.9-4a1.5 1.5 0 0 1 2.3-1.9l1.7 2"/></svg>';
+        const limpar = h => String(h).replace(/🧤\s?/g, LUVA).replace(RE_EMOJI, '');
+
         const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         const codigo = (new URLSearchParams(location.search).get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
         const chaveEu = 'cabecao_presenca_eu_' + codigo;
@@ -156,7 +163,7 @@
         let eu = lerEu();      // id do jogador escolhido neste aparelho
         let trocando = false;  // mostrando a grade de nomes para escolher outro
 
-        function aviso(msg) { $('conteudo').innerHTML = `<div class="card aviso-centro">${msg}</div>`; }
+        function aviso(msg) { $('conteudo').innerHTML = `<div class="card aviso-centro">${limpar(msg)}</div>`; }
 
         async function responder(id, status, extra) {
             if (!lista || !lista.aberta) return;
@@ -232,7 +239,7 @@
             const px = d.pix;
             const qr = qrDataUrl(cod);
             return `<div class="pix-box">
-                <div class="pix-topo"><span class="pix-logo">💠 Pix</span>${px.valor ? `<strong class="pix-valor">R$ ${Number(px.valor).toFixed(2).replace('.', ',')}</strong>` : ''}</div>
+                <div class="pix-topo"><span class="pix-logo">Pix</span>${px.valor ? `<strong class="pix-valor">R$ ${Number(px.valor).toFixed(2).replace('.', ',')}</strong>` : ''}</div>
                 ${qr ? `<img class="pix-qr" src="${qr}" alt="QR Code do Pix">` : ''}
                 <button class="btn btn-pix" data-copiar-pix>📋 Copiar código Pix</button>
                 <p class="pix-ajuda">No app do banco: <strong>Pix → Pix Copia e Cola</strong> e cole o código.${px.valor ? '' : ' Digite o valor combinado.'}<br>Recebedor: <strong>${esc(String(px.nome || '').toUpperCase())}</strong></p>
@@ -259,9 +266,9 @@
             const nomeRacha = (d.visual && d.visual.nome) || d.titulo || 'Lista do racha';
             document.title = nomeRacha + ' · Lista';
             $('titulo').textContent = nomeRacha;
-            $('chips').innerHTML = (d.quando ? `<span class="chip">📅 ${esc(d.quando)}</span>` : '')
-                + (d.times ? `<span class="chip">⚽ ${d.times} times · ${d.porTime} + goleiro</span>` : '')
-                + (d.aberta ? '' : '<span class="chip fechada">🔒 Lista fechada</span>');
+            $('chips').innerHTML = (d.quando ? `<span class="chip">${esc(d.quando)}</span>` : '')
+                + (d.times ? `<span class="chip">${d.times} times de ${d.porTime} + goleiro</span>` : '')
+                + (d.aberta ? '' : '<span class="chip fechada">Lista fechada</span>');
             const r = Logica.resumirPresenca(d.jogadores, d.respostas, d.limite, { vagasGoleiro: d.vagasGoleiro, pagos: d.pagos, prazo: d.prazo });
             const fmtPrazo = ms => new Date(ms).toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
             const jogadores = Object.values(d.jogadores || {}).filter(Boolean);
@@ -327,7 +334,7 @@
                 </div>`;
             } else if (d.aberta) {
                 h += `<div class="card">
-                    <h2>✍️ Confirme sua presença</h2>
+                    <h2>Confirme sua presença</h2>
                     <p class="subtext">Digite seu nome e toque em <strong>Vou</strong> ou <strong>Não vou</strong>.</p>
                     <div class="entrar-form">
                         <input id="meu-nome" list="nomes-elenco" maxlength="40" placeholder="Seu nome ou apelido" autocomplete="off" enterkeyhint="done">
@@ -346,7 +353,7 @@
             // listas
             const temPag = !!(d.prazo || d.pagamento || (d.pagos && Object.keys(d.pagos).length));
             const tagPag = p => p.pago === undefined || !temPag ? (p.convidado ? '<span class="tag">convidado</span>' : '')
-                : p.pago ? '<span class="tag pago">💰 pago ✔</span>'
+                : p.pago ? '<span class="tag pago">pago</span>'
                 : p.aConfirmar ? '<span class="tag aguardando">🕐 pagou (a confirmar)</span>'
                 : `<span class="tag ${p.atrasado ? 'atrasado' : ''}">${p.atrasado ? '⚠️ não pagou' : '⏳ a pagar'}</span>`;
             const linha = (p, i) => `<div class="linha-pessoa ${p.id === eu ? 'sou-eu' : ''}"><span class="pos">${i + 1}</span>${avatar(p.nome)}<span class="nm">${p.goleiro ? '🧤 ' : ''}${esc(p.nome)}</span>${tagPag(p)}</div>`;
@@ -364,6 +371,7 @@
             const antes = $('meu-nome') ? { nome: $('meu-nome').value, gol: $('meu-goleiro').checked, foco: document.activeElement === $('meu-nome') } : null;
             $('conteudo').classList.toggle('sem-anim', !primeiraVez);
             primeiraVez = false;
+            h = limpar(h);
             $('conteudo').innerHTML = h;
             if (antes && $('meu-nome')) {
                 $('meu-nome').value = antes.nome; $('meu-goleiro').checked = antes.gol;

@@ -39,7 +39,7 @@
         return s.charAt(0).toUpperCase() + s.slice(1);
     }
     // Texto de interface sem emoji (os textos que vão para o WhatsApp continuam com emoji)
-    const RE_EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu;
+    const RE_EMOJI = /[\u{1F000}-\u{1FAFF}\u{2300}-\u{23FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu;
     function semEmoji(t) {
         return String(t == null ? '' : t).replace(RE_EMOJI, '').replace(/^[\s·:–—-]+/, '').replace(/\s{2,}/g, ' ').replace(/\s+([!?.,)])/g, '$1').trim();
     }
