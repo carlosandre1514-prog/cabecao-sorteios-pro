@@ -1,0 +1,4 @@
+{
+  "app": "1.1.0",
+  "comentario": "app = versão que o usuário vê e que o bloqueio remoto compara (js/remoto.js). A versão dos arquivos (?v= e sw.js) é calculada sozinha pelo npm run build a partir do conteúdo."
+}

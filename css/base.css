@@ -476,3 +476,11 @@ body.com-sheet .barra-acao { display: none !important; }
 .cron-card .timer-display { color: var(--c-texto); text-shadow: none; }
 .placar-vivo { color: var(--c-texto); }
 .tabela-classificacao tbody tr:first-child td:first-child { color: var(--c-texto); }
+
+/* aviso de nova versão (js/remoto.js) */
+.aviso-versao { position: sticky; top: 0; z-index: 9999; display: flex; align-items: center; gap: var(--e-2); padding: 8px 12px 8px 16px;
+    background: var(--c-sup-3); border-bottom: 1px solid var(--c-linha-forte); font-size: var(--t-sm); color: var(--c-texto); }
+.aviso-versao > span { flex: 1; }
+.aviso-versao .btn-texto { color: var(--c-destaque); padding: 6px 4px; }
+.aviso-versao .icon-btn { width: 32px; height: 32px; background: none; border: 0; }
+.cx-tudo-pago { display: flex; align-items: center; justify-content: center; gap: 6px; }

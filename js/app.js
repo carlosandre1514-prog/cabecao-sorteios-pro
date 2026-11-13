@@ -1,3 +1,4 @@
+// ARQUIVO MONTADO por scripts/build.js — edite os arquivos em src/app/ e rode "npm run build".
 // =====================================================================
 // app.js — TELAS e ESTADO do app (login, jogadores, sorteio, campeonato, histórico)
 //
@@ -88,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const elVersao = document.getElementById('versao-app');
     if (elVersao) elVersao.textContent = VERSAO_ATUAL_APP;
     
-    // ALTERAÇÃO 2: Contador de sorteios por sessão
+    // quantos sorteios foram feitos nesta sessão (aparece no resultado)
     let contadorSorteios = 0;
 
     let timesSorteados = [];
@@ -557,7 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${d.prazo ? `<span class="${r.prazoVencido ? 'vencido' : ''}">Pagamento até ${escapeHtml(fmtPrazo(d.prazo))}${r.prazoVencido ? ' · vencido' : ''}</span>` : ''}
             </div>` : ''}
             ${r.aConfirmar.length ? `<p class="aviso-faixa ouro"><strong>${r.aConfirmar.length}</strong> ${r.aConfirmar.length === 1 ? 'avisou que pagou' : 'avisaram que pagaram'}: ${r.aConfirmar.map(c => escapeHtml(c.nome)).join(', ')}. Confira o Pix e toque em Confirmar.</p>` : ''}
-            ${r.prazoVencido && r.atrasados.length ? `<div class="aviso-faixa perigo"><span><strong>${r.atrasados.length}</strong> com vaga não ${r.atrasados.length === 1 ? 'pagou' : 'pagaram'} e o prazo acabou.</span>
+            ${r.prazoVencido && r.atrasados.length ? `<div class="aviso-faixa perigo"><span><strong>${r.atrasados.length} ${r.atrasados.length === 1 ? 'jogador' : 'jogadores'}</strong> sem pagamento confirmado</span>
                 <button type="button" class="btn-texto perigo" id="btn-tirar-atrasados">Tirar e subir suplentes</button></div>` : ''}`;
         const conv = document.getElementById('presenca-convidados');
         if (conv) {
@@ -818,7 +819,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (alvo('#btn-tirar-atrasados')) {
                 const ids = r.atrasados.map(a => a.id);
                 if (!ids.length) return;
-                const ok = await mostrarConfirmacao(`Tirar ${ids.length} pessoa(s) que não pagaram até o prazo (${r.atrasados.map(a => a.nome).join(', ')})? Os suplentes sobem para as vagas.`, '💰 PRAZO VENCIDO');
+                const ok = await mostrarConfirmacao(`${ids.length === 1 ? 'Sai da lista' : 'Saem da lista'}: ${r.atrasados.map(a => a.nome).join(', ')}. Os suplentes sobem para as vagas.`, `Tirar ${ids.length} ${ids.length === 1 ? 'jogador' : 'jogadores'} sem pagamento confirmado?`, { ok: 'Tirar', perigo: true });
                 if (ok) { await tirarDaLista(ids); toast('Pronto: quem não pagou saiu e os suplentes subiram.'); }
             }
         });
@@ -2002,7 +2003,7 @@ document.addEventListener('DOMContentLoaded', () => {
             placarRacha = { a: 0, b: 0 };
             tipoDesempateRacha = null;
             
-            // ALTERAÇÃO 2: Reseta o contador ao iniciar um campeonato
+            // novo campeonato: o contador de sorteios recomeça
             contadorSorteios = 0;
 
             inicializarClassificacao();
@@ -2015,7 +2016,7 @@ document.addEventListener('DOMContentLoaded', () => {
             artilharia = {};
             partidaAtualIndex = 0;
 
-            // ALTERAÇÃO 3: Salva o estado inicial do campeonato no Firebase
+            // grava o campeonato já no início (se o app fechar, ele volta daqui)
             salvarCampeonatoAtivo();
             if (window.Metricas) Metricas.evento('campeonato_iniciado');
 
@@ -2602,7 +2603,7 @@ document.addEventListener('DOMContentLoaded', () => {
             salvarHistoricoFirebase();
             if (window.Metricas) Metricas.evento('campeonato_finalizado');
 
-            // ALTERAÇÃO 3: Apaga o registro do campeonato ativo no Firebase ao finalizar
+            // o campeonato terminou: sai do "em andamento" no Firebase
             limparCampeonatoAtivo();
 
             // Reseta variáveis locais
@@ -2993,7 +2994,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="cx-progresso"><span><b>${r.pagaram}</b> de ${r.mensalistas.length} pagaram</span><span>${R(r.previsto - r.aReceber)} de ${R(r.previsto)}</span></div>
                     <div class="barra-cx"><div style="width:${pct}%"></div></div>
                     ${r.mensalistas.map(linhaMensalista).join('')}
-                    ${r.devedores.length ? `<button type="button" class="btn btn-primary" data-cx="cobrar-grupo" style="margin-top:12px;">${ic('share', 'i-sm')}Cobrar quem deve no grupo (${r.devedores.length})</button>` : '<p class="cx-tudo-pago">✅ Todo mundo pagou este mês!</p>'}
+                    ${r.devedores.length ? `<button type="button" class="btn btn-primary" data-cx="cobrar-grupo" style="margin-top:12px;">${ic('share', 'i-sm')}Cobrar quem deve no grupo (${r.devedores.length})</button>` : `<p class="cx-tudo-pago">${ic('check', 'i-sm')} Todo mundo pagou este mês</p>`}
                 ` : '<p class="subtext">Escolha quem paga por mês. O app mostra quem pagou, quem deve e monta a cobrança.</p>'}
                 <button type="button" class="btn btn-secondary" data-cx="mensalistas" style="margin-top:8px;">Escolher mensalistas</button>
             </div>

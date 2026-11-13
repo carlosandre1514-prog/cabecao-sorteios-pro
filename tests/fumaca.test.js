@@ -66,7 +66,7 @@ win.firebaseFns = {
 };
 win.firebaseReady = true;
 
-['js/logica.js', 'js/ui.js', 'js/remoto.js', 'js/auth.js', 'js/app.js', 'js/monetizacao.js', 'js/icones.js', 'js/metricas.js'].forEach(rodar);
+['js/logica.js', 'js/ui.js', 'js/remoto.js', 'js/auth.js', 'js/app.js', 'js/monetizacao.js', 'js/metricas.js'].forEach(rodar);
 (document.listeners.DOMContentLoaded || []).forEach(f => f());
 assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (antes dependia de um setTimeout de 500ms)');
 

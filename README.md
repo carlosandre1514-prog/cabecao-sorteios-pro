@@ -48,6 +48,16 @@ Ordem dos scripts no `index.html` importa: `logica → remoto → auth → app �
 | Login | `js/auth.js` + Firebase Console |
 | Trocar de tela / botão voltar | `js/app.js` → `irParaAba()` |
 
+## Como o código está organizado
+
+- **`src/app/`**: o app em 19 arquivos por assunto (`08-elenco.js`, `09-sorteio.js`, `12-jogo.js`, `16-caixa.js`...).
+  **Edite aqui.** `npm run build` junta tudo em `js/app.js` (que o navegador carrega) e carimba as versões.
+- **`versao.json`**: a versão do app (o que o usuário vê e o bloqueio remoto compara). A versão dos arquivos
+  (`?v=` nos HTML e no `sw.js`) é calculada sozinha pelo build a partir do conteúdo: não precisa mexer à mão.
+- **`npm test`**: confere se o build está em dia e roda todos os testes (lógica, apito, app inteiro simulado e Mercado Pago).
+- **`css/base.css`**: a base visual (cores, espaços, tipos e componentes). `css/style.css` guarda o que sobrou do visual antigo.
+- Ícones: sprite SVG no topo do `index.html`, usados com `<svg class="i"><use href="#i-nome"/></svg>` ou `UI.icone('nome')`.
+
 ## Rodar local
 
 Abra com um servidor estático (o módulo do Firebase não funciona em `file://`):
@@ -58,9 +68,8 @@ python3 -m http.server 8080
 
 ## Lançar nova versão
 
-1. Mude `VERSAO_ATUAL_APP` em `js/remoto.js`.
-   Troque também o `?v=` dos arquivos no `index.html` e o `VERSAO` no topo do `sw.js` (o mesmo valor),
-   senão quem já instalou continua com os arquivos antigos guardados no aparelho.
+1. Mude `"app"` em `versao.json` e rode `npm run build`.
+   (o `?v=` dos arquivos e o `VERSAO` do `sw.js` o build já atualiza sozinho.)
 2. Gere o APK.
 3. No Firebase, ajuste `configuracoes/versoes/versao_minima_permitida` (veja `docs/`).
 
@@ -75,7 +84,6 @@ tocando em "Ativar som do apito", ouve o apito quando o tempo acaba. O apito (6 
 fica em `js/apito.js` e é o mesmo no app e no link. Regras do Firebase: `docs/COMO-CONFIGURAR-MONETIZACAO.md`.
 
 ## Visual v3 (novidades)
-- Cores suaves, detalhes em preto translúcido e ícones SVG (`js/icones.js` troca os emojis automaticamente).
 - Aba **Ranking** (gols somados dos campeonatos finalizados do racha ativo).
 - Menu lateral: **foto e apelido**, **Meus rachas** (perfis de racha), **Falar com o suporte**, **Caixa do suporte** (só admin), **Termos de uso** e **Política de privacidade**.
 - **Histórico**: toque no campeonato para abrir a tela completa (tabela, confrontos, artilharia).

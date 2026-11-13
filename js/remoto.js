@@ -77,14 +77,13 @@ function exibirBannerAtualizacao(novaVersao, linkDownload) {
     if (document.getElementById('banner-soft-update')) return;
     const banner = document.createElement('div');
     banner.id = 'banner-soft-update';
-    banner.style.cssText = 'background:#1976D2; color:#fff; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; font-size:0.9rem; box-shadow:0 2px 8px rgba(0,0,0,0.3); position:sticky; top:0; z-index:9999;';
+    banner.className = 'aviso-versao';
+    banner.setAttribute('role', 'status');
     const seguro = /^https?:\/\//i.test(String(linkDownload || ''));
     banner.innerHTML = `
-        <span>Nova versão (<strong>v${String(novaVersao).replace(/[<>&"']/g, '')}</strong>) está disponível!</span>
-        <div style="display:flex; gap:8px; align-items:center;">
-            ${seguro ? '<button id="btn-atualizar-soft" style="background:#fff; color:#1976D2; border:none; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Atualizar agora</button>' : ''}
-            <button id="btn-fechar-soft" style="background:transparent; color:#fff; border:none; font-size:1.1rem; cursor:pointer; padding:0 4px;">✕</button>
-        </div>`;
+        <span>Nova versão <strong>${String(novaVersao).replace(/[<>&"']/g, '')}</strong> disponível</span>
+        ${seguro ? '<button type="button" id="btn-atualizar-soft" class="btn-texto">Atualizar</button>' : ''}
+        <button type="button" id="btn-fechar-soft" class="icon-btn" aria-label="Fechar aviso"><svg class="i i-sm"><use href="#i-x"/></svg></button>`;
     document.body.insertBefore(banner, document.body.firstChild);
     const bA = banner.querySelector('#btn-atualizar-soft');
     if (bA) bA.addEventListener('click', () => window.open(linkDownload, '_blank'));
