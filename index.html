@@ -84,7 +84,7 @@
                 <input type="email" id="auth-email" placeholder="Seu e-mail" autocomplete="email" inputmode="email" autocapitalize="none">
                 <div class="senha-wrap">
                     <input type="password" id="auth-password" placeholder="Sua senha (mínimo 6 caracteres)" autocomplete="current-password">
-                    <button type="button" id="btn-ver-senha" class="btn-olho" aria-label="Mostrar senha">👁️</button>
+                    <button type="button" id="btn-ver-senha" class="btn-olho" aria-label="Mostrar senha">Mostrar</button>
                 </div>
                 <button type="button" id="btn-esqueci-senha" class="link-discreto">Esqueci minha senha</button>
 
@@ -241,7 +241,7 @@
 
         <section id="tab-caixa" class="tab-content" data-title="Caixa do suporte" data-pai="tab-mais">
             <div class="card">
-                <h2>📥 Mensagens para o suporte</h2>
+                <h2>Mensagens para o suporte</h2>
                 <p class="subtext">Tela visível só para o e-mail do administrador.</p>
             </div>
             <div id="lista-caixa"></div>
@@ -249,7 +249,7 @@
 
         <section id="tab-metricas" class="tab-content" data-title="Métricas" data-pai="tab-mais">
             <div class="card">
-                <h2>📊 Métricas do app</h2>
+                <h2>Métricas do app</h2>
                 <p class="subtext">Contadores anônimos de uso. Hoje e últimos 7 dias. Tela visível só para o administrador.</p>
                 <div id="conteudo-metricas"></div>
             </div>
@@ -261,11 +261,8 @@
         </section>
 
         <section id="tab-ranking" class="tab-content" data-title="Ranking" data-pai="tab-mais">
-            <div class="card">
-                <h2>Ranking de gols</h2>
-                <p class="subtext">Soma dos gols de todos os campeonatos finalizados.</p>
-                <div id="lista-ranking"></div>
-            </div>
+            <p class="tela-sub" id="ranking-sub" style="padding:0 var(--e-1);">Gols somados de todos os campeonatos</p>
+            <div id="lista-ranking"></div>
         </section>
 
         <!-- MAIS: telas e ajustes que não cabem no menu de baixo -->
@@ -295,11 +292,8 @@
         </section>
 
         <section id="tab-historico" class="tab-content" data-title="Histórico" data-pai="tab-mais">
-            <div class="card">
-                <h2>📜 Campeonatos Salvos</h2>
-                <p class="subtext">Histórico permanente das edições encerradas:</p>
-                <div id="container-historico"></div>
-            </div>
+            <p class="tela-sub" style="padding:0 var(--e-1);">Toque num campeonato para ver a tabela, os jogos e a artilharia.</p>
+            <div id="container-historico"></div>
         </section>
     </div>
 

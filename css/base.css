@@ -400,3 +400,49 @@ body.com-sheet .barra-acao { display: none !important; }
 .art-gols { font-size: var(--t-lg); font-variant-numeric: tabular-nums; }
 .jogo-meio { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .jogo-pen { grid-column: auto; margin: 0; font-size: 0.6875rem; }
+.sheet-dinamico .modal-actions { display: flex; flex-direction: column-reverse; gap: var(--e-2); margin-top: var(--e-6); }
+.sheet-dinamico .modal-actions .btn { width: 100%; }
+.sheet-dinamico label.subtext { display: block; font-size: var(--t-sm); font-weight: 600; color: var(--c-texto-2); margin: var(--e-4) 0 6px; }
+.sheet-dinamico .form-group-row { margin: var(--e-3) 0 0; }
+
+/* ---------- Plano Pro ---------- */
+#modal-pro { align-items: flex-end; padding: 0; }
+.pro-modal { position: relative; max-width: 560px; width: 100%; max-height: 92vh; border: 1px solid var(--c-linha-forte); border-bottom: 0; border-radius: var(--r-xl) var(--r-xl) 0 0;
+    background: var(--c-sup-1); box-shadow: var(--sombra-painel); padding: var(--e-6) var(--e-5) calc(var(--e-6) + env(safe-area-inset-bottom)); animation: sobe .26s cubic-bezier(.2, .8, .2, 1); text-align: center; }
+.pro-close { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 50%; background: var(--c-sup-2); border: 0; color: var(--c-texto); }
+.pro-badge-topo { background: linear-gradient(135deg, #f0d27a, var(--c-ouro)); color: #231b05; font-size: var(--t-xs); font-weight: 800; letter-spacing: 1px; padding: 4px 12px; box-shadow: none; }
+.pro-modal h2 { font-size: var(--t-xl); font-weight: 700; letter-spacing: -0.4px; justify-content: center; margin-top: var(--e-2); }
+.pro-beneficios { gap: 0; margin: var(--e-4) 0 var(--e-5); background: var(--c-sup-2); border: 1px solid var(--c-linha); border-radius: var(--r-md); }
+.pro-beneficios li { display: flex; gap: var(--e-3); align-items: flex-start; background: none; border: 0; border-bottom: 1px solid var(--c-linha); border-radius: 0; padding: 11px var(--e-3); font-size: var(--t-sm); color: var(--c-texto-2); }
+.pro-beneficios li:last-child { border-bottom: 0; }
+.pro-beneficios li .i { color: var(--c-ouro); margin-top: 1px; }
+.pro-beneficios strong { color: var(--c-texto); }
+.btn-teste { background: linear-gradient(135deg, #f0d27a, var(--c-ouro)); color: #231b05; }
+.plano-opcao { background: var(--c-sup-2); border: 1.5px solid var(--c-linha); }
+.plano-opcao.on { border-color: var(--c-ouro); background: rgba(227, 179, 65, 0.06); }
+.plano-selo { background: var(--c-ouro); color: #231b05; }
+.pro-ok, .pro-teste-ativo { background: var(--c-sup-2); border: 1px solid var(--c-linha); color: var(--c-texto-2); }
+.pro-pix { background: var(--c-sup-2); border-color: var(--c-linha); }
+.pro-pix code { color: var(--c-texto); }
+.plano-status { background: var(--c-sup-2) !important; border: 1px solid var(--c-linha) !important; color: var(--c-texto) !important; font-weight: 650; box-shadow: none !important; text-shadow: none !important; }
+.plano-pro { border-color: rgba(227, 179, 65, 0.5) !important; color: var(--c-ouro) !important; }
+
+/* ---------- Histórico, detalhe e ranking ---------- */
+#tab-historico, #tab-ranking, #tab-hist-detalhe, #conteudo-hist-detalhe { gap: var(--e-3); }
+#conteudo-hist-detalhe { display: flex; flex-direction: column; }
+#container-historico { display: flex; flex-direction: column; gap: var(--e-2); }
+.card-hist { margin: 0; background: var(--c-sup-1); }
+.hist-ic { background: rgba(227, 179, 65, 0.1); border-color: rgba(227, 179, 65, 0.25); color: var(--c-ouro); }
+.hist-txt span { letter-spacing: 0.4px; }
+.hist-abrir { color: var(--c-texto-2); font-weight: 600; }
+.card-bloqueado { text-align: center; cursor: pointer; }
+.campeao-card { display: flex; align-items: center; gap: var(--e-4); }
+.campeao-ic { width: 52px; height: 52px; border-radius: var(--r-md); display: grid; place-items: center; flex: none; background: rgba(227, 179, 65, 0.12); color: var(--c-ouro); }
+.campeao-ic .i { width: 26px; height: 26px; }
+.campeao-txt { display: flex; flex-direction: column; min-width: 0; }
+.campeao-txt .rotulo { color: var(--c-ouro); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.6px; }
+.campeao-txt b { font-size: var(--t-xl); font-weight: 750; letter-spacing: -0.4px; }
+.ranking-linha .art-nome { display: flex; flex-direction: column; gap: 4px; }
+.barra-rank { display: block; height: 4px; border-radius: 99px; background: var(--c-sup-3); overflow: hidden; }
+.barra-rank span { display: block; height: 100%; background: var(--c-destaque-forte); border-radius: 99px; }
+.btn-olho { font-size: var(--t-sm); font-weight: 600; color: var(--c-texto-2); }

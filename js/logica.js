@@ -613,7 +613,12 @@
             testeUsado: !!inicio
         };
     }
-    function reais(v) { return 'R$ ' + (Number(v) || 0).toFixed(2).replace('.', ','); }
+    // R$ 1.234,50 (negativo: −R$ 115,00)
+    function reais(v) {
+        const n = Number(v) || 0;
+        const [int, dec] = Math.abs(n).toFixed(2).split('.');
+        return (n < 0 ? '−' : '') + 'R$ ' + int.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + dec;
+    }
     // quanto o anual economiza em relação a 12 mensalidades (em %)
     function economiaAnual(mensal, anual) {
         mensal = Number(mensal) || 0; anual = Number(anual) || 0;

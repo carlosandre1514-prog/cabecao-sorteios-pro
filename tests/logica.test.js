@@ -394,3 +394,9 @@ t('caixa: saldo, mês, mensalistas pagos/devendo e cobrança', () => {
     const todos = L.resumoCaixa(Object.assign({}, caixa, { mensalistas: { 1: true } }), js, '2026-11');
     assert.ok(L.textoCobrancaGrupo(todos, '2026-11', '', null).includes('Todo mundo pagou'));
 });
+
+t('dinheiro: milhar com ponto e negativo com sinal antes do R$', () => {
+    assert.strictEqual(L.reais(1234.5), 'R$ 1.234,50');
+    assert.strictEqual(L.reais(-115), '−R$ 115,00');
+    assert.strictEqual(L.reais(0), 'R$ 0,00');
+});

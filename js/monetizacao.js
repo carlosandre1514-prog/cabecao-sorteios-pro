@@ -143,16 +143,16 @@
         m.style.zIndex = '100000';
         m.innerHTML = `
             <div class="modal-content card pro-modal">
-                <button class="pro-close" id="pro-fechar" aria-label="Fechar">✕</button>
-                <div class="pro-badge-topo">⭐ PRO</div>
+                <button class="pro-close icon-btn" id="pro-fechar" aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+                <div class="pro-badge-topo">PRO</div>
                 <h2 id="pro-titulo" style="justify-content:center;">Cabeção Sorteios Pro</h2>
                 <p id="pro-motivo" class="subtext" style="text-align:center;"></p>
                 <ul class="pro-beneficios">
-                    <li>💠 <strong>Pix copia e cola</strong> e QR Code na lista de presença</li>
-                    <li>💰 <strong>Controle de caixa</strong>: mensalistas, quem deve e cobrança</li>
-                    <li>🎨 <strong>Escudo e cor</strong> do seu racha no app, na lista e nas imagens</li>
-                    <li>👥 Jogadores <strong>ilimitados</strong> e histórico <strong>completo</strong></li>
-                    <li>🚫 Sem banners de patrocinador</li>
+                    <li><svg class="i i-sm"><use href="#i-qr"/></svg><span><strong>Pix copia e cola</strong> e QR Code na lista de presença</span></li>
+                    <li><svg class="i i-sm"><use href="#i-wallet"/></svg><span><strong>Caixa do racha</strong>: mensalistas, quem deve e cobrança</span></li>
+                    <li><svg class="i i-sm"><use href="#i-palette"/></svg><span><strong>Escudo e cor</strong> do racha no app, na lista e nas imagens</span></li>
+                    <li><svg class="i i-sm"><use href="#i-users"/></svg><span>Jogadores <strong>ilimitados</strong> e histórico <strong>completo</strong></span></li>
+                    <li><svg class="i i-sm"><use href="#i-check"/></svg><span>Sem anúncios de patrocinador</span></li>
                 </ul>
                 <div id="pro-acoes" class="form-group-col"></div>
             </div>`;
@@ -167,7 +167,7 @@
     function copiar(texto, btn) {
         const ok = () => {
             const original = btn.textContent;
-            btn.textContent = '✅ Copiado!';
+            btn.textContent = 'Copiado';
             setTimeout(() => (btn.textContent = original), 1800);
         };
         if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -216,29 +216,29 @@
 
         if (config.ativo && st.origem === 'plano') {
             const ate = dataPro();
-            h = `<p class="pro-ok">✅ Você é <strong>Pro</strong>${ate ? ' até <strong>' + ate + '</strong>' : ''}. Obrigado por apoiar!</p>`;
+            h = `<p class="pro-ok">Você é <strong>Pro</strong>${ate ? ' até <strong>' + ate + '</strong>' : ''}. Obrigado por apoiar!</p>`;
         } else {
             if (st.origem === 'teste') {
-                h += `<p class="pro-teste-ativo">🎁 Teste grátis: falta${st.diasTeste > 1 ? 'm' : ''} <strong>${st.diasTeste} dia${st.diasTeste > 1 ? 's' : ''}</strong>. Assine para não perder nada.</p>`;
+                h += `<p class="pro-teste-ativo">Teste grátis: falta${st.diasTeste > 1 ? 'm' : ''} <strong>${st.diasTeste} dia${st.diasTeste > 1 ? 's' : ''}</strong>. Assine para não perder nada.</p>`;
             } else if (podeTestar()) {
-                h += `<button class="btn btn-primary btn-teste" data-acao-pro="teste">🎁 Testar ${config.dias_teste} dias grátis</button>
+                h += `<button class="btn btn-primary btn-teste" data-acao-pro="teste">Testar ${config.dias_teste} dias grátis</button>
                     <p class="pro-sem-cartao">Sem cartão e sem compromisso. Depois você decide.</p>
                     <div class="pro-ou">ou assine agora</div>`;
             }
             if (temCompra) {
                 h += htmlPlanos();
-                h += `<button class="btn ${podeTestar() ? 'btn-secondary' : 'btn-primary'}" data-acao-pro="assinar">💳 Assinar plano ${planoEscolhido}</button>
+                h += `<button class="btn ${podeTestar() ? 'btn-secondary' : 'btn-primary'}" data-acao-pro="assinar">Assinar plano ${planoEscolhido}</button>
                     <p class="pro-sem-cartao">Pix ou cartão pelo Mercado Pago. O Pro libera sozinho quando o pagamento é aprovado.</p>`;
             }
             if (config.chave_pix && !urlSegura(config.checkout_api)) {
                 h += `<details class="pro-pix-det"><summary>Prefere Pix direto?</summary><div class="pro-pix">
                     <small>Pix${config.nome_pix ? ' para ' + esc(config.nome_pix) : ''}:</small><code>${esc(config.chave_pix)}</code>
-                    <button class="btn btn-success" data-acao-pro="pix">📋 Copiar chave Pix</button>
-                    ${String(config.whatsapp_suporte || '').replace(/\D/g, '') ? '<button class="btn btn-secondary" data-acao-pro="comprovante">✅ Já paguei – enviar comprovante</button>' : ''}
+                    <button class="btn btn-success" data-acao-pro="pix">Copiar chave Pix</button>
+                    ${String(config.whatsapp_suporte || '').replace(/\D/g, '') ? '<button class="btn btn-secondary" data-acao-pro="comprovante">Já paguei, enviar comprovante</button>' : ''}
                 </div></details>`;
             }
             if (!temCompra && !config.chave_pix && !podeTestar() && st.origem !== 'teste') {
-                h = '<p class="subtext" style="text-align:center;">🚧 Plano Pro em breve! Fique de olho nas novidades.</p>';
+                h = '<p class="subtext" style="text-align:center;">O plano Pro chega em breve.</p>';
             }
         }
         acoes.innerHTML = h;
@@ -248,7 +248,7 @@
                 planoEscolhido = pl.dataset.plano;
                 acoes.querySelectorAll('[data-plano]').forEach(b => b.classList.toggle('on', b === pl));
                 const ba = acoes.querySelector('[data-acao-pro="assinar"]');
-                if (ba) ba.textContent = '💳 Assinar plano ' + planoEscolhido;
+                if (ba) ba.textContent = 'Assinar plano ' + planoEscolhido;
                 return;
             }
             const b = e.target.closest('[data-acao-pro]');
@@ -289,13 +289,13 @@
         }
         const st = status();
         const ate = dataPro();
-        const rotulo = st.origem === 'plano' ? '⭐ PRO' + (ate ? ' até ' + ate : '')
-            : st.origem === 'teste' ? `🎁 Teste grátis · ${st.diasTeste} dia${st.diasTeste > 1 ? 's' : ''}` : '🆓 Plano Grátis';
+        const rotulo = st.origem === 'plano' ? 'Pro' + (ate ? ' até ' + ate : '')
+            : st.origem === 'teste' ? `Teste grátis · ${st.diasTeste} dia${st.diasTeste > 1 ? 's' : ''}` : 'Plano grátis';
         sec.innerHTML = `
-            <h4>⭐ Meu Plano</h4>
+            <h4>Meu plano</h4>
             <div class="plano-status ${st.pro ? 'plano-pro' : 'plano-gratis'}">${rotulo}</div>
             ${st.pro ? '' : `<p class="about-text" style="margin:8px 0;">Até ${limiteJogadores()} jogadores e ${limiteHistorico()} campeonatos no histórico.</p>`}
-            <button class="btn btn-primary" id="btn-drawer-pro" style="margin-top:6px;">${st.origem === 'plano' ? '⭐ Detalhes do Pro' : podeTestar() ? `🎁 Testar Pro ${config.dias_teste} dias grátis` : '🚀 Seja Pro'}</button>
+            <button class="btn btn-primary" id="btn-drawer-pro" style="margin-top:6px;">${st.origem === 'plano' ? 'Detalhes do plano' : podeTestar() ? `Testar o Pro por ${config.dias_teste} dias` : 'Conhecer o Pro'}</button>
         `;
         sec.querySelector('#btn-drawer-pro').onclick = () => { abrirModal(); };
     }

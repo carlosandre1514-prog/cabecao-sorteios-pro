@@ -36,7 +36,8 @@ function toast(mensagem, tipo = 'ok') {
     if (!box) return;
     const el = document.createElement('div');
     el.className = 'toast' + (tipo === 'erro' ? ' erro' : '');
-    el.textContent = mensagem;
+    el.setAttribute('role', tipo === 'erro' ? 'alert' : 'status');
+    el.textContent = window.UI ? UI.semEmoji(mensagem) : mensagem;
     box.appendChild(el);
     setTimeout(() => { el.classList.add('saindo'); setTimeout(() => el.remove(), 320); }, 2800);
 }
@@ -142,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const f = filtrosEstrelas[chave] = { min: '', max: '', opMin: '>=', opMax: '<=' };
         if (!box) return;
         box.className = 'filtro-estrelas';
-        box.innerHTML = `<details${box.closest && box.closest('.sheet') ? ' open' : ''}><summary>⭐ Filtrar por estrelas</summary>
+        box.innerHTML = `<details${box.closest && box.closest('.sheet') ? ' open' : ''}><summary>Filtrar por nível</summary>
             <div class="filtro-linha">
                 <select data-f="opMin" aria-label="Comparação mínima"><option value=">=">maior ou igual a</option><option value=">">maior que</option></select>
                 <input type="number" data-f="min" step="0.1" min="0" max="5" inputmode="decimal" placeholder="ex: 1,5">
@@ -564,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="pos">${i + 1}</span>
                 <span class="nome">${c.goleiro && window.UI ? UI.icone('glove', 'i-sm') + ' ' : ''}${escapeHtml(c.nome)}${c.convidado ? ' <small class="tag-conv">convidado</small>' : ''}</span>
                 ${suplente ? '' : `<button type="button" class="btn-pag ${c.pago ? 'pago' : c.aConfirmar ? 'aconfirmar' : ''}" data-pago="${escapeHtml(c.id)}">${c.pago ? 'Pago' : c.aConfirmar ? 'Confirmar' : c.atrasado ? 'Não pagou' : 'A pagar'}</button>`}
-                <button type="button" class="btn-tirar" data-tirar="${escapeHtml(c.id)}" aria-label="Tirar da lista">✕</button>
+                <button type="button" class="btn-tirar" data-tirar="${escapeHtml(c.id)}" aria-label="Tirar da lista">${window.UI ? UI.icone('x', 'i-sm') : '✕'}</button>
             </div>`;
             const pedidos = r.convidados.filter(c => r.confirmados.some(x => x.id === c.id) || r.espera.some(x => x.id === c.id));
             conv.innerHTML = `
@@ -618,7 +619,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <label class="subtext" for="pr-pag" style="margin-top:10px;display:block;">Como pagar (opcional)</label>
             <input type="text" id="pr-pag" maxlength="80" placeholder="Ex.: R$ 15 no Pix 11 99999-9999" value="${escapeHtml(d.pagamento || '')}">
             <div class="pix-config">
-                <p class="pix-titulo">💠 Pix copia e cola ${podeVisualPro() ? '' : '<span class="tag-pro">PRO</span>'}</p>
+                <p class="pix-titulo">Pix copia e cola ${podeVisualPro() ? '' : '<span class="tag-pro">PRO</span>'}</p>
                 <p class="subtext" style="margin:0 0 8px;">Cada jogador com vaga recebe o QR Code e o "copiar Pix" já com o valor. O dinheiro cai direto na sua conta, sem taxa.</p>
                 <div class="pix-linha">
                     <select id="pr-pix-tipo" aria-label="Tipo da chave">
@@ -664,7 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const el = m.querySelector('#pr-pix-dica'); if (!el) return;
             const px = lerPix();
             el.className = 'dica-pix' + (px ? (px.chave ? ' ok' : ' erro') : '');
-            el.textContent = !px ? '' : px.chave ? '✔ Chave válida: ' + px.chave : '✖ Essa chave não parece um ' + ({ telefone: 'celular com DDD', cpf: 'CPF (11 números)', cnpj: 'CNPJ (14 números)', email: 'e-mail', aleatoria: 'chave aleatória' }[px.tipo]);
+            el.textContent = !px ? '' : px.chave ? 'Chave válida: ' + px.chave : 'Essa chave não parece um ' + ({ telefone: 'celular com DDD', cpf: 'CPF (11 números)', cnpj: 'CNPJ (14 números)', email: 'e-mail', aleatoria: 'chave aleatória' }[px.tipo]);
         };
         ['#pr-pix-chave', '#pr-pix-tipo'].forEach(sel => { const el = m.querySelector(sel); if (el && el.addEventListener) { el.addEventListener('input', dicaPix); el.addEventListener('change', dicaPix); } });
         dicaPix();
@@ -986,7 +987,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     criarContainerAlertas();
 
-    window.mostrarAlerta = function(mensagem, titulo = '⚠️ AVISO') {
+    window.mostrarAlerta = function(mensagem, titulo = 'Aviso') {
         return new Promise((resolve) => {
             const modal = document.getElementById('modal-alerta-custom');
             const elTitulo = document.getElementById('alerta-titulo');
@@ -1001,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             elTitulo.textContent = window.UI ? UI.tituloLimpo(titulo) : titulo;
-            elMensagem.textContent = mensagem;
+            elMensagem.textContent = window.UI ? UI.semEmoji(mensagem) : mensagem;
 
             btnCancelar.classList.add('hidden');
             btnOk.textContent = 'OK';
@@ -1039,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             elTitulo.textContent = window.UI ? UI.tituloLimpo(titulo) : titulo;
-            elMensagem.textContent = mensagem;
+            elMensagem.textContent = window.UI ? UI.semEmoji(mensagem) : mensagem;
 
             btnCancelar.classList.remove('hidden');
             btnOk.textContent = opcoes.ok || 'Confirmar';
@@ -1797,13 +1798,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <input type="text" id="vis-nome" maxlength="32" placeholder="Ex.: Pelada de Sexta" value="${escapeHtml(temp.nome || sugestao)}">
             <p class="subtext" style="margin:14px 0 6px;">Logo / escudo do racha ${podeVisualPro() ? '' : '<span class="tag-pro">PRO</span>'}</p>
             <div class="vis-escudo-acoes">
-                <button type="button" class="btn btn-secondary" id="vis-escudo-btn">🖼️ Escolher foto ou PNG</button>
+                <button type="button" class="btn btn-secondary" id="vis-escudo-btn">${window.UI ? UI.icone('image', 'i-sm') : ''}Escolher foto ou PNG</button>
                 <button type="button" class="btn btn-secondary" id="vis-escudo-tirar">Tirar</button>
             </div>
             <input type="file" id="vis-escudo-arq" accept="image/*" class="hidden">
             <div class="vis-modo hidden" id="vis-modo" role="group" aria-label="Como a imagem fica">
-                <button type="button" data-modo="preencher">📷 Preencher<small>foto com fundo</small></button>
-                <button type="button" data-modo="encaixar">🛡️ Encaixar inteira<small>escudo sem fundo</small></button>
+                <button type="button" data-modo="preencher">Preencher<small>foto com fundo</small></button>
+                <button type="button" data-modo="encaixar">Encaixar inteira<small>escudo sem fundo</small></button>
             </div>
             <p class="subtext" style="margin:6px 0 0;">Pode ser escudo em PNG (com ou sem fundo) ou uma foto do grupo.</p>
             <p class="subtext" style="margin:14px 0 6px;">Cor ${podeVisualPro() ? '' : '<span class="tag-pro">PRO</span>'}</p>
@@ -2628,11 +2629,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ---------- MODAL SIMPLES, TELAS EXTRAS E MENU ----------
+    // Painel de baixo montado na hora (formulários curtos). Fecha pelo fundo, pelo X ou com m.remove().
+    // O primeiro <h2> do html vira o título do painel.
     function abrirModalHtml(html) {
         const m = document.createElement('div');
-        m.className = 'modal';
-        m.innerHTML = '<div class="modal-content card">' + html + '</div>';
-        m.addEventListener('click', (e) => { if (e.target === m) m.remove(); });
+        m.className = 'sheet sheet-dinamico';
+        m.setAttribute('role', 'dialog');
+        m.setAttribute('aria-modal', 'true');
+        const corpo = String(html).replace(/^\s*<h2([^>]*)>([\s\S]*?)<\/h2>/, (x, attrs, titulo) =>
+            `<div class="sheet-cab"><h2${attrs}>${window.UI ? UI.semEmoji(titulo) : titulo}</h2><button type="button" class="icon-btn" data-fechar-dinamico aria-label="Fechar">${window.UI ? UI.icone('x') : '✕'}</button></div>`);
+        m.innerHTML = '<div class="sheet-fundo" data-fechar-dinamico></div><div class="sheet-painel"><div class="sheet-alca"></div>' + corpo + '</div>';
+        m.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-fechar-dinamico]')) m.remove(); });
         document.body.appendChild(m);
         return m;
     }
@@ -2795,7 +2802,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <b>${escapeHtml(m.de || '')}</b> ${m.ok ? '<span class="tag-ok">resolvido</span>' : '<span class="tag-novo">novo</span>'}
                 <div class="msg-texto">${escapeHtml(m.texto || '')}</div>
                 <small>${escapeHtml(m.email || '')} · ${escapeHtml(m.racha || '')} · ${new Date(m.em || 0).toLocaleString('pt-BR')}</small>
-                ${m.ok ? '' : `<button type="button" class="btn btn-secondary" data-resolver="${escapeHtml(m.id)}" style="margin-top:8px;">✔ Marcar como resolvido</button>`}
+                ${m.ok ? '' : `<button type="button" class="btn btn-secondary" data-resolver="${escapeHtml(m.id)}" style="margin-top:8px;">Marcar como resolvido</button>`}
             </div>`).join('') : '<p class="subtext">Nenhuma mensagem.</p>';
         } catch (e) {
             box.innerHTML = '<p class="subtext">Não foi possível ler as mensagens. Confira as regras do Firebase em docs/COMO-CONFIGURAR-MONETIZACAO.md.</p>';
@@ -2820,7 +2827,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ['campeonato_finalizado', 'Campeonatos finalizados'],
         ['resumo_imagem', 'Resumos do racha enviados (imagem)'],
         ['resumo_texto', 'Resumos do racha copiados (texto)'],
-        ['visual_salvo', 'Rachas personalizados (🎨)'],
+        ['visual_salvo', 'Rachas personalizados'],
         ['presenca_criada', 'Listas de presença criadas'],
         ['presenca_enviada', 'Listas enviadas no grupo'],
         ['presenca_visita', 'Visitas à lista de presença'],
@@ -2895,8 +2902,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let caixa = {};
     let caixaMes = Logica.mesISO();
     const CATEGORIAS_CAIXA = {
-        mensalidade: ['📅', 'Mensalidade'], diaria: ['🎟️', 'Diária'], quadra: ['🏟️', 'Quadra / aluguel'],
-        material: ['⚽', 'Bola, colete, material'], outros: ['📦', 'Outros']
+        mensalidade: ['calendar', 'Mensalidade'], diaria: ['users', 'Diária'], quadra: ['flag', 'Quadra / aluguel'],
+        material: ['ball', 'Bola, colete, material'], outros: ['dots', 'Outros']
     };
     function salvarCaixa() { gravar('caixa', caixa); }
     // chave Pix para as cobranças: a última usada nas listas deste racha (ou a da lista aberta)
@@ -2918,21 +2925,22 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderizarCaixa() {
         const box = document.getElementById('conteudo-financeiro');
         if (!box) return;
+        const ic = (n, c) => (window.UI ? UI.icone(n, c) : '');
         box.onclick = cliqueCaixa;
         const pro = !window.Monetizacao || window.Monetizacao.isPro();
         if (!pro) {
             const st = window.Monetizacao ? window.Monetizacao.status() : {};
             box.innerHTML = `<div class="card caixa-bloqueado">
-                <div class="caixa-cadeado">🔒</div>
-                <h2 style="justify-content:center;">💰 Caixa do racha</h2>
+                <div class="caixa-cadeado">${ic('wallet')}</div>
+                <h2 style="justify-content:center;">Caixa do racha</h2>
                 <p class="subtext" style="text-align:center;">Chega de caderninho e de "quem não pagou?" no grupo.</p>
                 <ul class="pro-beneficios">
-                    <li>📅 <strong>Mensalistas</strong>: quem pagou e quem está devendo no mês</li>
-                    <li>📲 <strong>Cobrança pronta</strong> no WhatsApp, para um ou para o grupo</li>
-                    <li>🎟️ <strong>Diárias</strong> puxadas da lista de presença com um toque</li>
-                    <li>🏟️ Gastos com quadra e bola, e o <strong>saldo do caixa</strong></li>
+                    <li>${ic('calendar', 'i-sm')}<span><strong>Mensalistas</strong>: quem pagou e quem está devendo no mês</span></li>
+                    <li>${ic('share', 'i-sm')}<span><strong>Cobrança pronta</strong> no WhatsApp, para um ou para o grupo</span></li>
+                    <li>${ic('users', 'i-sm')}<span><strong>Diárias</strong> puxadas da lista de presença com um toque</span></li>
+                    <li>${ic('wallet', 'i-sm')}<span>Gastos com quadra e bola, e o <strong>saldo do caixa</strong></span></li>
                 </ul>
-                <button class="btn btn-primary" data-cx="pro">${st.testeUsado ? '⭐ Liberar com o Pro' : '🎁 Testar 7 dias grátis'}</button>
+                <button class="btn btn-primary" data-cx="pro">${st.testeUsado ? 'Liberar com o Pro' : 'Testar 7 dias grátis'}</button>
             </div>`;
             return;
         }
@@ -2944,26 +2952,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const dataCurta = ms => new Date(ms || 0).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
         const linhaMensalista = m => `<div class="cx-pessoa ${m.pago ? 'pago' : ''}">
                 ${avatarHtml(m.nome)}<span class="nm">${escapeHtml(m.nome)}</span>
-                ${m.pago ? `<button type="button" class="btn-pag pago" data-cx-despagar="${escapeHtml(m.lancId)}">💰 Pago</button>`
+                ${m.pago ? `<button type="button" class="btn-pag pago" data-cx-despagar="${escapeHtml(m.lancId)}">Pago</button>`
                     : `<button type="button" class="btn-pag" data-cx-pagar="${escapeHtml(m.id)}">Marcar pago</button>
-                       <button type="button" class="btn-icone" data-cx-cobrar="${escapeHtml(m.id)}" aria-label="Cobrar ${escapeHtml(m.nome)}" title="Cobrar no WhatsApp">📲</button>`}
+                       <button type="button" class="btn-icone" data-cx-cobrar="${escapeHtml(m.id)}" aria-label="Cobrar ${escapeHtml(m.nome)}" title="Cobrar no WhatsApp">${ic('share', 'i-sm')}</button>`}
             </div>`;
         const linhaLanc = l => {
             const c = CATEGORIAS_CAIXA[l.categoria] || CATEGORIAS_CAIXA.outros;
             return `<div class="cx-lanc">
-                <span class="cx-ic">${c[0]}</span>
+                <span class="cx-ic">${ic(c[0], 'i-sm')}</span>
                 <span class="cx-desc"><b>${escapeHtml(l.desc || c[1])}</b><small>${dataCurta(l.data)} · ${c[1]}</small></span>
                 <strong class="${l.tipo === 'entrada' ? 'pos' : 'neg'}">${l.tipo === 'entrada' ? '+' : '−'} ${R(l.valor)}</strong>
-                <button type="button" class="btn-tirar" data-cx-apagar="${escapeHtml(l.id)}" aria-label="Apagar lançamento">✕</button>
+                <button type="button" class="btn-tirar" data-cx-apagar="${escapeHtml(l.id)}" aria-label="Apagar lançamento">${ic('x', 'i-sm')}</button>
             </div>`;
         };
         const pct = r.mensalistas.length ? Math.round(r.pagaram / r.mensalistas.length * 100) : 0;
         box.innerHTML = `
             <div class="card caixa-topo">
                 <div class="mes-nav">
-                    <button type="button" data-cx="mes-ant" aria-label="Mês anterior">‹</button>
+                    <button type="button" data-cx="mes-ant" aria-label="Mês anterior">${ic('back')}</button>
                     <b>${nomeM.charAt(0).toUpperCase() + nomeM.slice(1)}</b>
-                    <button type="button" data-cx="mes-prox" aria-label="Próximo mês">›</button>
+                    <button type="button" data-cx="mes-prox" aria-label="Próximo mês">${ic('chevron')}</button>
                 </div>
                 <div class="caixa-saldo"><small>Saldo do caixa</small><strong class="${r.saldo < 0 ? 'neg' : ''}">${R(r.saldo)}</strong></div>
                 <div class="caixa-tiles">
@@ -2972,27 +2980,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div><span>A receber</span><b>${R(r.aReceber)}</b></div>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn btn-success" data-cx="entrada">＋ Entrada</button>
-                    <button type="button" class="btn btn-danger" data-cx="saida">− Saída</button>
+                    <button type="button" class="btn btn-success" data-cx="entrada">${ic('plus', 'i-sm')}Entrada</button>
+                    <button type="button" class="btn btn-secondary" data-cx="saida">${ic('minus', 'i-sm')}Saída</button>
                 </div>
             </div>
 
             <div class="card">
-                <h2>📅 Mensalistas</h2>
+                <h2>Mensalistas</h2>
                 <p class="subtext" style="margin-bottom:8px;">${cfg.mensalidade ? `${R(cfg.mensalidade)} por mês · vence dia ${cfg.vencimento || 10}` : 'Defina o valor da mensalidade.'}
-                    <button type="button" class="link-discreto" data-cx="config">⚙️ Valores</button></p>
+                    <button type="button" class="btn-texto" data-cx="config">Valores</button></p>
                 ${r.mensalistas.length ? `
                     <div class="cx-progresso"><span><b>${r.pagaram}</b> de ${r.mensalistas.length} pagaram</span><span>${R(r.previsto - r.aReceber)} de ${R(r.previsto)}</span></div>
                     <div class="barra-cx"><div style="width:${pct}%"></div></div>
                     ${r.mensalistas.map(linhaMensalista).join('')}
-                    ${r.devedores.length ? `<button type="button" class="btn btn-primary" data-cx="cobrar-grupo" style="margin-top:12px;">📢 Cobrar quem deve no grupo (${r.devedores.length})</button>` : '<p class="cx-tudo-pago">✅ Todo mundo pagou este mês!</p>'}
+                    ${r.devedores.length ? `<button type="button" class="btn btn-primary" data-cx="cobrar-grupo" style="margin-top:12px;">${ic('share', 'i-sm')}Cobrar quem deve no grupo (${r.devedores.length})</button>` : '<p class="cx-tudo-pago">✅ Todo mundo pagou este mês!</p>'}
                 ` : '<p class="subtext">Escolha quem paga por mês. O app mostra quem pagou, quem deve e monta a cobrança.</p>'}
-                <button type="button" class="btn btn-secondary" data-cx="mensalistas" style="margin-top:8px;">👥 Escolher mensalistas</button>
+                <button type="button" class="btn btn-secondary" data-cx="mensalistas" style="margin-top:8px;">Escolher mensalistas</button>
             </div>
 
             <div class="card">
-                <h2>🧾 Lançamentos</h2>
-                ${presencaCodigo ? `<button type="button" class="btn btn-secondary" data-cx="puxar-lista" style="margin-bottom:10px;">⬇️ Puxar diárias pagas da lista de presença</button>` : ''}
+                <h2>Lançamentos</h2>
+                ${presencaCodigo ? `<button type="button" class="btn btn-secondary" data-cx="puxar-lista" style="margin-bottom:10px;">Puxar diárias pagas da lista</button>` : ''}
                 ${r.lancamentos.length ? r.lancamentos.map(linhaLanc).join('') : `<p class="subtext">Nenhum lançamento em ${nomeM}.</p>`}
             </div>`;
     }
@@ -3002,11 +3010,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const hoje = Logica.mesISO() === caixaMes ? new Date() : new Date(caixaMes + '-15T12:00:00');
         const p2 = n => String(n).padStart(2, '0');
         const dataPadrao = `${hoje.getFullYear()}-${p2(hoje.getMonth() + 1)}-${p2(hoje.getDate())}`;
-        const m = abrirModalHtml(`<h2>${tipo === 'entrada' ? '＋ Entrada no caixa' : '− Saída do caixa'}</h2>
+        const m = abrirModalHtml(`<h2>${tipo === 'entrada' ? 'Nova entrada' : 'Nova saída'}</h2>
             <label class="subtext" for="cx-valor">Valor (R$)</label>
             <input type="number" id="cx-valor" min="0" step="0.01" inputmode="decimal" placeholder="0,00" value="${tipo === 'entrada' && r.config.diaria ? r.config.diaria : ''}">
             <label class="subtext" for="cx-cat" style="display:block;margin-top:10px;">Tipo</label>
-            <select id="cx-cat">${cats.map(c => `<option value="${c}">${CATEGORIAS_CAIXA[c][0]} ${CATEGORIAS_CAIXA[c][1]}</option>`).join('')}</select>
+            <select id="cx-cat">${cats.map(c => `<option value="${c}">${CATEGORIAS_CAIXA[c][1]}</option>`).join('')}</select>
             ${tipo === 'entrada' ? `<label class="subtext" for="cx-jog" style="display:block;margin-top:10px;">De quem? (opcional)</label>
                 <select id="cx-jog"><option value="">—</option>${jogadores.slice().sort((a, b) => String(a.nome).localeCompare(String(b.nome))).map(j => `<option value="${escapeHtml(String(j.id))}">${escapeHtml(j.nome)}</option>`).join('')}</select>` : ''}
             <label class="subtext" for="cx-desc" style="display:block;margin-top:10px;">Descrição (opcional)</label>
@@ -3036,7 +3044,7 @@ document.addEventListener('DOMContentLoaded', () => {
             novoLancamento(l);
             m.remove();
             renderizarCaixa();
-            toast(tipo === 'entrada' ? '＋ Entrada lançada' : '− Saída lançada');
+            toast(tipo === 'entrada' ? 'Entrada lançada' : 'Saída lançada');
         };
     }
     function abrirValoresCaixa() {
@@ -3155,24 +3163,40 @@ document.addEventListener('DOMContentLoaded', () => {
         const cl = Logica.ordenarClassificacao(Object.values(h.classificacao || {}));
         const art = Object.entries(h.artilharia || {}).map(([n, g]) => [String(n).replace(/\u2024/g, '.'), Number(g) || 0]).sort((a, b) => b[1] - a[1]);
         const jogos = comoLista(h.partidas);
-        const linhaJogo = (p) => (p.rodada !== undefined
-            ? `<strong>Rodada ${p.rodada}:</strong> ${escapeHtml(p.timeA.nome)} ${p.golsA} x ${p.golsB} ${escapeHtml(p.timeB.nome)}${p.golsA === p.golsB ? ` (Pênaltis: ${p.penaltisA || 0} x ${p.penaltisB || 0})` : ''}`
-            : `<strong>Jogo ${p.idPartida}:</strong> ${escapeHtml(p.timeA.nome)} ${p.golsA} x ${p.golsB} ${escapeHtml(p.timeB.nome)} (Avançou: ${escapeHtml(p.vencedor || '')})`);
+        const ic = (n, c) => (window.UI ? UI.icone(n, c) : '');
+        const linhaJogo = (p) => {
+            const rot = p.rodada !== undefined ? 'R' + p.rodada : 'J' + p.idPartida;
+            const venceA = p.rodada !== undefined ? (p.golsA > p.golsB || (p.golsA === p.golsB && (p.penaltisA || 0) > (p.penaltisB || 0))) : p.vencedor === p.timeA.nome;
+            const venceB = p.rodada !== undefined ? (p.golsB > p.golsA || (p.golsA === p.golsB && (p.penaltisB || 0) > (p.penaltisA || 0))) : p.vencedor === p.timeB.nome;
+            const pen = p.rodada !== undefined && p.golsA === p.golsB ? `<span class="jogo-pen">pên. ${p.penaltisA || 0}–${p.penaltisB || 0}</span>` : '';
+            return `<div class="jogo-linha"><span class="jogo-rod">${rot}</span>
+                <span class="jogo-a ${venceA ? 'venceu' : ''}">${escapeHtml(p.timeA.nome)}</span>
+                <span class="jogo-meio"><span class="jogo-placar">${p.golsA}<i>×</i>${p.golsB}</span>${pen}</span>
+                <span class="jogo-b ${venceB ? 'venceu' : ''}">${escapeHtml(p.timeB.nome)}</span><span></span></div>`;
+        };
         const el = document.getElementById('conteudo-hist-detalhe');
         if (!el) return;
+        const campeao = cl[0] ? cl[0].nome : '—';
+        const totalGols = jogos.reduce((a, p) => a + (Number(p.golsA) || 0) + (Number(p.golsB) || 0), 0);
         el.innerHTML = `
-            <button type="button" class="voltar-hist" id="voltar-hist">‹ Voltar ao histórico</button>
-            <div class="card"><h2>🏆 Campeão: ${escapeHtml(cl[0] ? cl[0].nome : 'N/A')}</h2>
-                <p class="subtext">${escapeHtml(h.data || '')} · ${h.modo === 'todos-contra-todos' ? 'Tabela' : 'Racha Livre'}</p>
-                <p class="subtext" style="margin-top:10px;">Mande o resultado completo (campeão, tabela, artilharia e confrontos) no grupo:</p>
-                <button type="button" class="btn btn-success" id="btn-resumo-imagem">📸 Enviar resumo em imagem</button>
-                <button type="button" class="btn btn-secondary" id="btn-resumo-texto" style="margin-top:8px;">📋 Copiar resumo em texto</button></div>
-            <div class="card"><h2>📊 Tabela de Classificação</h2><div class="table-responsive"><table class="tabela-classificacao">
+            <div class="card campeao-card">
+                <span class="campeao-ic">${ic('trophy')}</span>
+                <div class="campeao-txt"><span class="rotulo">Campeão</span><b>${escapeHtml(campeao)}</b>
+                    <span class="tela-sub">${escapeHtml(h.data || '')} · ${h.modo === 'todos-contra-todos' ? 'Tabela' : 'Racha livre'} · ${jogos.length} jogos · ${totalGols} gols</span></div>
+            </div>
+            <div class="dois-botoes" style="margin-top:0;">
+                <button type="button" class="btn btn-primary" id="btn-resumo-imagem">${ic('image', 'i-sm')}Enviar resumo</button>
+                <button type="button" class="btn btn-secondary" id="btn-resumo-texto">${ic('copy', 'i-sm')}Copiar texto</button>
+            </div>
+            <p class="lista-rotulo">Classificação</p>
+            <div class="card painel-jogo"><div class="table-responsive"><table class="tabela-classificacao">
                 <thead><tr><th>Time</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>SG</th></tr></thead>
-                <tbody>${cl.map(c => `<tr><td>${escapeHtml(c.nome)}</td><td>${c.p}</td><td>${c.j}</td><td>${c.v}</td><td>${c.e}</td><td>${c.d}</td><td>${c.gp}</td><td>${c.sg}</td></tr>`).join('')}</tbody>
+                <tbody>${cl.map(c => `<tr><td>${escapeHtml(c.nome)}</td><td class="pts">${c.p}</td><td>${c.j}</td><td>${c.v}</td><td>${c.e}</td><td>${c.d}</td><td>${c.gp}</td><td>${c.sg}</td></tr>`).join('')}</tbody>
             </table></div></div>
-            <div class="card"><h2>⚔️ Confrontos Realizados</h2>${jogos.length ? jogos.map(p => `<div style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">${linhaJogo(p)}</div>`).join('') : '<p class="subtext">Sem confrontos registrados.</p>'}</div>
-            <div class="card"><h2>⚽ Artilharia do Campeonato</h2>${art.length ? art.map(([n, g]) => `<div class="item-jogador"><span>${escapeHtml(n)}</span><strong>${g}</strong></div>`).join('') : '<p class="subtext">Nenhum gol marcado.</p>'}</div>`;
+            <p class="lista-rotulo">Jogos</p>
+            <div class="card painel-jogo">${jogos.length ? jogos.map(linhaJogo).join('') : '<p class="dica-painel">Sem jogos registrados.</p>'}</div>
+            <p class="lista-rotulo">Artilharia</p>
+            <div class="card painel-jogo">${art.length ? art.map(([n, g], i) => `<div class="art-linha"><span class="art-pos">${i + 1}</span>${avatarHtml(n)}<span class="art-nome">${escapeHtml(n)}</span><strong class="art-gols">${g}</strong></div>`).join('') : '<p class="dica-painel">Nenhum gol marcado.</p>'}</div>`;
         el.onclick = (e) => {
             if (e.target.closest('#voltar-hist')) irParaAba('tab-historico');
             else if (e.target.closest('#btn-resumo-imagem')) enviarResumoImagem(h, e.target.closest('#btn-resumo-imagem'));
@@ -3193,7 +3217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const box = m.querySelector('.modal-content');
         const stp = (k, v) => `<div class="corrige-stp"><button type="button" class="step-btn" data-sp="${k}:-1">−</button><strong>${v}</strong><button type="button" class="step-btn step-mais" data-sp="${k}:1">+</button></div>`;
         const desenhar = () => {
-            box.innerHTML = `<h2>✏️ Corrigir placar</h2>
+            box.innerHTML = `<h2>Corrigir placar</h2>
                 <div class="corrige-linha"><div class="corrige-time"><span>${escapeHtml(p.timeA.nome)}</span>${stp('a', a)}</div><div class="corrige-time"><span>${escapeHtml(p.timeB.nome)}</span>${stp('b', b)}</div></div>
                 ${a === b ? `<p class="subtext" style="text-align:center;">Empate · pênaltis</p><div class="corrige-linha"><div class="corrige-time">${stp('pa', pa)}</div><div class="corrige-time">${stp('pb', pb)}</div></div>` : ''}
                 <div class="modal-actions"><button type="button" class="btn btn-primary" id="ok-corrige">Salvar placar</button><button type="button" class="btn btn-secondary" id="cancela-corrige">Cancelar</button></div>`;
@@ -3246,24 +3270,29 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderizarRanking() {
         const box = document.getElementById('lista-ranking');
         if (!box) return;
-        const tit = document.querySelector('#tab-ranking h2');
-        if (tit) tit.textContent = '🥇 Ranking de gols · ' + nomeRachaAtivo();
+        const sub = document.getElementById('ranking-sub');
+        if (sub) sub.textContent = 'Gols somados de todos os campeonatos · ' + ((visualRacha && visualRacha.nome) || nomeRachaAtivo());
         const soma = {};
         historico.forEach(h => Object.entries(h.artilharia || {}).forEach(([n, g]) => {
             const nome = String(n).replace(/\u2024/g, '.');
             soma[nome] = (soma[nome] || 0) + (Number(g) || 0);
         }));
         const lista = Object.entries(soma).filter(([, g]) => g > 0).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-        if (!lista.length) { box.innerHTML = '<p class="subtext">Ainda não há gols registrados. Finalize um campeonato para montar o ranking.</p>'; return; }
-        const medalha = ['🥇', '🥈', '🥉'];
-        box.innerHTML = lista.map(([n, g], i) =>
-            `<div class="item-jogador"><span>${medalha[i] || (i + 1) + 'º'} ${escapeHtml(n)}</span><strong>${g} ${g === 1 ? 'gol' : 'gols'}</strong></div>`).join('');
+        if (!lista.length) {
+            box.innerHTML = `<div class="vazio">${window.UI ? UI.icone('podium') : ''}<h3>Ranking vazio</h3><p>Os gols entram aqui quando você encerra um campeonato.</p></div>`;
+            return;
+        }
+        const max = lista[0][1] || 1;
+        box.innerHTML = '<div class="card painel-jogo">' + lista.map(([n, g], i) =>
+            `<div class="art-linha ranking-linha"><span class="art-pos">${i + 1}</span>${avatarHtml(n)}
+                <span class="art-nome">${escapeHtml(n)}<span class="barra-rank"><span style="width:${Math.round(g / max * 100)}%"></span></span></span>
+                <strong class="art-gols">${g}</strong></div>`).join('') + '</div>';
     }
 
     // ---------- PERFIL NO MENU (foto + apelido) ----------
     function renderizarPerfil() {
         const img = document.getElementById('perfil-foto');
-        const svg = document.querySelector('#perfil-avatar .profile-avatar-svg');
+        const svg = document.querySelector('#perfil-avatar svg');
         const btn = document.getElementById('perfil-apelido');
         if (img && svg) {
             const tem = !!(perfil && perfil.foto);
@@ -3342,16 +3371,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return `
                 <div class="card card-hist" data-acao="abrir-hist" data-id="${h.id}">
                     <div class="hist-topo">
-                        <span class="hist-ic">🏆</span>
-                        <div class="hist-txt"><small>${escapeHtml(String(h.data || ''))} · ${h.modo === 'todos-contra-todos' ? 'Tabela' : 'Racha Livre'}</small><b>${escapeHtml(campeao)}</b><span>Campeão</span></div>
-                        <button class="btn-icone perigo" data-acao="excluir-hist" data-id="${h.id}" aria-label="Excluir campeonato" title="Excluir">🗑️</button>
+                        <span class="hist-ic">${window.UI ? UI.icone('trophy') : ''}</span>
+                        <div class="hist-txt"><small>${escapeHtml(String(h.data || ''))} · ${h.modo === 'todos-contra-todos' ? 'Tabela' : 'Racha livre'}</small><b>${escapeHtml(campeao)}</b><span>Campeão</span></div>
+                        <button class="btn-icone perigo" data-acao="excluir-hist" data-id="${h.id}" aria-label="Excluir campeonato" title="Excluir">${window.UI ? UI.icone('trash', 'i-sm') : 'Excluir'}</button>
                     </div>
                     <p class="hist-abrir">Ver tabela, confrontos e artilharia ›</p>
                 </div>
             `;
         }).join('') + (ocultos > 0 ? `
             <div class="card card-bloqueado" onclick="window.Monetizacao && window.Monetizacao.abrirModal('Você tem ${ocultos} campeonato(s) antigo(s) guardados. Seja Pro para ver todo o histórico!')">
-                <h3>🔒 +${ocultos} campeonato(s) no histórico</h3>
+                <h3>Mais ${ocultos} campeonato${ocultos > 1 ? 's' : ''} guardado${ocultos > 1 ? 's' : ''}</h3>
                 <p class="subtext" style="margin:6px 0 0;">Seus dados estão salvos. Toque para liberar com o Plano Pro.</p>
             </div>` : '');
     }

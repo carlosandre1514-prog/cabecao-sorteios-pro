@@ -130,7 +130,7 @@ assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (a
 
     // histórico: tocar no campeonato abre a tela de detalhe
     els['container-historico'].onclick({ target: { closest: s => s.includes('abrir-hist') ? { dataset: { id: '9' } } : null } });
-    assert.ok(els['conteudo-hist-detalhe'].innerHTML.includes('Voltar') && els['conteudo-hist-detalhe'].innerHTML.includes('Time 1'), 'detalhe do histórico deveria abrir');
+    assert.ok(els['conteudo-hist-detalhe'].innerHTML.includes('Campeão') && els['conteudo-hist-detalhe'].innerHTML.includes('Time 1'), 'detalhe do histórico deveria abrir');
     assert.ok(els['lista-confrontos-encerrados'].innerHTML.includes('data-corrigir="2"'), 'confronto finalizado deveria ter o botão de corrigir placar');
     assert.ok(els['conteudo-hist-detalhe'].innerHTML.includes('btn-resumo-imagem') && els['conteudo-hist-detalhe'].innerHTML.includes('btn-resumo-texto'), 'detalhe deveria ter os botões de enviar o resumo');
     console.log('✅ histórico abre a tela completa e confrontos têm "corrigir placar"');

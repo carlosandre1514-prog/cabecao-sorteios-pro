@@ -19,7 +19,7 @@ function aoFirebasePronto(cb) {
 function avaliarConfigRemota(config) {
     if (config.global && config.global.app_ativo === false) {
         return {
-            titulo: '⚠️ Aplicativo Desativado',
+            titulo: 'Aplicativo fora do ar',
             mensagem: config.global.mensagem_desativacao || 'Este aplicativo está temporariamente indisponível. Volte mais tarde!',
             link: ''
         };
@@ -27,7 +27,7 @@ function avaliarConfigRemota(config) {
     const versaoMinima = config.versoes && config.versoes.versao_minima_permitida;
     if (versaoMinima && Logica.compararVersoes(VERSAO_ATUAL_APP, versaoMinima) < 0) {
         return {
-            titulo: '⚠️ Atualização Obrigatória',
+            titulo: 'Atualização necessária',
             mensagem: (config.versoes && config.versoes.mensagem_versao_minima) ||
                 `Esta versão (${VERSAO_ATUAL_APP}) do aplicativo está desatualizada. Baixe a nova versão (mínima: ${versaoMinima}) para continuar!`,
             link: (config.versoes && config.versoes.link_download) || ''
@@ -61,7 +61,7 @@ function bloquearTelaApp(titulo, mensagem, link) {
         a.href = link;
         a.target = '_blank';
         a.rel = 'noopener';
-        a.textContent = '⬇️ Baixar nova versão';
+        a.textContent = 'Baixar a nova versão';
         a.style.cssText = 'background:linear-gradient(135deg,#93d54b,#2da762); color:#000; font-weight:800; padding:12px 22px; border-radius:8px; text-decoration:none; text-transform:uppercase;';
         wrap.appendChild(a);
     }
@@ -80,7 +80,7 @@ function exibirBannerAtualizacao(novaVersao, linkDownload) {
     banner.style.cssText = 'background:#1976D2; color:#fff; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; font-size:0.9rem; box-shadow:0 2px 8px rgba(0,0,0,0.3); position:sticky; top:0; z-index:9999;';
     const seguro = /^https?:\/\//i.test(String(linkDownload || ''));
     banner.innerHTML = `
-        <span>🚀 Uma nova versão (<strong>v${String(novaVersao).replace(/[<>&"']/g, '')}</strong>) está disponível!</span>
+        <span>Nova versão (<strong>v${String(novaVersao).replace(/[<>&"']/g, '')}</strong>) está disponível!</span>
         <div style="display:flex; gap:8px; align-items:center;">
             ${seguro ? '<button id="btn-atualizar-soft" style="background:#fff; color:#1976D2; border:none; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Atualizar agora</button>' : ''}
             <button id="btn-fechar-soft" style="background:transparent; color:#fff; border:none; font-size:1.1rem; cursor:pointer; padding:0 4px;">✕</button>

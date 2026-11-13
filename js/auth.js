@@ -154,7 +154,8 @@
             const campo = $('auth-password');
             const mostrar = campo.type === 'password';
             campo.type = mostrar ? 'text' : 'password';
-            $('btn-ver-senha').textContent = mostrar ? '🙈' : '👁️';
+            $('btn-ver-senha').textContent = mostrar ? 'Ocultar' : 'Mostrar';
+        $('btn-ver-senha').setAttribute('aria-label', mostrar ? 'Ocultar senha' : 'Mostrar senha');
         });
     }
 
