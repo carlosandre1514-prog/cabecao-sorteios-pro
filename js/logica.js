@@ -525,6 +525,7 @@
         if (d.quando) L.push('📅 ' + d.quando);
         if (d.times) L.push('🏟️ ' + d.times + ' times de ' + d.porTime + ' + goleiro (' + d.limite + ' na linha)');
         if (d.pagamento) L.push('💰 ' + d.pagamento);
+        if (d.pix && d.pix.chave && !/copia e cola/i.test(d.pagamento || '')) L.push('💠 Pix copia e cola e QR Code no link');
         if (d.prazo) L.push('⏰ Pagar até ' + fmt(d.prazo));
         const pag = c => !d.prazo && !d.pagamento ? '' : c.pago ? ' ✅' : c.aConfirmar ? ' 🕐' : '';
         const linha = r.confirmados.filter(c => !c.goleiro), gols = r.confirmados.filter(c => c.goleiro);
@@ -545,6 +546,54 @@
         return L.join('\n');
     }
 
+    // ---------- Pix "copia e cola" (BR Code estático do Banco Central) ----------
+    // Gera o texto que o app do banco lê (no QR ou colado). O dinheiro vai direto para a chave do organizador.
+    // Formato: campos ID + tamanho (2 dígitos) + valor; termina com CRC16-CCITT (0x1021, início 0xFFFF).
+    function crc16Pix(txt) {
+        let crc = 0xFFFF;
+        for (let i = 0; i < txt.length; i++) {
+            crc ^= txt.charCodeAt(i) << 8;
+            for (let b = 0; b < 8; b++) crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+        }
+        return crc.toString(16).toUpperCase().padStart(4, '0');
+    }
+    // texto sem acento e só com caracteres aceitos pelo padrão
+    function textoPix(t, max) {
+        return String(t == null ? '' : t).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^A-Za-z0-9 .,\-\/]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
+    }
+    // tipo: 'cpf' | 'cnpj' | 'telefone' | 'email' | 'aleatoria'. Devolve a chave no formato do Pix ou '' se inválida.
+    function normalizarChavePix(tipo, chave) {
+        const c = String(chave == null ? '' : chave).trim();
+        const dig = c.replace(/\D/g, '');
+        if (tipo === 'cpf') return dig.length === 11 ? dig : '';
+        if (tipo === 'cnpj') return dig.length === 14 ? dig : '';
+        if (tipo === 'telefone') {
+            const n = dig.length === 10 || dig.length === 11 ? '55' + dig : (dig.length === 12 || dig.length === 13) && dig.startsWith('55') ? dig : '';
+            return n ? '+' + n : '';
+        }
+        if (tipo === 'email') return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c) && c.length <= 77 ? c.toLowerCase() : '';
+        if (tipo === 'aleatoria') return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c) ? c.toLowerCase() : '';
+        return '';
+    }
+    // p = { chave (já normalizada), nome, cidade, valor (reais), txid, mensagem }
+    function montarPix(p) {
+        const campo = (id, v) => id + String(v.length).padStart(2, '0') + v;
+        const chave = String(p.chave || '');
+        if (!chave) return '';
+        let conta = campo('00', 'br.gov.bcb.pix') + campo('01', chave);
+        const msg = textoPix(p.mensagem, 99 - conta.length - 4);
+        if (msg) conta += campo('02', msg);
+        const valor = Number(p.valor) > 0 ? (Math.round(Number(p.valor) * 100) / 100).toFixed(2) : '';
+        const txid = String(p.txid || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 25) || '***';
+        let s = campo('00', '01') + campo('26', conta) + campo('52', '0000') + campo('53', '986')
+            + (valor ? campo('54', valor) : '') + campo('58', 'BR')
+            + campo('59', textoPix(p.nome, 25).toUpperCase() || 'RECEBEDOR')
+            + campo('60', textoPix(p.cidade, 15).toUpperCase() || 'BRASIL')
+            + campo('62', campo('05', txid)) + '6304';
+        return s + crc16Pix(s);
+    }
+
     return {
         embaralhar, idUnico, chaveSegura, limparMapa, normalizarTime, compararVersoes,
         filtrarLinhasLote, sortearTimes, gerarPartidas, novaClassificacao,
@@ -552,6 +601,7 @@
         normalizarEstrelas, filtrarPorEstrelas,
         gravarNoCaminho, lerDoCaminho, diaISO, ultimosDias, resumirMetricas,
         nomeDaChave, resumoCampeonato, textoResumo, proximoTurno, resumirPresenca,
-        normalizarNome, acharPorNome, CORES_RACHA, corRacha, hexParaRgb, textoListaWhatsApp
+        normalizarNome, acharPorNome, CORES_RACHA, corRacha, hexParaRgb, textoListaWhatsApp,
+        crc16Pix, normalizarChavePix, montarPix
     };
 });

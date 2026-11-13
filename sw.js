@@ -8,7 +8,7 @@
 //
 // AO LANÇAR VERSÃO NOVA: troque VERSAO abaixo pelo mesmo ?v= usado no index.html.
 // =====================================================================
-const VERSAO = '20261113i';
+const VERSAO = '20261113j';
 const CACHE = 'cabecao-' + VERSAO;
 const FIREBASE = 'https://www.gstatic.com/firebasejs/11.0.0/';
 
@@ -19,6 +19,7 @@ const PRECACHE = [
     'css/style.css?v=' + VERSAO,
     ...['logica', 'apito', 'remoto', 'auth', 'app', 'monetizacao', 'icones', 'metricas', 'imagem-times']
         .map(n => 'js/' + n + '.js?v=' + VERSAO),
+    'js/vendor/qrcode.js?v=' + VERSAO,
     FIREBASE + 'firebase-app.js', FIREBASE + 'firebase-auth.js', FIREBASE + 'firebase-database.js'
 ];
 

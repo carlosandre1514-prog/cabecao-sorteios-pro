@@ -114,3 +114,9 @@ fica em `js/apito.js` e é o mesmo no app e no link. Regras do Firebase: `docs/C
   aberto, goleiros, suplentes, pagamento e o link (`Logica.textoListaWhatsApp`, com testes).
 - **Repaginada**: avatares com iniciais, estrelas em selo, botões de ícone, interruptor de presença, filtro de
   estrelas recolhido, histórico em cartões e página da lista com cabeçalho do racha e vagas em aberto.
+- **Pix copia e cola na lista** (Pro): na configuração da lista o organizador põe tipo/chave Pix, nome, cidade e valor
+  (fica salvo em `usuarios/<uid>/[rachas/<id>/]pix` para as próximas listas). Cada jogador com vaga vê na página o
+  **QR Code** e o botão **"Copiar código Pix"** com o valor e o nome dele na identificação (txid = código da lista +
+  nome). O código é o BR Code estático do Banco Central, gerado no próprio celular (`Logica.montarPix`, CRC conferido
+  com o exemplo oficial, com testes); o QR usa `js/vendor/qrcode.js` (qrcode-generator, MIT). O dinheiro cai direto
+  na conta do organizador, sem taxa; depois o jogador aperta "Já paguei" e o organizador confirma.

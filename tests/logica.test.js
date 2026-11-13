@@ -323,3 +323,31 @@ t('cara do racha: cores e mensagem da lista para o WhatsApp', () => {
     assert.ok(txt.includes('⏳ *SUPLENTES*\n1. Duda'));
     assert.ok(txt.includes('⏰ Pagar até sex 18h') && txt.endsWith('👉 *Confirme aqui:* https://x/presenca.html?c=ABC'));
 });
+
+t('Pix copia e cola: CRC oficial, chaves e código completo válido', () => {
+    assert.strictEqual(L.crc16Pix('123456789'), '29B1');                       // valor de referência do CRC-16/CCITT-FALSE
+    assert.strictEqual(L.normalizarChavePix('telefone', '(11) 99999-8888'), '+5511999998888');
+    assert.strictEqual(L.normalizarChavePix('telefone', '+55 11 99999-8888'), '+5511999998888');
+    assert.strictEqual(L.normalizarChavePix('cpf', '123.456.789-09'), '12345678909');
+    assert.strictEqual(L.normalizarChavePix('cpf', '123'), '');
+    assert.strictEqual(L.normalizarChavePix('email', 'Zé@Racha.com'), 'zé@racha.com');
+    assert.strictEqual(L.normalizarChavePix('email', 'semarroba'), '');
+    assert.strictEqual(L.normalizarChavePix('aleatoria', '123E4567-E12B-12D1-A456-426655440000'), '123e4567-e12b-12d1-a456-426655440000');
+    const pix = L.montarPix({ chave: '+5511999998888', nome: 'Carlos André da Silva Júnior Neto', cidade: 'São José dos Campos', valor: 15, txid: 'ABCD1234-Ana Souza', mensagem: 'Pelada dos Crias - Ana' });
+    // estrutura: começa com 000201, tem a chave, o valor, BR, nome/cidade sem acento e cortados, txid limpo e CRC no fim
+    assert.ok(pix.startsWith('000201'));
+    assert.ok(pix.includes('0014br.gov.bcb.pix0114+5511999998888'));
+    assert.ok(pix.includes('540515.00') && pix.includes('5802BR'));
+    assert.ok(pix.includes('5925CARLOS ANDRE DA SILVA JUN') && pix.includes('6015SAO JOSE DOS CA'));
+    assert.ok(pix.includes('62200516ABCD1234AnaSouza'));
+    assert.strictEqual(pix.slice(-8, -4), '6304');
+    assert.strictEqual(pix.slice(-4), L.crc16Pix(pix.slice(0, -4)));
+    // cada campo tem o tamanho certo (lê o código como o banco lê)
+    const ler = str => { const o = {}; let i = 0; while (i < str.length) { const id = str.substr(i, 2), n = +str.substr(i + 2, 2); o[id] = str.substr(i + 4, n); i += 4 + n; } return o; };
+    const campos = ler(pix);
+    assert.strictEqual(campos['53'], '986'); assert.strictEqual(campos['54'], '15.00');
+    assert.strictEqual(ler(campos['26'])['01'], '+5511999998888');
+    assert.ok(campos['26'].length <= 99);
+    assert.strictEqual(L.montarPix({ chave: '' }), '');
+    assert.ok(L.montarPix({ chave: 'a@b.co', nome: 'X', cidade: 'Y' }).includes('0503***'));   // sem valor e sem txid
+});

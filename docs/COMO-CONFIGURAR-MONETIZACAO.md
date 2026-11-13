@@ -231,5 +231,8 @@ Acrescente este nó nas regras (mantenha os que já existem):
 - Qualquer pessoa com o link responde, mas só enquanto a lista estiver **aberta**. "Fechar lista" congela as respostas.
 - Não dá para listar todas as listas (não há leitura em `presenca` inteiro); o código tem 8 caracteres sorteados.
 - A página pública mostra **só os nomes** dos jogadores, nunca as estrelas.
+- **Pix copia e cola** (`presenca/<codigo>/pix` = chave, nome, cidade, valor): só o dono grava (já coberto pela regra
+  de escrita do `$codigo`, nada novo a publicar). A chave fica visível para quem tem o link, como quando o organizador
+  manda a chave no grupo.
 - Limitação conhecida: como não há login na página, alguém com o link poderia responder no lugar de outro.
   Para um grupo de pelada isso é aceitável; se virar problema, dá para exigir login anônimo do Firebase.

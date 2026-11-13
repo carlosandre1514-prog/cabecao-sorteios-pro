@@ -594,3 +594,10 @@ input[type="text"], input[type="number"], input[type="password"], input[type="em
 .vis-modo button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 6px; border-radius: 12px; cursor: pointer; font: inherit; font-size: 0.85rem; font-weight: 800; color: var(--txt); background: rgba(0,0,0,0.3); border: 1px solid var(--linha); }
 .vis-modo button small { font-size: 0.68rem; font-weight: 600; color: var(--mudo); }
 .vis-modo button.on { border-color: var(--neon); background: rgba(var(--neon-rgb),0.1); }
+.pix-config { margin-top: 14px; padding: 12px; border-radius: 14px; background: rgba(50, 188, 173, 0.07); border: 1px solid rgba(50, 188, 173, 0.35); }
+.pix-titulo { font-weight: 800; margin: 0 0 4px; color: #5fe0cf; }
+.pix-linha { display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; margin-top: 8px; }
+.pix-linha select, .pix-linha input { padding: 11px 10px; font-size: 0.92rem; }
+.dica-pix { min-height: 1em; margin: 6px 0 0; font-size: 0.78rem; color: var(--mudo); word-break: break-all; }
+.dica-pix.ok { color: var(--neon); font-weight: 700; }
+.dica-pix.erro { color: var(--verm); font-weight: 700; }

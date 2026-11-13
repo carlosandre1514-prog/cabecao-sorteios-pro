@@ -7,7 +7,7 @@
     <meta name="description" content="Confirme se você vai no racha.">
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0b0e0c">
-    <link rel="stylesheet" href="css/style.css?v=20261113i">
+    <link rel="stylesheet" href="css/style.css?v=20261113j">
     <style>
         .app-container { padding-bottom: 32px; }
         body { background-image: radial-gradient(ellipse 90% 40% at 50% -8%, rgba(var(--verde-rgb), 0.38), transparent 72%); }
@@ -71,6 +71,14 @@
         .btn-pagar { margin: 8px 0 0 !important; background: linear-gradient(135deg, #e7c75e, var(--ouro)); color: #1d1606; }
         .linha-pessoa .tag.aguardando { color: #e7c75e; font-weight: 700; }
         .card-pag { border-color: rgba(221, 180, 60, 0.4); }
+        .pix-box { margin: 10px 0 2px; padding: 14px; border-radius: 16px; background: #0f1b19; border: 1px solid rgba(50, 188, 173, 0.45); color: var(--txt); text-align: center; }
+        .pix-topo { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .pix-logo { font-weight: 900; color: #5fe0cf; font-size: 1rem; }
+        .pix-valor { font-size: 1.5rem; font-weight: 900; color: #fff; }
+        .pix-qr { width: 190px; height: 190px; image-rendering: pixelated; background: #fff; border-radius: 12px; padding: 6px; display: block; margin: 0 auto 12px; }
+        .btn-pix { background: linear-gradient(135deg, #5fe0cf, #32bcad); color: #062420; margin: 0 !important; }
+        .pix-ajuda { margin: 10px 0 0; font-size: .78rem; font-weight: 500; color: var(--mudo); line-height: 1.5; }
+        .pix-ajuda strong { color: var(--txt); }
         .dica-nome { min-height: 1.2em; margin: 0; font-size: .85rem; color: var(--mudo); }
         .dica-nome.achou { color: var(--neon); font-weight: 700; }
         #meu-nome { font-size: 1.1rem; padding: 14px; }
@@ -107,7 +115,8 @@
         <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro</p>
     </div>
 
-    <script src="js/logica.js?v=20261113i"></script>
+    <script src="js/logica.js?v=20261113j"></script>
+    <script src="js/vendor/qrcode.js?v=20261113j"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getDatabase, ref, onValue, get, set, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
@@ -199,6 +208,51 @@
         }
         let primeiraVez = true;
 
+        // ---------- Pix copia e cola + QR Code (gerado aqui no celular, padrão do Banco Central) ----------
+        let pixAtual = '';
+        function codigoPix(d, pessoa, nomeRacha) {
+            const px = d.pix || {};
+            if (!px.chave) return '';
+            return Logica.montarPix({
+                chave: px.chave, nome: px.nome, cidade: px.cidade, valor: px.valor,
+                txid: codigo + String(pessoa.nome || '').replace(/[^A-Za-z0-9]/g, ''),        // aparece no extrato do organizador
+                mensagem: nomeRacha + ' - ' + pessoa.nome
+            });
+        }
+        function qrDataUrl(texto) {
+            try {
+                const q = qrcode(0, 'M'); q.addData(texto); q.make();
+                return q.createDataURL(5, 2);
+            } catch (e) { return ''; }
+        }
+        function caixaPix(d, pessoa, nomeRacha) {
+            const cod = codigoPix(d, pessoa, nomeRacha);
+            pixAtual = cod;
+            if (!cod) return '';
+            const px = d.pix;
+            const qr = qrDataUrl(cod);
+            return `<div class="pix-box">
+                <div class="pix-topo"><span class="pix-logo">💠 Pix</span>${px.valor ? `<strong class="pix-valor">R$ ${Number(px.valor).toFixed(2).replace('.', ',')}</strong>` : ''}</div>
+                ${qr ? `<img class="pix-qr" src="${qr}" alt="QR Code do Pix">` : ''}
+                <button class="btn btn-pix" data-copiar-pix>📋 Copiar código Pix</button>
+                <p class="pix-ajuda">No app do banco: <strong>Pix → Pix Copia e Cola</strong> e cole o código.${px.valor ? '' : ' Digite o valor combinado.'}<br>Recebedor: <strong>${esc(String(px.nome || '').toUpperCase())}</strong></p>
+            </div>`;
+        }
+        async function copiarPix(botao) {
+            if (!pixAtual) return;
+            let ok = false;
+            try { await navigator.clipboard.writeText(pixAtual); ok = true; } catch (e) {
+                const ta = document.createElement('textarea'); ta.value = pixAtual; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.select();
+                try { ok = document.execCommand('copy'); } catch (e2) { /* ignora */ }
+                ta.remove();
+            }
+            const original = botao.textContent;
+            botao.textContent = ok ? '✅ Código copiado! Cole no app do banco' : 'Não deu para copiar: segure no QR Code';
+            setTimeout(() => { botao.textContent = original; }, 2500);
+            if (ok) contar('presenca_pix_copiado');
+        }
+
         function desenhar() {
             const d = lista;
             aplicarVisual(d.visual);
@@ -242,6 +296,7 @@
             if (d.pagamento || d.prazo) h += `<div class="card card-pag">
                 <h2 style="margin-bottom:6px;">💰 Pagamento</h2>
                 ${d.pagamento ? `<p style="margin:0 0 4px;font-weight:700;">${esc(d.pagamento)}</p>` : ''}
+                ${d.pix && d.pix.chave ? `<p class="subtext" style="margin:0 0 4px;">💠 Pix para <strong>${esc(String(d.pix.nome || '').toUpperCase())}</strong>. Confirme seu nome na lista para ver o QR Code e o copia e cola.</p>` : ''}
                 ${d.prazo ? `<p class="subtext" style="margin:0;${r.prazoVencido ? 'color:var(--verm);' : ''}">⏰ Pagar até <strong>${esc(fmtPrazo(d.prazo))}</strong>${r.prazoVencido ? ' — prazo encerrado' : ''}. Quem não pagar pode perder a vaga para o suplente.</p>` : ''}
             </div>`;
 
@@ -256,7 +311,8 @@
                     : minhaVaga.aConfirmar ? `<div class="pag-eu aguardando">🕐 Você marcou que pagou <span>aguardando confirmação do organizador</span>
                         ${d.aberta ? '<button class="link-discreto" data-paguei="nao">Desfazer</button>' : ''}</div>`
                     : `<div class="pag-eu ${minhaVaga.atrasado ? 'atrasado' : ''}">⏳ Pagamento pendente${d.prazo ? ' — até ' + esc(fmtPrazo(d.prazo)) : ''}
-                        ${d.aberta ? '<button class="btn btn-pagar" data-paguei="sim">💸 Já paguei</button>' : ''}</div>`;
+                        ${caixaPix(d, meu, nomeRacha)}
+                        ${d.aberta ? `<button class="btn btn-pagar" data-paguei="sim">💸 Já paguei${d.pix && d.pix.chave ? ' (avisar o organizador)' : ''}</button>` : ''}</div>`;
                 const cls = est === 'vou' ? 'vou' : est.startsWith('espera') ? 'espera' : est === 'nao' ? 'nao' : '';
                 h += `<div class="card eu">
                     ${avatar(meu.nome, true)}
@@ -349,6 +405,7 @@
             const b = e.target.closest('button');
             if (!b || !lista) return;
             if (b.dataset.digitado) { await enviarDigitado(b.dataset.digitado, b); return; }
+            if (b.hasAttribute('data-copiar-pix')) { await copiarPix(b); return; }
             if (b.dataset.paguei && eu) { b.disabled = true; await marcarPaguei(eu, b.dataset.paguei === 'sim'); return; }
             if (b.dataset.resp && eu) { b.disabled = true; await responder(eu, b.dataset.resp); return; }
             if (b.hasAttribute('data-trocar')) { trocando = true; desenhar(); return; }

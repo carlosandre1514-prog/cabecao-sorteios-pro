@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pararEscutaPresenca();
         presencaCodigo = null; presencaDados = null; presencaAssinatura = '';
         renderizarCardPresenca();
-        visualRacha = {}; aplicarVisual();
+        visualRacha = {}; aplicarVisual(); pixPadrao = null;
         dadosCarregados = false;
     }
 
@@ -490,6 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const d = presencaDados || {};
         return Logica.resumirPresenca(d.jogadores, d.respostas, d.limite, opcoesPresenca(d));
     };
+    let pixPadrao = null;   // usuarios/<uid>/[rachas/<id>/]pix: última chave Pix usada nas listas
     const fmtPrazo = ms => new Date(ms).toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     // o sorteio usa os mesmos times x jogadores de linha da lista (só quando a configuração da lista muda)
     let cfgListaAplicada = '';
@@ -540,6 +541,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div><strong>${r.pendentes}</strong><small>a pagar</small></div>
             </div>
             ${r.aConfirmar.length ? `<div class="presenca-aviso-pag">🕐 <strong>${r.aConfirmar.length}</strong> ${r.aConfirmar.length === 1 ? 'disse que já pagou' : 'disseram que já pagaram'}: <strong>${r.aConfirmar.map(c => escapeHtml(c.nome)).join(', ')}</strong>. Confira o Pix e toque em <strong>"Confirmar"</strong> no nome.</div>` : ''}
+            ${d.pix && d.pix.chave ? `<p class="subtext" style="margin:8px 0 0;">💠 Pix na lista: <strong>${escapeHtml(d.pix.chave)}</strong>${d.pix.valor ? ' · R$ ' + Number(d.pix.valor).toFixed(2).replace('.', ',') : ''}</p>` : ''}
             ${d.prazo ? `<p class="subtext prazo-pag ${r.prazoVencido ? 'vencido' : ''}">💰 Prazo do pagamento: <strong>${escapeHtml(fmtPrazo(d.prazo))}</strong>${r.prazoVencido ? ' (vencido)' : ''}</p>` : ''}
             ${r.prazoVencido && r.atrasados.length ? `<div class="presenca-alerta">⚠️ <strong>${r.atrasados.length}</strong> com vaga ainda não pagaram e o prazo acabou.
                 <button type="button" class="btn btn-danger btn-mini" id="btn-tirar-atrasados" style="margin-top:8px !important;">Tirar quem não pagou e subir suplentes</button></div>` : ''}`;
@@ -592,6 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const d = editar ? (presencaDados || {}) : {};
         const times0 = d.times || parseInt(document.getElementById('qtd-times')?.value, 10) || 4;
+        const pix0 = (d.pix && d.pix.chave) ? d.pix : (pixPadrao || {});   // última chave usada neste racha
         const linha0 = d.porTime || parseInt(document.getElementById('qtd-por-time')?.value, 10) || 4;
         const m = abrirModalHtml(`<h2>${editar ? '⚙️ Ajustar lista' : '📲 Nova lista de presença'}</h2>
             <div class="form-group-row"><label for="pr-times">Quantidade de times</label><input type="number" id="pr-times" min="2" max="8" value="${times0}"></div>
@@ -601,6 +604,22 @@ document.addEventListener('DOMContentLoaded', () => {
             <input type="text" id="pr-quando" maxlength="60" placeholder="Ex.: Sábado, 16h — Quadra do Zé" value="${escapeHtml(d.quando || '')}">
             <label class="subtext" for="pr-pag" style="margin-top:10px;display:block;">Como pagar (opcional)</label>
             <input type="text" id="pr-pag" maxlength="80" placeholder="Ex.: R$ 15 no Pix 11 99999-9999" value="${escapeHtml(d.pagamento || '')}">
+            <div class="pix-config">
+                <p class="pix-titulo">💠 Pix copia e cola ${podeVisualPro() ? '' : '<span class="tag-pro">PRO</span>'}</p>
+                <p class="subtext" style="margin:0 0 8px;">Cada jogador com vaga recebe o QR Code e o "copiar Pix" já com o valor. O dinheiro cai direto na sua conta, sem taxa.</p>
+                <div class="pix-linha">
+                    <select id="pr-pix-tipo" aria-label="Tipo da chave">
+                        ${[['telefone', 'Celular'], ['cpf', 'CPF'], ['email', 'E-mail'], ['cnpj', 'CNPJ'], ['aleatoria', 'Aleatória']].map(([v, t]) => `<option value="${v}" ${pix0.tipo === v ? 'selected' : ''}>${t}</option>`).join('')}
+                    </select>
+                    <input type="text" id="pr-pix-chave" maxlength="80" placeholder="Sua chave Pix" value="${escapeHtml(pix0.chaveDigitada || '')}" autocomplete="off">
+                </div>
+                <p class="dica-pix" id="pr-pix-dica"></p>
+                <div class="pix-linha">
+                    <input type="text" id="pr-pix-nome" maxlength="25" placeholder="Nome de quem recebe" value="${escapeHtml(pix0.nome || '')}">
+                    <input type="text" id="pr-pix-cidade" maxlength="15" placeholder="Cidade" value="${escapeHtml(pix0.cidade || '')}">
+                </div>
+                <div class="form-group-row" style="margin:8px 0 0;"><label for="pr-pix-valor">Valor por pessoa (R$)</label><input type="number" id="pr-pix-valor" min="0" step="0.5" inputmode="decimal" placeholder="15" value="${pix0.valor || ''}"></div>
+            </div>
             <label class="subtext" for="pr-prazo" style="margin-top:10px;display:block;">Prazo para pagar (opcional)</label>
             <input type="datetime-local" id="pr-prazo" value="${paraCampoData(d.prazo)}">
             <p class="subtext" style="margin:4px 0 0;">Quem não for marcado como pago até o prazo fica pendente, e você pode tirar da lista para subir os suplentes.</p>
@@ -617,16 +636,48 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         ['#pr-times', '#pr-linha'].forEach(sel => { const el = m.querySelector(sel); if (el && el.addEventListener) el.addEventListener('input', conta); });
         conta();
+        const lerPix = () => {
+            const digitada = (m.querySelector('#pr-pix-chave').value || '').trim();
+            if (!digitada) return null;
+            const tipo = m.querySelector('#pr-pix-tipo').value;
+            return {
+                tipo, chaveDigitada: digitada, chave: Logica.normalizarChavePix(tipo, digitada),
+                nome: (m.querySelector('#pr-pix-nome').value || '').trim().slice(0, 25),
+                cidade: (m.querySelector('#pr-pix-cidade').value || '').trim().slice(0, 15),
+                valor: Math.max(0, Math.round((parseFloat(String(m.querySelector('#pr-pix-valor').value).replace(',', '.')) || 0) * 100) / 100)
+            };
+        };
+        const dicaPix = () => {
+            const el = m.querySelector('#pr-pix-dica'); if (!el) return;
+            const px = lerPix();
+            el.className = 'dica-pix' + (px ? (px.chave ? ' ok' : ' erro') : '');
+            el.textContent = !px ? '' : px.chave ? '✔ Chave válida: ' + px.chave : '✖ Essa chave não parece um ' + ({ telefone: 'celular com DDD', cpf: 'CPF (11 números)', cnpj: 'CNPJ (14 números)', email: 'e-mail', aleatoria: 'chave aleatória' }[px.tipo]);
+        };
+        ['#pr-pix-chave', '#pr-pix-tipo'].forEach(sel => { const el = m.querySelector(sel); if (el && el.addEventListener) { el.addEventListener('input', dicaPix); el.addEventListener('change', dicaPix); } });
+        dicaPix();
         m.querySelector('#pr-cancelar').onclick = () => m.remove();
         m.querySelector('#pr-criar').onclick = async () => {
             const c = ler();
+            const px = lerPix();
+            if (px && !px.chave) { dicaPix(); toast('Confira a chave Pix (ou deixe em branco).', 'erro'); return; }
+            if (px && !px.nome) { toast('Coloque o nome de quem recebe o Pix.', 'erro'); return; }
+            if (px && !podeVisualPro()) {
+                m.remove();
+                if (window.Monetizacao) window.Monetizacao.abrirModal('O Pix copia e cola na lista é do plano Pro. Seus jogadores pagam com um toque e você não precisa ficar mandando a chave!');
+                return;
+            }
             const prazoTxt = m.querySelector('#pr-prazo').value;
             const prazo = prazoTxt ? new Date(prazoTxt).getTime() || 0 : 0;
+            let pagamento = m.querySelector('#pr-pag').value.trim().slice(0, 80);
+            if (px && !pagamento && px.valor) pagamento = 'R$ ' + px.valor.toFixed(2).replace('.', ',') + ' no Pix (copia e cola no link)';
             const cfg = Object.assign(c, {
                 quando: m.querySelector('#pr-quando').value.trim().slice(0, 60),
-                pagamento: m.querySelector('#pr-pag').value.trim().slice(0, 80),
-                prazo
+                pagamento,
+                prazo,
+                pix: px || null
             });
+            // lembra a chave para as próximas listas deste racha
+            if (px) { pixPadrao = px; gravar('pix', px); }
             // o sorteio usa a mesma configuração
             const qt = document.getElementById('qtd-times'), qp = document.getElementById('qtd-por-time');
             if (qt) qt.value = String(c.times);
@@ -878,6 +929,7 @@ document.addEventListener('DOMContentLoaded', () => {
             aoVivoCodigo = (base.aoVivo && base.aoVivo.codigo) || null;
             presencaCodigo = (base.presenca && base.presenca.codigo) || null;
             visualRacha = (base.visual && typeof base.visual === 'object') ? base.visual : {};
+            pixPadrao = (base.pix && typeof base.pix === 'object') ? base.pix : null;
             presencaAssinatura = '';
             dadosCarregados = true;
             aplicarVisual();
@@ -2617,6 +2669,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ['presenca_convidado_add', 'Convidados adicionados ao elenco'],
         ['presenca_paguei', 'Jogadores que avisaram "já paguei"'],
         ['presenca_pago', 'Pagamentos confirmados pelo organizador'],
+        ['presenca_pix_copiado', 'Pix copiados na lista (copia e cola)'],
         ['presenca_removido', 'Tirados da lista pelo organizador'],
         ['presenca_cta', 'Cliques em "Criar meu racha" (lista)'],
         ['ao_vivo_ligado', 'Placares ao vivo ligados'],
