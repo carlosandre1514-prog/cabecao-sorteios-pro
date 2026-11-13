@@ -504,6 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const qt = document.getElementById('qtd-times'), qp = document.getElementById('qtd-por-time');
         if (qt) qt.value = String(d.times);
         if (qp) qp.value = String(d.porTime);
+        atualizarBarraSorteio();
     }
     function aplicarRespostasPresenca() {
         if (!presencaDados) return;
@@ -524,16 +525,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!off || !on) return;
         off.classList.toggle('hidden', !!presencaCodigo);
         on.classList.toggle('hidden', !presencaCodigo);
-        if (!presencaCodigo) return;
+        const status = document.getElementById('lista-link-status');
+        const acesso = document.getElementById('abrir-lista-link');
+        if (acesso) acesso.classList.toggle('ativo', !!presencaCodigo);
+        if (!presencaCodigo) { if (status) status.textContent = 'Mande no grupo: quem confirmar já fica marcado'; return; }
         const campo = document.getElementById('presenca-link');
         if (campo) campo.value = linkPresenca();
         const d = presencaDados || {};
         const r = resumoPresencaAtual();
         const resumo = document.getElementById('presenca-resumo');
-        const cfg = d.times ? `${d.times} times · ${d.porTime} na linha + goleiro` : (d.limite ? `${d.limite} vagas na linha` : 'Sem limite de vagas');
+        const cfg = d.times ? `${d.times} times de ${d.porTime} + goleiro` : (d.limite ? `${d.limite} vagas na linha` : 'Sem limite de vagas');
+        if (status) status.textContent = (d.aberta === false ? 'Fechada' : 'Aberta') + ` · ${r.linhaConfirmados}${r.limite ? '/' + r.limite : ''} na linha`
+            + (r.espera.length ? ` · ${r.espera.length} suplente${r.espera.length > 1 ? 's' : ''}` : '') + (r.aConfirmar.length ? ` · ${r.aConfirmar.length} a confirmar` : '');
         if (resumo) resumo.innerHTML = `
-            ${d.aberta === false ? '<p class="subtext" style="color:var(--verm);font-weight:700;margin:0 0 6px;">🔒 Lista fechada: ninguém consegue mudar a resposta.</p>' : ''}
-            <p class="subtext" style="margin:0 0 6px;">${d.quando ? '📅 ' + escapeHtml(d.quando) + ' · ' : ''}⚽ ${cfg} <button type="button" class="link-discreto" id="btn-presenca-config">⚙️ Ajustar</button></p>
+            ${d.aberta === false ? '<p class="aviso-faixa perigo">Lista fechada. Ninguém consegue mudar a resposta.</p>' : ''}
+            <div class="lp-cfg"><span>${d.quando ? escapeHtml(d.quando) + ' · ' : ''}${cfg}</span><button type="button" class="btn-texto" id="btn-presenca-config">Ajustar</button></div>
             <div class="presenca-numeros">
                 <div><strong>${r.linhaConfirmados}${r.limite ? '/' + r.limite : ''}</strong><small>na linha</small></div>
                 <div><strong>${r.goleirosConfirmados}${r.vagasGoleiro ? '/' + r.vagasGoleiro : ''}</strong><small>goleiros</small></div>
@@ -541,31 +547,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div><strong>${r.pagos}</strong><small>pagos</small></div>
                 <div><strong>${r.pendentes}</strong><small>a pagar</small></div>
             </div>
-            ${r.aConfirmar.length ? `<div class="presenca-aviso-pag">🕐 <strong>${r.aConfirmar.length}</strong> ${r.aConfirmar.length === 1 ? 'disse que já pagou' : 'disseram que já pagaram'}: <strong>${r.aConfirmar.map(c => escapeHtml(c.nome)).join(', ')}</strong>. Confira o Pix e toque em <strong>"Confirmar"</strong> no nome.</div>` : ''}
-            ${d.pix && d.pix.chave ? `<p class="subtext" style="margin:8px 0 0;">💠 Pix na lista: <strong>${escapeHtml(d.pix.chave)}</strong>${d.pix.valor ? ' · R$ ' + Number(d.pix.valor).toFixed(2).replace('.', ',') : ''}</p>` : ''}
-            ${d.prazo ? `<p class="subtext prazo-pag ${r.prazoVencido ? 'vencido' : ''}">💰 Prazo do pagamento: <strong>${escapeHtml(fmtPrazo(d.prazo))}</strong>${r.prazoVencido ? ' (vencido)' : ''}</p>` : ''}
-            ${r.prazoVencido && r.atrasados.length ? `<div class="presenca-alerta">⚠️ <strong>${r.atrasados.length}</strong> com vaga ainda não pagaram e o prazo acabou.
-                <button type="button" class="btn btn-danger btn-mini" id="btn-tirar-atrasados" style="margin-top:8px !important;">Tirar quem não pagou e subir suplentes</button></div>` : ''}`;
+            ${d.pix && d.pix.chave || d.prazo ? `<div class="lp-pag">
+                ${d.pix && d.pix.chave ? `<span>Pix ${escapeHtml(d.pix.chave)}${d.pix.valor ? ' · ' + Logica.reais(d.pix.valor) : ''}</span>` : ''}
+                ${d.prazo ? `<span class="${r.prazoVencido ? 'vencido' : ''}">Pagamento até ${escapeHtml(fmtPrazo(d.prazo))}${r.prazoVencido ? ' · vencido' : ''}</span>` : ''}
+            </div>` : ''}
+            ${r.aConfirmar.length ? `<p class="aviso-faixa ouro"><strong>${r.aConfirmar.length}</strong> ${r.aConfirmar.length === 1 ? 'avisou que pagou' : 'avisaram que pagaram'}: ${r.aConfirmar.map(c => escapeHtml(c.nome)).join(', ')}. Confira o Pix e toque em Confirmar.</p>` : ''}
+            ${r.prazoVencido && r.atrasados.length ? `<div class="aviso-faixa perigo"><span><strong>${r.atrasados.length}</strong> com vaga não ${r.atrasados.length === 1 ? 'pagou' : 'pagaram'} e o prazo acabou.</span>
+                <button type="button" class="btn-texto perigo" id="btn-tirar-atrasados">Tirar e subir suplentes</button></div>` : ''}`;
         const conv = document.getElementById('presenca-convidados');
         if (conv) {
             const linhaPessoa = (c, i, suplente) => `<div class="pessoa-lista ${c.atrasado ? 'atrasado' : ''}">
                 <span class="pos">${i + 1}</span>
-                <span class="nome">${c.goleiro ? '🧤 ' : ''}${escapeHtml(c.nome)}${c.convidado ? ' <small class="tag-conv">convidado</small>' : ''}</span>
-                ${suplente ? '' : `<button type="button" class="btn-pag ${c.pago ? 'pago' : c.aConfirmar ? 'aconfirmar' : ''}" data-pago="${escapeHtml(c.id)}">${c.pago ? '💰 Pago ✔' : c.aConfirmar ? '🕐 Confirmar' : c.atrasado ? '⚠️ Não pagou' : '⏳ A pagar'}</button>`}
+                <span class="nome">${c.goleiro && window.UI ? UI.icone('glove', 'i-sm') + ' ' : ''}${escapeHtml(c.nome)}${c.convidado ? ' <small class="tag-conv">convidado</small>' : ''}</span>
+                ${suplente ? '' : `<button type="button" class="btn-pag ${c.pago ? 'pago' : c.aConfirmar ? 'aconfirmar' : ''}" data-pago="${escapeHtml(c.id)}">${c.pago ? 'Pago' : c.aConfirmar ? 'Confirmar' : c.atrasado ? 'Não pagou' : 'A pagar'}</button>`}
                 <button type="button" class="btn-tirar" data-tirar="${escapeHtml(c.id)}" aria-label="Tirar da lista">✕</button>
             </div>`;
             const pedidos = r.convidados.filter(c => r.confirmados.some(x => x.id === c.id) || r.espera.some(x => x.id === c.id));
             conv.innerHTML = `
-                <details class="presenca-gestao" open><summary>✅ Confirmados (${r.confirmados.length}) — toque no pagamento para confirmar quem pagou</summary>
+                <details class="presenca-gestao" open><summary>Confirmados <span>${r.confirmados.length}</span></summary>
                     ${r.confirmados.length ? r.confirmados.map((c, i) => linhaPessoa(c, i, false)).join('') : '<p class="subtext">Ninguém confirmou ainda.</p>'}
                 </details>
-                ${r.espera.length ? `<details class="presenca-gestao" open><summary>⏳ Suplentes (${r.espera.length}) — sobem sozinhos quando alguém sai</summary>
+                ${r.espera.length ? `<details class="presenca-gestao" open><summary>Suplentes <span>${r.espera.length}</span></summary><p class="dica">Sobem sozinhos quando alguém sai da lista.</p>
                     ${r.espera.map((c, i) => linhaPessoa(c, i, true)).join('')}</details>` : ''}
-                ${pedidos.length ? `<div class="presenca-pedidos"><p class="subtext" style="margin:0 0 6px;"><strong>Convidados</strong> (não estão no elenco):</p>
-                    ${pedidos.map(c => `<div class="item-jogador"><span>${c.goleiro ? '🧤 ' : ''}${escapeHtml(c.nome)}</span><button type="button" class="btn btn-secondary btn-mini" data-add-conv="${escapeHtml(c.id)}">＋ Pôr no elenco</button></div>`).join('')}</div>` : ''}`;
+                ${pedidos.length ? `<div class="presenca-pedidos"><p class="rotulo">Convidados (fora do elenco)</p>
+                    ${pedidos.map(c => `<div class="item-jogador"><span>${c.goleiro && window.UI ? UI.icone('glove', 'i-sm') + ' ' : ''}${escapeHtml(c.nome)}</span><button type="button" class="btn btn-secondary btn-mini" data-add-conv="${escapeHtml(c.id)}">Pôr no elenco</button></div>`).join('')}</div>` : ''}`;
         }
         const bf = document.getElementById('btn-presenca-fechar');
-        if (bf) bf.textContent = d.aberta === false ? '🔓 Reabrir lista' : '🔒 Fechar lista';
+        if (bf) bf.textContent = d.aberta === false ? 'Reabrir lista' : 'Fechar lista';
     }
     // mensagem no formato das listas do WhatsApp: vagas numeradas, goleiros, suplentes, pagamento e o link
     function textoListaPresenca() {
@@ -1536,41 +1544,106 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 4. ABA SORTEIO ---
+    // --- SORTEIO: quem veio (busca, presentes/fora, nível) ---
+    let buscaPresenca = '';
+    let filtroPresenca = 'todos';   // todos | presentes | fora
     function renderizarPresenca() {
         const container = document.getElementById('lista-presenca');
+        atualizarBarraSorteio();
         if (!container) return;
-        container.innerHTML = '';
+        const ic = (n, c) => (window.UI ? UI.icone(n, c) : '');
+        const presentes = jogadores.filter(j => j.presente);
+        const golsPres = presentes.filter(j => j.isGoleiro).length;
+        const resumo = document.getElementById('presenca-resumo-tela');
+        if (resumo) resumo.textContent = !jogadores.length ? 'Nenhum jogador no elenco'
+            : `${presentes.length} de ${jogadores.length} presentes${golsPres ? ` · ${golsPres} goleiro${golsPres > 1 ? 's' : ''}` : ''}`;
 
         if (jogadores.length === 0) {
-            container.innerHTML = '<p class="subtext">Nenhum jogador cadastrado!</p>';
+            container.innerHTML = `<div class="vazio">${ic('users')}<h3>Cadastre o elenco primeiro</h3>
+                <p>O sorteio usa os jogadores do elenco e o nível de cada um.</p>
+                <button type="button" class="btn btn-primary" data-ir-elenco>Ir para o elenco</button></div>`;
+            container.onclick = (e) => { if (e.target.closest('[data-ir-elenco]')) irParaAba('tab-jogadores'); };
             return;
         }
+        const termo = Logica.normalizarNome(buscaPresenca);
+        const visiveis = listaFiltrada('presenca', jogadores)
+            .filter(j => filtroPresenca === 'todos' || (filtroPresenca === 'presentes' ? j.presente : !j.presente))
+            .filter(j => !termo || Logica.normalizarNome(j.nome).includes(termo))
+            .slice().sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR'));
+        const fN = filtrosEstrelas.presenca || {};
+        const chipN = document.getElementById('chip-nivel-presenca');
+        if (chipN) chipN.classList.toggle('ativo-filtro', String(fN.min || '').trim() !== '' || String(fN.max || '').trim() !== '');
 
-        const visiveis = listaFiltrada('presenca', jogadores);
         if (visiveis.length === 0) {
-            container.innerHTML = '<p class="subtext">Nenhum jogador nessa faixa de estrelas.</p>';
+            container.innerHTML = `<div class="vazio">${ic('search')}<h3>Ninguém aqui</h3><p>Nenhum jogador com esses filtros.</p></div>`;
             return;
         }
-
-        visiveis.forEach(j => {
-            const div = document.createElement('div');
-            div.className = 'item-presenca';
-            const estrelasFmt = Number(j.estrelas || 3.0).toFixed(1).replace('.', ',');
-            div.innerHTML = `
-                <input type="checkbox" class="chk-presenca" id="p-${j.id}" ${j.presente ? 'checked' : ''}>
-                <label for="p-${j.id}" class="lbl-presenca">${avatarHtml(j.nome)}<span class="nm">${j.isGoleiro ? '🧤 ' : ''}${escapeHtml(j.nome)}</span><span class="pill-est">⭐ ${estrelasFmt}</span><span class="switch" aria-hidden="true"></span></label>
-            `;
-            container.appendChild(div);
-
-            const check = div.querySelector('input');
-            if (check) {
-                check.addEventListener('change', (e) => {
-                    j.presente = e.target.checked;
-                    salvarJogadores();
-                });
-            }
-        });
+        container.innerHTML = '<div class="lista">' + visiveis.map(j => {
+            const nivel = Number(j.estrelas || 3.0).toFixed(1).replace('.', ',');
+            return `<div class="item-presenca">
+                <input type="checkbox" class="chk-presenca" id="p-${escapeHtml(String(j.id))}" data-id="${escapeHtml(String(j.id))}" ${j.presente ? 'checked' : ''}>
+                <label for="p-${escapeHtml(String(j.id))}" class="lbl-presenca">${avatarHtml(j.nome)}
+                    <span class="li-txt"><span class="li-titulo">${escapeHtml(j.nome)}</span><span class="li-sub">${j.isGoleiro ? ic('glove', 'i-sm') + 'Goleiro' : 'Linha'} · <span class="nivel-txt">${ic('star', 'i-cheio')}${nivel}</span></span></span>
+                    <span class="switch" aria-hidden="true"></span></label>
+            </div>`;
+        }).join('') + '</div>';
+        container.onchange = (e) => {
+            const c = e.target.closest && e.target.closest('.chk-presenca');
+            if (!c) return;
+            const j = jogadores.find(x => String(x.id) === c.dataset.id);
+            if (!j) return;
+            j.presente = c.checked;
+            salvarJogadores();
+            const pres = jogadores.filter(x => x.presente), g = pres.filter(x => x.isGoleiro).length;
+            if (resumo) resumo.textContent = `${pres.length} de ${jogadores.length} presentes${g ? ` · ${g} goleiro${g > 1 ? 's' : ''}` : ''}`;
+            atualizarBarraSorteio();
+        };
     }
+    function atualizarBarraSorteio() {
+        const t = parseInt(document.getElementById('qtd-times')?.value, 10) || 0;
+        const l = parseInt(document.getElementById('qtd-por-time')?.value, 10) || 0;
+        const r = document.getElementById('resumo-config-sorteio');
+        if (r) r.textContent = `${t} times de ${l}`;
+        const p = document.getElementById('bc-presentes');
+        const n = jogadores.filter(j => j.presente).length;
+        if (p) p.textContent = `${n} presente${n === 1 ? '' : 's'}`;
+    }
+    (function ligarTelaSorteio() {
+        const $ = id => document.getElementById(id);
+        const busca = $('busca-presenca');
+        if (busca) busca.addEventListener('input', () => { buscaPresenca = busca.value; renderizarPresenca(); });
+        $('chips-presenca')?.addEventListener('click', (e) => {
+            const c = e.target.closest('.chip');
+            if (!c) return;
+            if (c.id === 'chip-nivel-presenca') { if (window.UI) UI.abrirSheet('sheet-filtro-presenca'); return; }
+            filtroPresenca = c.dataset.pres || 'todos';
+            $('chips-presenca').querySelectorAll('[data-pres]').forEach(x => x.classList.toggle('on', x === c));
+            renderizarPresenca();
+        });
+        $('btn-presenca-opcoes')?.addEventListener('click', () => { if (window.UI) UI.abrirSheet('sheet-presenca-opcoes'); });
+        const marcarTodos = (v) => {
+            jogadores.forEach(j => { j.presente = v; });
+            salvarJogadores(); renderizarPresenca();
+            if (window.UI) UI.fecharSheet('sheet-presenca-opcoes');
+            toast(v ? 'Todos marcados como presentes' : 'Presença zerada');
+        };
+        $('btn-marcar-todos')?.addEventListener('click', () => marcarTodos(true));
+        $('btn-desmarcar-todos')?.addEventListener('click', () => marcarTodos(false));
+        $('btn-config-sorteio')?.addEventListener('click', () => { if (window.UI) UI.abrirSheet('sheet-config-sorteio'); });
+        $('abrir-lista-link')?.addEventListener('click', () => { renderizarCardPresenca(); if (window.UI) UI.abrirSheet('sheet-lista-link'); });
+        // − e + dos seletores de quantidade (data-alvo = id do campo)
+        document.querySelectorAll('.stepper[data-alvo]').forEach(st => {
+            const campo = $(st.dataset.alvo);
+            const min = Number(st.dataset.min) || 0, max = Number(st.dataset.max) || 99;
+            const ajustar = v => { if (campo) { campo.value = String(Math.min(max, Math.max(min, v))); atualizarBarraSorteio(); } };
+            st.addEventListener('click', (e) => { const b = e.target.closest('[data-passo]'); if (b) ajustar((parseInt(campo.value, 10) || 0) + Number(b.dataset.passo)); });
+            if (campo) campo.addEventListener('change', () => ajustar(parseInt(campo.value, 10) || min));
+        });
+        $('btn-copiar-lista')?.addEventListener('click', copiarListaTimes);
+        $('btn-imagem-times')?.addEventListener('click', compartilharImagemTimes);
+        $('btn-sortear-de-novo')?.addEventListener('click', () => $('btn-sortear')?.click());
+        atualizarBarraSorteio();
+    })();
 
     const btnSortear = document.getElementById('btn-sortear');
     if (btnSortear) {
@@ -1580,11 +1653,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const porTime = parseInt(document.getElementById('qtd-por-time')?.value) || 0;
 
             if (qtdTimes < 2 || qtdTimes > 8) {
-                await mostrarAlerta('Escolha entre 2 e 8 times.', '🎲 SORTEIO');
+                toast('Escolha entre 2 e 8 times.', 'erro');
                 return;
             }
             if (presentes.length < qtdTimes) {
-                await mostrarAlerta(`Só ${presentes.length} jogador(es) presente(s) para ${qtdTimes} times!`, '🎲 SORTEIO');
+                toast(presentes.length ? `Só ${presentes.length} presente${presentes.length > 1 ? 's' : ''} para ${qtdTimes} times. Marque mais gente.` : 'Marque quem veio jogar primeiro.', 'erro');
                 return;
             }
 
@@ -1596,84 +1669,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Resultado do sorteio (painel): um card por time, nível médio e goleiro em destaque
+    const CORES_TIMES = ['#2da762', '#e3b341', '#4f8fe0', '#ef6b6b', '#a66be0', '#e08a3c', '#3cc4c4', '#c9cfd3'];
     function exibirTimesSorteados() {
         const container = document.getElementById('times-sorteados-container');
         if (!container) return;
-        
-        container.className = 'grid-times-container';
         container.innerHTML = '';
+        const ic = (n, c) => (window.UI ? UI.icone(n, c) : '');
+        const fmt = v => (Number(v) || 0).toFixed(1).replace('.', ',');
+        const medias = sorteioAtual.map(t => t.jogadores.length ? t.somaEstrelas / t.jogadores.length : 0);
+        const dif = medias.length ? Math.max(...medias) - Math.min(...medias) : 0;
+        const sub = document.getElementById('resultado-sub');
+        if (sub) sub.textContent = `${sorteioAtual.length} times · diferença de nível ${fmt(dif)}${contadorSorteios > 1 ? ` · ${contadorSorteios}º sorteio` : ''}`;
 
-        // ALTERAÇÃO 2: Exibição visual do contador de sorteios realizados
-        let divContador = document.getElementById('contador-sorteios-info');
-        if (!divContador) {
-            divContador = document.createElement('div');
-            divContador.id = 'contador-sorteios-info';
-            divContador.style.cssText = 'background: rgba(221, 180, 60, 0.15); border: 1px solid #ddb43c; color: #ddb43c; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; text-align: center; font-weight: bold; font-size: 0.9rem;';
-            container.parentNode.insertBefore(divContador, container);
-        }
-        divContador.innerHTML = `🔁 Sorteio realizado <strong>${contadorSorteios}x</strong> nesta sessão`;
-
-        sorteioAtual.forEach(t => {
+        sorteioAtual.forEach((t, i) => {
             const card = document.createElement('div');
-            card.className = 'card-time';
-
-            const avisoGoleiro = t.temGoleiro ? '' : ' <span class="badge-sem-goleiro">(Sem goleiro fixo)</span>';
-            const mediaEstrelas = (t.jogadores.length > 0 ? (t.somaEstrelas / t.jogadores.length) : 0).toFixed(1).replace('.', ',');
-            
-            const listaJogadoresHtml = t.jogadores.map(j => {
-                const estFmt = Number(j.estrelas || 3.0).toFixed(1).replace('.', ',');
-                return `
-                    <li class="item-jogador-time">
-                        <span>${j.isGoleiro ? '🧤 ' : ''}${escapeHtml(j.nome)}</span>
-                        <small class="estrelas-jogador">⭐ ${estFmt}</small>
-                    </li>
-                `;
-            }).join('');
-
+            card.className = 'time-card';
+            const linhas = t.jogadores.map(j => `<li>
+                    <span class="tc-pos">${j.isGoleiro ? ic('glove', 'i-sm') : ''}</span>
+                    <span class="tc-nome">${escapeHtml(j.nome)}</span>
+                    <span class="tc-nivel">${fmt(j.estrelas || 3)}</span>
+                </li>`).join('');
             card.innerHTML = `
-                <div class="card-time-header">
-                    <h3>🟢 ${t.nome}</h3>
-                    <span class="badge-estrelas">⭐ Média: ${mediaEstrelas}</span>
+                <div class="tc-cab">
+                    <span class="tc-cor" style="background:${CORES_TIMES[i % CORES_TIMES.length]}"></span>
+                    <b>${escapeHtml(t.nome)}</b>
+                    <span class="nivel">${ic('star', 'i-cheio')}${fmt(medias[i])}</span>
                 </div>
-                ${avisoGoleiro}
-                <ul class="lista-jogadores-card">
-                    ${listaJogadoresHtml}
-                </ul>
-            `;
-
+                <ul>${linhas}</ul>
+                ${t.temGoleiro ? '' : '<p class="tc-aviso">Sem goleiro fixo</p>'}`;
             container.appendChild(card);
         });
-
-        let btnCopiar = document.getElementById('btn-copiar-lista');
-        if (!btnCopiar) {
-            btnCopiar = document.createElement('button');
-            btnCopiar.id = 'btn-copiar-lista';
-            btnCopiar.className = 'btn btn-primary';
-            btnCopiar.style.width = '100%';
-            btnCopiar.style.marginTop = '12px';
-            btnCopiar.innerHTML = '📋 Copiar Lista de Times';
-            
-            btnCopiar.addEventListener('click', copiarListaTimes);
-            
-            if (container.parentNode) {
-                container.parentNode.appendChild(btnCopiar);
-            }
-        }
-
-        let btnImagem = document.getElementById('btn-imagem-times');
-        if (!btnImagem && window.ImagemTimes) {
-            btnImagem = document.createElement('button');
-            btnImagem.id = 'btn-imagem-times';
-            btnImagem.className = 'btn btn-success';
-            btnImagem.style.width = '100%';
-            btnImagem.style.marginTop = '10px';
-            btnImagem.textContent = '📸 Enviar imagem dos times';
-            btnImagem.addEventListener('click', compartilharImagemTimes);
-            if (container.parentNode) container.parentNode.insertBefore(btnImagem, btnCopiar);
-        }
-
-        const resDiv = document.getElementById('resultado-sorteio');
-        if (resDiv) resDiv.classList.remove('hidden');
+        const res = document.getElementById('resultado-sorteio');
+        if (window.UI) UI.abrirSheet('resultado-sorteio'); else if (res) res.classList.remove('hidden');
     }
 
     // ---------- CARA DO RACHA (🎨 Personalizar): nome, escudo e cor ----------
@@ -1968,6 +1996,7 @@ document.addEventListener('DOMContentLoaded', () => {
             salvarCampeonatoAtivo();
             if (window.Metricas) Metricas.evento('campeonato_iniciado');
 
+            if (window.UI) UI.fecharSheet('resultado-sorteio');
             irParaAba('tab-campeonato');
         });
     }

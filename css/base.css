@@ -246,3 +246,80 @@ a.lista-item { text-decoration: none; }
 #drawer-rachas .btn { margin-top: var(--e-2); }
 #drawer-rachas .btn-texto { width: 100%; justify-content: center; }
 .plano-status { border-radius: var(--r-md); }
+
+/* ---------- Sorteio ---------- */
+#tab-sorteio { gap: var(--e-3); padding-bottom: 96px; }
+.acesso { display: flex; align-items: center; gap: var(--e-3); width: 100%; padding: 12px var(--e-4); text-align: left; cursor: pointer; font: inherit; color: var(--c-texto);
+    background: var(--c-sup-1); border: 1px solid var(--c-linha); border-radius: var(--r-lg); }
+.acesso-ic { width: 40px; height: 40px; border-radius: var(--r-md); display: grid; place-items: center; flex: none; background: var(--c-sup-2); color: var(--c-texto-2); }
+.acesso.ativo { border-color: rgba(var(--verde-rgb), 0.45); }
+.acesso.ativo .acesso-ic { background: rgba(var(--verde-rgb), 0.15); color: var(--c-destaque); }
+.acesso.ativo .li-sub { color: var(--c-destaque); }
+
+/* presença: linha da lista com interruptor */
+.lista .item-presenca { display: block; margin: 0; padding: 0; border: 0; border-bottom: 1px solid var(--c-linha); border-radius: 0; background: none; }
+.lista .item-presenca:last-child { border-bottom: 0; }
+.lista .lbl-presenca { gap: var(--e-3); padding: 10px var(--e-4); min-height: 60px; }
+.lista .chk-presenca:checked + .lbl-presenca { background: none; }
+.lista .chk-presenca:not(:checked) + .lbl-presenca .li-titulo { color: var(--c-texto-2); }
+.nivel-txt { display: inline-flex; align-items: center; gap: 3px; }
+.nivel-txt .i { width: 12px; height: 12px; color: var(--c-ouro); }
+.switch { width: 46px; height: 28px; background: var(--c-sup-3); }
+.switch::after { width: 22px; height: 22px; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); }
+.chk-presenca:checked + .lbl-presenca .switch { background: var(--c-destaque-forte); }
+
+/* barra de ação fixa (acima do menu) */
+.barra-acao { position: fixed; left: 0; right: 0; z-index: 55; bottom: calc(var(--nav-h) + env(safe-area-inset-bottom)); display: none; gap: var(--e-2); align-items: center;
+    padding: 10px max(12px, calc(50% - 300px)); background: rgba(15, 18, 20, 0.96); border-top: 1px solid var(--c-linha); }
+body[data-aba="tab-sorteio"] .barra-acao[data-so-aba="tab-sorteio"] { display: flex; }
+body.com-sheet .barra-acao { display: none !important; }
+.barra-acao .btn { width: auto; flex: 1.2; }
+.barra-config { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 6px 12px; min-height: 48px; justify-content: center; cursor: pointer;
+    background: var(--c-sup-1); border: 1px solid var(--c-linha); border-radius: var(--r-md); color: var(--c-texto); font: inherit; text-align: left; }
+.bc-rotulo { font-size: var(--t-xs); color: var(--c-texto-3); font-weight: 600; }
+.bc-valor { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-sm); font-weight: 650; }
+.bc-valor .i { color: var(--c-texto-3); }
+.stepper .valor input[type="number"] { -moz-appearance: textfield; }
+.stepper .valor input::-webkit-outer-spin-button, .stepper .valor input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* resultado do sorteio */
+.sheet-alto { max-height: 92vh; }
+.sheet-cab .tela-sub { margin-top: 2px; }
+.times-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--e-2); }
+.time-card { background: var(--c-sup-2); border: 1px solid var(--c-linha); border-radius: var(--r-md); padding: 10px 12px 8px; }
+.tc-cab { display: flex; align-items: center; gap: 8px; padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--c-linha); }
+.tc-cab b { flex: 1; font-size: var(--t-md); }
+.tc-cor { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.time-card ul { list-style: none; }
+.time-card li { display: flex; align-items: center; gap: 6px; padding: 5px 0; font-size: var(--t-sm); }
+.tc-pos { width: 16px; display: grid; place-items: center; color: var(--c-destaque); flex: none; }
+.tc-nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tc-nivel { color: var(--c-texto-3); font-variant-numeric: tabular-nums; font-size: var(--t-xs); }
+.tc-aviso { font-size: var(--t-xs); color: var(--c-perigo); margin-top: 4px; }
+.tres-botoes { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e-2); }
+.tres-botoes .btn, .dois-botoes .btn { padding: 11px 6px; font-size: var(--t-sm); }
+.dois-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-2); margin-top: var(--e-3); }
+
+/* painel da lista de presença */
+#card-presenca .vazio { padding-top: var(--e-2); }
+.lp-cfg { display: flex; align-items: center; justify-content: space-between; gap: var(--e-2); font-size: var(--t-sm); color: var(--c-texto-2); margin-bottom: var(--e-3); }
+.lp-cfg .btn-texto { padding: 4px 0; color: var(--c-destaque); }
+.lp-pag { display: flex; flex-direction: column; gap: 2px; margin-top: var(--e-3); font-size: var(--t-sm); color: var(--c-texto-2); }
+.lp-pag .vencido { color: var(--c-perigo); }
+.aviso-faixa { display: flex; align-items: center; justify-content: space-between; gap: var(--e-2); flex-wrap: wrap; margin-top: var(--e-3); padding: 10px 12px; border-radius: var(--r-md); font-size: var(--t-sm); line-height: 1.4; }
+.aviso-faixa.perigo { background: rgba(239, 107, 107, 0.08); border: 1px solid rgba(239, 107, 107, 0.3); color: #f3a0a0; }
+.aviso-faixa.ouro { background: rgba(227, 179, 65, 0.08); border: 1px solid rgba(227, 179, 65, 0.3); color: #e9c76d; }
+.aviso-faixa .btn-texto { padding: 0; }
+.link-linha input { margin-top: var(--e-3); font-size: var(--t-sm); color: var(--c-texto-2); }
+.presenca-numeros > div { background: var(--c-sup-2); border-color: var(--c-linha); border-radius: var(--r-md); }
+.presenca-numeros strong { color: var(--c-texto); font-variant-numeric: tabular-nums; }
+.presenca-gestao { background: var(--c-sup-2); border-color: var(--c-linha); border-radius: var(--r-md); }
+.presenca-gestao summary { color: var(--c-texto); display: flex; justify-content: space-between; list-style: none; }
+.presenca-gestao summary::-webkit-details-marker { display: none; }
+.presenca-gestao summary span { color: var(--c-texto-3); }
+.btn-pag { background: var(--c-sup-3); color: var(--c-texto-2); border-color: var(--c-linha); }
+.btn-pag.pago { background: rgba(var(--verde-rgb), 0.14); border-color: rgba(var(--verde-rgb), 0.45); color: var(--c-destaque); }
+.btn-pag.aconfirmar { background: rgba(227, 179, 65, 0.12); border-color: rgba(227, 179, 65, 0.5); color: var(--c-ouro); }
+.btn-tirar { width: 30px; height: 30px; border-color: var(--c-linha); }
+.presenca-pedidos { border-color: rgba(227, 179, 65, 0.35); border-radius: var(--r-md); }
+.bc-valor { white-space: nowrap; }

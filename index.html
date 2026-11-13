@@ -157,54 +157,26 @@
 
         <!-- ABA 2: SORTEIO -->
         <section id="tab-sorteio" class="tab-content" data-title="Sorteio">
-            <!-- LISTA DE PRESENÇA POR LINK (cada um confirma no celular; o app marca sozinho) -->
-            <div class="card" id="card-presenca">
-                <h2>📲 Lista de presença por link</h2>
-                <div id="presenca-off">
-                    <p class="subtext">Mande um link no grupo: cada jogador toca no nome e confirma se vai. Quem confirmar já fica marcado aqui embaixo, pronto para o sorteio.</p>
-                    <button id="btn-presenca-criar" class="btn btn-primary">📲 Criar lista e enviar no grupo</button>
-                </div>
-                <div id="presenca-on" class="hidden">
-                    <div id="presenca-resumo"></div>
-                    <input type="text" id="presenca-link" readonly>
-                    <div class="modal-actions">
-                        <button id="btn-presenca-enviar" class="btn btn-success">📤 Enviar lista no grupo</button>
-                        <button id="btn-presenca-copiar" class="btn btn-secondary">📋 Copiar lista</button>
-                    </div>
-                    <div id="presenca-convidados"></div>
-                    <div class="modal-actions" style="margin-top:8px;">
-                        <button id="btn-presenca-fechar" class="btn btn-secondary">🔒 Fechar lista</button>
-                        <button id="btn-presenca-encerrar" class="btn btn-danger">Encerrar link</button>
-                    </div>
-                </div>
+            <button type="button" class="acesso" id="abrir-lista-link">
+                <span class="acesso-ic"><svg class="i"><use href="#i-link"/></svg></span>
+                <span class="li-txt"><span class="li-titulo">Lista de presença por link</span><span class="li-sub" id="lista-link-status">Mande no grupo: quem confirmar já fica marcado</span></span>
+                <svg class="i i-sm li-seta"><use href="#i-chevron"/></svg>
+            </button>
+            <label class="busca">
+                <svg class="i" aria-hidden="true"><use href="#i-search"/></svg>
+                <input type="search" id="busca-presenca" placeholder="Buscar jogador" autocomplete="off" enterkeyhint="search" aria-label="Buscar jogador">
+            </label>
+            <div class="chips" id="chips-presenca" role="group" aria-label="Filtrar presença">
+                <button type="button" class="chip on" data-pres="todos">Todos</button>
+                <button type="button" class="chip" data-pres="presentes">Presentes</button>
+                <button type="button" class="chip" data-pres="fora">Fora</button>
+                <button type="button" class="chip" id="chip-nivel-presenca"><svg class="i" aria-hidden="true"><use href="#i-sliders"/></svg>Nível</button>
             </div>
-
-            <div class="card">
-                <h2>1. Quem veio jogar hoje?</h2>
-                <p class="subtext">Marque quem está presente no racha do dia:</p>
-                <div id="filtro-presenca"></div>
-                <div id="lista-presenca"></div>
+            <div class="tela-cab">
+                <p class="tela-sub" id="presenca-resumo-tela">Ninguém marcado</p>
+                <button type="button" class="icon-btn" id="btn-presenca-opcoes" aria-label="Opções da presença"><svg class="i" aria-hidden="true"><use href="#i-dots"/></svg></button>
             </div>
-
-            <div class="card">
-                <h2>2. Configurar Times</h2>
-                <div class="form-group-row">
-                    <label>Quantidade de Times:</label>
-                    <input type="number" id="qtd-times" value="3" min="2" max="8">
-                </div>
-                <div class="form-group-row">
-                    <label>Jogadores de linha por time:</label>
-                    <input type="number" id="qtd-por-time" value="6" min="3" max="12">
-                </div>
-                <p class="subtext">Goleiros são sorteados à parte: 1 por time, a partir do Time 1. O último time fica com o que sobrar.</p>
-                <button id="btn-sortear" class="btn btn-primary">⚡ Realizar Sorteio Equilibrado</button>
-            </div>
-
-            <div id="resultado-sorteio" class="card hidden">
-                <h2>Times Definidos</h2>
-                <div id="times-sorteados-container"></div>
-                <button id="btn-iniciar-campeonato" class="btn btn-success" style="margin-top:10px;">🚀 Iniciar Campeonato</button>
-            </div>
+            <div id="lista-presenca"></div>
         </section>
 
         <!-- ABA 3: CAMPEONATO -->
@@ -491,6 +463,114 @@
 
     <!-- AÇÃO PRINCIPAL DA TELA (aparece só na aba certa: body[data-aba]) -->
     <button type="button" class="fab" id="btn-novo-jogador" data-so-aba="tab-jogadores"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>Adicionar</button>
+
+    <div class="barra-acao" data-so-aba="tab-sorteio" id="barra-sorteio">
+        <button type="button" class="barra-config" id="btn-config-sorteio" aria-label="Ajustar times">
+            <span class="bc-rotulo" id="bc-presentes">0 presentes</span>
+            <span class="bc-valor"><span id="resumo-config-sorteio">3 times de 6</span><svg class="i i-sm"><use href="#i-sliders"/></svg></span>
+        </button>
+        <button type="button" id="btn-sortear" class="btn btn-primary"><svg class="i"><use href="#i-shuffle"/></svg>Sortear times</button>
+    </div>
+
+    <!-- PAINÉIS DE BAIXO: sorteio -->
+    <div id="sheet-config-sorteio" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-config-sorteio">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab"><h2 id="t-config-sorteio">Times</h2><button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button></div>
+            <div class="campo">
+                <span class="rotulo">Quantidade de times</span>
+                <div class="stepper" data-alvo="qtd-times" data-min="2" data-max="8">
+                    <button type="button" data-passo="-1" aria-label="Menos times"><svg class="i"><use href="#i-minus"/></svg></button>
+                    <div class="valor"><input type="number" id="qtd-times" value="3" min="2" max="8" inputmode="numeric" aria-label="Quantidade de times"></div>
+                    <button type="button" data-passo="1" aria-label="Mais times"><svg class="i"><use href="#i-plus"/></svg></button>
+                </div>
+            </div>
+            <div class="campo">
+                <span class="rotulo">Jogadores de linha por time</span>
+                <div class="stepper" data-alvo="qtd-por-time" data-min="1" data-max="12">
+                    <button type="button" data-passo="-1" aria-label="Menos jogadores"><svg class="i"><use href="#i-minus"/></svg></button>
+                    <div class="valor"><input type="number" id="qtd-por-time" value="6" min="1" max="12" inputmode="numeric" aria-label="Jogadores de linha por time"></div>
+                    <button type="button" data-passo="1" aria-label="Mais jogadores"><svg class="i"><use href="#i-plus"/></svg></button>
+                </div>
+                <span class="dica">Goleiros são sorteados à parte, um por time a partir do Time 1. O último time fica com quem sobrar.</span>
+            </div>
+            <div class="sheet-acoes"><button type="button" class="btn btn-primary" data-fechar>Pronto</button></div>
+        </div>
+    </div>
+
+    <div id="sheet-filtro-presenca" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-filtro-presenca">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab"><h2 id="t-filtro-presenca">Filtrar por nível</h2><button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button></div>
+            <div id="filtro-presenca"></div>
+            <div class="sheet-acoes"><button type="button" class="btn btn-primary" data-fechar>Ver jogadores</button></div>
+        </div>
+    </div>
+
+    <div id="sheet-presenca-opcoes" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-presenca-opcoes">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab"><h2 id="t-presenca-opcoes">Presença</h2><button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button></div>
+            <div class="lista sheet-menu">
+                <button type="button" class="lista-item" id="btn-marcar-todos"><svg class="i"><use href="#i-check"/></svg><span class="li-txt"><span class="li-titulo">Marcar todos como presentes</span></span></button>
+                <button type="button" class="lista-item" id="btn-desmarcar-todos"><svg class="i"><use href="#i-x"/></svg><span class="li-txt"><span class="li-titulo">Desmarcar todos</span><span class="li-sub">Para começar a lista do zero</span></span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sheet-lista-link" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-lista-link">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel sheet-alto">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab"><h2 id="t-lista-link">Lista de presença</h2><button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button></div>
+            <div id="card-presenca">
+                <div id="presenca-off">
+                    <div class="vazio">
+                        <svg class="i"><use href="#i-link"/></svg>
+                        <h3>Confirmação pelo celular</h3>
+                        <p>Você manda um link no grupo, cada um digita o nome e confirma. Quem confirmar já fica marcado aqui. Dá para cobrar com Pix e ter lista de suplentes.</p>
+                        <button type="button" id="btn-presenca-criar" class="btn btn-primary">Criar lista</button>
+                    </div>
+                </div>
+                <div id="presenca-on" class="hidden">
+                    <div id="presenca-resumo"></div>
+                    <div class="link-linha"><input type="text" id="presenca-link" readonly aria-label="Link da lista"></div>
+                    <div class="dois-botoes">
+                        <button type="button" id="btn-presenca-enviar" class="btn btn-primary"><svg class="i"><use href="#i-share"/></svg>Enviar no grupo</button>
+                        <button type="button" id="btn-presenca-copiar" class="btn btn-secondary"><svg class="i"><use href="#i-copy"/></svg>Copiar lista</button>
+                    </div>
+                    <div id="presenca-convidados"></div>
+                    <div class="dois-botoes" style="margin-top:var(--e-4);">
+                        <button type="button" id="btn-presenca-fechar" class="btn btn-secondary">Fechar lista</button>
+                        <button type="button" id="btn-presenca-encerrar" class="btn btn-danger">Encerrar link</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultado-sorteio" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-resultado">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel sheet-alto">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab">
+                <div><h2 id="t-resultado">Times sorteados</h2><p class="tela-sub" id="resultado-sub"></p></div>
+                <button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+            </div>
+            <div id="times-sorteados-container" class="times-grade"></div>
+            <div class="sheet-acoes">
+                <button type="button" id="btn-iniciar-campeonato" class="btn btn-primary"><svg class="i"><use href="#i-whistle"/></svg>Começar jogo</button>
+                <div class="tres-botoes">
+                    <button type="button" id="btn-imagem-times" class="btn btn-secondary"><svg class="i i-sm"><use href="#i-image"/></svg>Imagem</button>
+                    <button type="button" id="btn-copiar-lista" class="btn btn-secondary"><svg class="i i-sm"><use href="#i-copy"/></svg>Copiar</button>
+                    <button type="button" id="btn-sortear-de-novo" class="btn btn-secondary"><svg class="i i-sm"><use href="#i-reset"/></svg>De novo</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- MENU INFERIOR -->
     <nav class="nav-tabs">
