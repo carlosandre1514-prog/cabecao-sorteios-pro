@@ -294,3 +294,16 @@ t('lista: 4 times x 4 na linha + 1 goleiro por time, suplentes, saída sobe o su
     const poucos = L.resumirPresenca([{ id: 'g1', nome: 'G1', g: true }], { g1: { status: 'vou', em: 1 } }, 16, { vagasGoleiro: 4 });
     assert.strictEqual(poucos.goleirosConfirmados, 1); assert.strictEqual(poucos.espera.length, 0);
 });
+
+t('pagamento: jogador diz "já paguei" -> a confirmar (não conta como atrasado) -> organizador confirma', () => {
+    const js = [{ id: 'a', nome: 'Ana' }, { id: 'b', nome: 'Bia' }, { id: 'c', nome: 'Caio' }];
+    const resp = { a: { status: 'vou', em: 1, paguei: 5 }, b: { status: 'vou', em: 2 }, c: { status: 'vou', em: 3, paguei: 6 } };
+    const r = L.resumirPresenca(js, resp, 0, { pagos: { c: true }, prazo: 10, agora: 20 });
+    const por = id => r.confirmados.find(x => x.id === id);
+    assert.ok(por('a').aConfirmar && !por('a').pago && !por('a').atrasado);   // disse que pagou, falta o organizador
+    assert.ok(por('b').atrasado && !por('b').aConfirmar);                     // não pagou e o prazo passou
+    assert.ok(por('c').pago && !por('c').aConfirmar);                         // confirmado pelo organizador
+    assert.deepStrictEqual(r.aConfirmar.map(x => x.nome), ['Ana']);
+    assert.deepStrictEqual(r.atrasados.map(x => x.nome), ['Bia']);
+    assert.strictEqual(r.pagos, 1); assert.strictEqual(r.pendentes, 1);
+});

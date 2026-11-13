@@ -7,7 +7,7 @@
     <meta name="description" content="Confirme se você vai no racha.">
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0b0e0c">
-    <link rel="stylesheet" href="css/style.css?v=20261113f">
+    <link rel="stylesheet" href="css/style.css?v=20261113g">
     <style>
         .app-container { padding-bottom: 32px; }
         main { display: flex; flex-direction: column; gap: 12px; }
@@ -34,8 +34,14 @@
         .entrar-form label { display: flex; gap: 8px; align-items: center; color: var(--mudo); font-size: .9rem; }
         .linha-pessoa .tag.pago { color: var(--neon); font-weight: 700; }
         .linha-pessoa .tag.atrasado { color: var(--verm); font-weight: 700; }
-        .pag-eu { margin: -4px 0 12px; font-size: .9rem; color: var(--ouro); font-weight: 700; }
-        .pag-eu.ok { color: var(--neon); } .pag-eu.atrasado { color: var(--verm); }
+        .pag-eu { margin: -4px 0 12px; padding: 10px; border-radius: 12px; font-size: .95rem; font-weight: 800; color: var(--ouro); background: rgba(221, 180, 60, 0.08); border: 1px solid rgba(221, 180, 60, 0.3); }
+        .pag-eu span { display: block; font-size: .78rem; font-weight: 600; opacity: .85; }
+        .pag-eu.ok { color: var(--neon); background: rgba(45, 167, 98, 0.1); border-color: rgba(45, 167, 98, 0.45); }
+        .pag-eu.atrasado { color: var(--verm); background: rgba(222, 90, 104, 0.08); border-color: rgba(222, 90, 104, 0.4); }
+        .pag-eu.aguardando { color: #e7c75e; }
+        .pag-eu .link-discreto { margin-top: 4px; }
+        .btn-pagar { margin: 8px 0 0 !important; background: linear-gradient(135deg, #e7c75e, var(--ouro)); color: #1d1606; }
+        .linha-pessoa .tag.aguardando { color: #e7c75e; font-weight: 700; }
         .card-pag { border-color: rgba(221, 180, 60, 0.4); }
         .dica-nome { min-height: 1.2em; margin: 0; font-size: .85rem; color: var(--mudo); }
         .dica-nome.achou { color: var(--neon); font-weight: 700; }
@@ -74,7 +80,7 @@
         <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro</p>
     </div>
 
-    <script src="js/logica.js?v=20261113f"></script>
+    <script src="js/logica.js?v=20261113g"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getDatabase, ref, onValue, get, set, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
@@ -123,10 +129,22 @@
             const em = (atual && atual.status === 'vou' && status === 'vou') ? atual.em : Date.now();
             // convidado mudando a resposta: mantém o nome (senão ele some da lista)
             const doConvidado = (atual && atual.convidado) ? { nome: atual.nome, convidado: true, goleiro: !!atual.goleiro } : {};
+            if (atual && atual.paguei && status === 'vou') doConvidado.paguei = atual.paguei;   // não perde o "já paguei"
             const dados = Object.assign({ status, em }, doConvidado, extra || {});
             try {
                 await set(ref(db, 'presenca/' + codigo + '/respostas/' + id), dados);
                 contar('presenca_resposta');
+            } catch (e) {
+                alert('Não foi possível salvar. A lista pode ter sido fechada pelo organizador. (' + ((e && e.code) || 'erro') + ')');
+            }
+        }
+
+        // "Já paguei": o jogador avisa; só vira PAGO quando o organizador confirmar no app
+        async function marcarPaguei(id, sim) {
+            if (!lista || !(lista.respostas || {})[id]) return;
+            try {
+                await set(ref(db, 'presenca/' + codigo + '/respostas/' + id + '/paguei'), sim ? Date.now() : null);
+                if (sim) contar('presenca_paguei');
             } catch (e) {
                 alert('Não foi possível salvar. A lista pode ter sido fechada pelo organizador. (' + ((e && e.code) || 'erro') + ')');
             }
@@ -178,8 +196,11 @@
                 const txt = est === 'vou' ? '✅ Você está confirmado!' : est.startsWith('espera') ? `⏳ Você é suplente (${est.split(':')[1]}º da fila)` : removido ? '❌ O organizador tirou você da lista' : est === 'nao' ? '❌ Você marcou que não vai' : 'Você ainda não respondeu';
                 const minhaVaga = r.confirmados.find(c => c.id === meu.id);
                 const pagTxt = !minhaVaga || !(d.prazo || d.pagamento || (d.pagos && Object.keys(d.pagos).length)) ? ''
-                    : minhaVaga.pago ? '<p class="pag-eu ok">💰 Pagamento confirmado pelo organizador</p>'
-                    : `<p class="pag-eu ${minhaVaga.atrasado ? 'atrasado' : ''}">⏳ Pagamento pendente${d.prazo ? ' — até ' + esc(fmtPrazo(d.prazo)) : ''}</p>`;
+                    : minhaVaga.pago ? '<div class="pag-eu ok">💰 Pago ✔ <span>confirmado pelo organizador</span></div>'
+                    : minhaVaga.aConfirmar ? `<div class="pag-eu aguardando">🕐 Você marcou que pagou <span>aguardando confirmação do organizador</span>
+                        ${d.aberta ? '<button class="link-discreto" data-paguei="nao">Desfazer</button>' : ''}</div>`
+                    : `<div class="pag-eu ${minhaVaga.atrasado ? 'atrasado' : ''}">⏳ Pagamento pendente${d.prazo ? ' — até ' + esc(fmtPrazo(d.prazo)) : ''}
+                        ${d.aberta ? '<button class="btn btn-pagar" data-paguei="sim">💸 Já paguei</button>' : ''}</div>`;
                 const cls = est === 'vou' ? 'vou' : est.startsWith('espera') ? 'espera' : est === 'nao' ? 'nao' : '';
                 h += `<div class="card eu">
                     <p class="subtext" style="margin:0;">Você é</p>
@@ -213,7 +234,9 @@
             // listas
             const temPag = !!(d.prazo || d.pagamento || (d.pagos && Object.keys(d.pagos).length));
             const tagPag = p => p.pago === undefined || !temPag ? (p.convidado ? '<span class="tag">convidado</span>' : '')
-                : p.pago ? '<span class="tag pago">💰 pago</span>' : `<span class="tag ${p.atrasado ? 'atrasado' : ''}">${p.atrasado ? '⚠️ não pagou' : '⏳ a pagar'}</span>`;
+                : p.pago ? '<span class="tag pago">💰 pago ✔</span>'
+                : p.aConfirmar ? '<span class="tag aguardando">🕐 pagou (a confirmar)</span>'
+                : `<span class="tag ${p.atrasado ? 'atrasado' : ''}">${p.atrasado ? '⚠️ não pagou' : '⏳ a pagar'}</span>`;
             const linha = (p, i) => `<div class="linha-pessoa ${p.id === eu ? 'sou-eu' : ''}"><span class="pos">${i + 1}</span><span>${p.goleiro ? '🧤 ' : ''}${esc(p.nome)}</span>${tagPag(p)}</div>`;
             h += `<div class="card"><h2>✅ Confirmados (${r.confirmados.length})</h2>${r.confirmados.length ? r.confirmados.map(linha).join('') : '<p class="subtext">Ninguém confirmou ainda. Seja o primeiro!</p>'}</div>`;
             if (r.espera.length) h += `<div class="card"><h2>⏳ Suplentes (${r.espera.length})</h2><p class="subtext">Se alguém desistir ou não pagar, o primeiro suplente entra.</p>${r.espera.map(linha).join('')}</div>`;
@@ -262,6 +285,7 @@
             const b = e.target.closest('button');
             if (!b || !lista) return;
             if (b.dataset.digitado) { await enviarDigitado(b.dataset.digitado, b); return; }
+            if (b.dataset.paguei && eu) { b.disabled = true; await marcarPaguei(eu, b.dataset.paguei === 'sim'); return; }
             if (b.dataset.resp && eu) { b.disabled = true; await responder(eu, b.dataset.resp); return; }
             if (b.hasAttribute('data-trocar')) { trocando = true; desenhar(); return; }
             if (b.hasAttribute('data-cancelar')) { trocando = false; desenhar(); return; }

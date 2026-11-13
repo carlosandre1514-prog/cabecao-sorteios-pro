@@ -423,7 +423,8 @@
     // respostas: { id: { status: 'vou'|'nao', em, nome?, convidado?, goleiro?, removido? } } vindas da página
     // limite: vagas na LINHA (times x jogadores de linha); 0 = sem limite.
     // opcoes.vagasGoleiro: vagas de goleiro (1 por time); 0/ausente = sem limite.
-    // opcoes.pagos: { id: true } marcados pelo organizador; opcoes.prazo: ms do prazo de pagamento.
+    // opcoes.pagos: { id: true } CONFIRMADOS pelo organizador; opcoes.prazo: ms do prazo de pagamento.
+    // respostas[id].paguei (ms): o próprio jogador disse "já paguei" -> fica "a confirmar" até o organizador confirmar.
     // Quem confirmou primeiro fica com a vaga; o resto vira SUPLENTE, em ordem de confirmação.
     // Quando alguém sai (não vai / removido), o primeiro suplente sobe sozinho.
     function resumirPresenca(jogadores, respostas, limite, opcoes) {
@@ -447,7 +448,7 @@
             const item = {
                 id, nome: j ? String(j.nome) : String(r.nome || '?'),
                 goleiro: j ? !!(j.g || j.isGoleiro) : !!r.goleiro,
-                convidado: !j, em: Number(r.em) || 0, removido: !!r.removido
+                convidado: !j, em: Number(r.em) || 0, removido: !!r.removido, declarou: !!r.paguei
             };
             if (item.convidado) convidados.push(item);
             (r.status === 'vou' ? vou : naoVao).push(item);
@@ -462,9 +463,11 @@
             else espera.push(v);
         });
         // pagamento (só de quem está com vaga)
+        // quem disse que pagou e espera confirmação NÃO conta como atrasado (o organizador confere antes)
         confirmados.forEach(c => {
             c.pago = !!pagos[c.id];
-            c.atrasado = !c.pago && prazoVencido;
+            c.aConfirmar = !c.pago && c.declarou;
+            c.atrasado = !c.pago && !c.declarou && prazoVencido;
         });
         const semResposta = jogadores.filter(j => !respostas[String(j.id)])
             .map(j => ({ id: String(j.id), nome: String(j.nome), goleiro: !!(j.g || j.isGoleiro) }))
@@ -473,7 +476,8 @@
             confirmados, espera, naoVao, semResposta, convidados: convidados.sort(ordem),
             linhaConfirmados: linha, goleirosConfirmados: gols, limite, vagasGoleiro: vagasGol,
             pagos: confirmados.filter(c => c.pago).length,
-            pendentes: confirmados.filter(c => !c.pago).length,
+            pendentes: confirmados.filter(c => !c.pago && !c.declarou).length,
+            aConfirmar: confirmados.filter(c => c.aConfirmar),
             atrasados: confirmados.filter(c => c.atrasado), prazoVencido
         };
     }

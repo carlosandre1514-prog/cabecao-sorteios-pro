@@ -210,6 +210,7 @@ Acrescente este nó nas regras (mantenha os que já existem):
         "convidado": { ".validate": "newData.isBoolean()" },
         "goleiro": { ".validate": "newData.isBoolean()" },
         "removido": { ".validate": "newData.isBoolean()" },
+        "paguei": { ".validate": "newData.isNumber()" },
         "$outro": { ".validate": false }
       }
     }
@@ -218,7 +219,9 @@ Acrescente este nó nas regras (mantenha os que já existem):
 ```
 
 - Só o dono (organizador logado) cria, fecha, reabre, ajusta ou apaga a lista, mexe nos nomes e marca quem **pagou**
-  (`pagos/<id>`). Ninguém pela página consegue se marcar como pago.
+  (`pagos/<id>`). Pela página o jogador só consegue **avisar** "Já paguei" (`respostas/<id>/paguei`): ele fica
+  "🕐 pagou (a confirmar)" até o organizador conferir e tocar em **Confirmar**. Quem avisou que pagou não entra no
+  "Tirar quem não pagou" (o organizador confere antes).
 - **Vagas:** o organizador escolhe quantos times e quantos de linha por time (ex.: 4 x 4 = 16 na linha + 4 goleiros,
   1 por time, igual ao sorteio). Passou disso, vira **suplente**, em ordem de confirmação. Se tiver menos goleiros que
   times, tudo bem (o sorteio já reparte os goleiros do Time 1 para baixo).

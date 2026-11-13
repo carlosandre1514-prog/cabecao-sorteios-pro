@@ -539,6 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div><strong>${r.pagos}</strong><small>pagos</small></div>
                 <div><strong>${r.pendentes}</strong><small>a pagar</small></div>
             </div>
+            ${r.aConfirmar.length ? `<div class="presenca-aviso-pag">🕐 <strong>${r.aConfirmar.length}</strong> ${r.aConfirmar.length === 1 ? 'disse que já pagou' : 'disseram que já pagaram'}: <strong>${r.aConfirmar.map(c => escapeHtml(c.nome)).join(', ')}</strong>. Confira o Pix e toque em <strong>"Confirmar"</strong> no nome.</div>` : ''}
             ${d.prazo ? `<p class="subtext prazo-pag ${r.prazoVencido ? 'vencido' : ''}">💰 Prazo do pagamento: <strong>${escapeHtml(fmtPrazo(d.prazo))}</strong>${r.prazoVencido ? ' (vencido)' : ''}</p>` : ''}
             ${r.prazoVencido && r.atrasados.length ? `<div class="presenca-alerta">⚠️ <strong>${r.atrasados.length}</strong> com vaga ainda não pagaram e o prazo acabou.
                 <button type="button" class="btn btn-danger btn-mini" id="btn-tirar-atrasados" style="margin-top:8px !important;">Tirar quem não pagou e subir suplentes</button></div>` : ''}`;
@@ -547,12 +548,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const linhaPessoa = (c, i, suplente) => `<div class="pessoa-lista ${c.atrasado ? 'atrasado' : ''}">
                 <span class="pos">${i + 1}</span>
                 <span class="nome">${c.goleiro ? '🧤 ' : ''}${escapeHtml(c.nome)}${c.convidado ? ' <small class="tag-conv">convidado</small>' : ''}</span>
-                ${suplente ? '' : `<button type="button" class="btn-pag ${c.pago ? 'pago' : ''}" data-pago="${escapeHtml(c.id)}">${c.pago ? '💰 Pago' : c.atrasado ? '⚠️ Não pagou' : '⏳ A pagar'}</button>`}
+                ${suplente ? '' : `<button type="button" class="btn-pag ${c.pago ? 'pago' : c.aConfirmar ? 'aconfirmar' : ''}" data-pago="${escapeHtml(c.id)}">${c.pago ? '💰 Pago ✔' : c.aConfirmar ? '🕐 Confirmar' : c.atrasado ? '⚠️ Não pagou' : '⏳ A pagar'}</button>`}
                 <button type="button" class="btn-tirar" data-tirar="${escapeHtml(c.id)}" aria-label="Tirar da lista">✕</button>
             </div>`;
             const pedidos = r.convidados.filter(c => r.confirmados.some(x => x.id === c.id) || r.espera.some(x => x.id === c.id));
             conv.innerHTML = `
-                <details class="presenca-gestao" open><summary>✅ Confirmados (${r.confirmados.length}) — toque em "A pagar" quando a pessoa pagar</summary>
+                <details class="presenca-gestao" open><summary>✅ Confirmados (${r.confirmados.length}) — toque no pagamento para confirmar quem pagou</summary>
                     ${r.confirmados.length ? r.confirmados.map((c, i) => linhaPessoa(c, i, false)).join('') : '<p class="subtext">Ninguém confirmou ainda.</p>'}
                 </details>
                 ${r.espera.length ? `<details class="presenca-gestao" open><summary>⏳ Suplentes (${r.espera.length}) — sobem sozinhos quando alguém sai</summary>
@@ -734,6 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if ((b = alvo('[data-pago]'))) {
                 const id = b.dataset.pago;
                 const pago = !((presencaDados.pagos || {})[id]);
+                if (!pago && !(await mostrarConfirmacao(`Desmarcar o pagamento de ${nomeDe(id)}?`, '💰 PAGAMENTO'))) return;
                 b.disabled = true;
                 try { await window.firebaseFns.set(refPresenca('pagos/' + id), pago ? true : null); if (window.Metricas && pago) Metricas.evento('presenca_pago'); }
                 catch (er) { toast('Não foi possível marcar', 'erro'); }
@@ -2445,7 +2447,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ['presenca_visita', 'Visitas à lista de presença'],
         ['presenca_resposta', 'Respostas na lista (vou/não vou)'],
         ['presenca_convidado_add', 'Convidados adicionados ao elenco'],
-        ['presenca_pago', 'Pagamentos marcados na lista'],
+        ['presenca_paguei', 'Jogadores que avisaram "já paguei"'],
+        ['presenca_pago', 'Pagamentos confirmados pelo organizador'],
         ['presenca_removido', 'Tirados da lista pelo organizador'],
         ['presenca_cta', 'Cliques em "Criar meu racha" (lista)'],
         ['ao_vivo_ligado', 'Placares ao vivo ligados'],
