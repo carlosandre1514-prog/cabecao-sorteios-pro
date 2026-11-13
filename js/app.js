@@ -361,6 +361,10 @@ document.addEventListener('DOMContentLoaded', () => {
         on.classList.toggle('hidden', !aoVivoCodigo);
         const campo = document.getElementById('ao-vivo-link');
         if (campo) campo.value = aoVivoCodigo ? linkAoVivo() : '';
+        const st = document.getElementById('ao-vivo-status');
+        if (st) st.textContent = aoVivoCodigo ? 'Ligado · quem tem o link acompanha em tempo real' : 'Quem está esperando acompanha pelo celular';
+        const ac = document.getElementById('abrir-ao-vivo');
+        if (ac) ac.classList.toggle('ativo', !!aoVivoCodigo);
     }
     // Monta o retrato na hora (o estado pode ser zerado logo depois) e grava com um pequeno atraso
     // para juntar várias mudanças seguidas em uma só escrita.
@@ -399,24 +403,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const $ = id => document.getElementById(id);
         $('btn-ao-vivo-iniciar')?.addEventListener('click', () => {
             if (!dadosCarregados) {
-                mostrarAlerta('Seus dados ainda não carregaram, então não dá para compartilhar. Feche e abra o app e tente de novo.', '📡 PLACAR AO VIVO');
+                mostrarAlerta('Seus dados ainda não carregaram. Feche e abra o app e tente de novo.', 'Placar ao vivo');
                 return;
             }
             if (!timesSorteados.length) {
-                mostrarAlerta('Ainda não há campeonato em andamento. Na aba Sorteio, faça o sorteio e toque em "Iniciar Campeonato". Depois volte aqui e toque em "Compartilhar ao vivo".', '📡 PLACAR AO VIVO');
+                mostrarAlerta('Comece um jogo primeiro: sorteie os times e toque em Começar jogo.', 'Placar ao vivo');
                 return;
             }
             aoVivoCodigo = gerarCodigoAoVivo();
             gravar('aoVivo', { codigo: aoVivoCodigo });
             publicarAoVivo(false);
             atualizarCardAoVivo();
-            toast('📡 Placar ao vivo ligado! Envie o link para o grupo.');
+            toast('Placar ao vivo ligado. Envie o link para o grupo.');
             if (window.Metricas) Metricas.evento('ao_vivo_ligado');
         });
         $('btn-ao-vivo-enviar')?.addEventListener('click', async () => {
             const url = linkAoVivo();
             if (navigator.share) {
-                try { await navigator.share({ title: 'Placar ao vivo', text: '🔴 Acompanhe o campeonato ao vivo:', url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+                try { await navigator.share({ title: 'Placar ao vivo', text: 'Acompanhe o jogo ao vivo:', url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
             }
             toast(await copiarTexto(url) ? 'Link copiado!' : 'Copie o link no campo acima.');
         });
@@ -424,7 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toast(await copiarTexto(linkAoVivo()) ? 'Link copiado!' : 'Copie o link no campo acima.');
         });
         $('btn-ao-vivo-parar')?.addEventListener('click', async () => {
-            const ok = await mostrarConfirmacao('O link deixa de funcionar para todo mundo. Parar de compartilhar?', '📡 PARAR');
+            const ok = await mostrarConfirmacao('O link para de funcionar para todo mundo.', 'Desligar o placar ao vivo?', { ok: 'Desligar', perigo: true });
             if (!ok || !aoVivoCodigo) return;
             const codigo = aoVivoCodigo;
             clearTimeout(aoVivoTimer);
@@ -434,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
             f.set(f.ref(window.firebaseDb, 'ao_vivo/' + codigo), null).catch(e => console.error('Placar ao vivo:', e));
             gravar('aoVivo', null);
             atualizarCardAoVivo();
-            toast('Compartilhamento encerrado.');
+            toast('Placar ao vivo desligado');
         });
     }
     configurarAoVivo();
@@ -775,7 +779,7 @@ document.addEventListener('DOMContentLoaded', () => {
             catch (e) { toast('Não foi possível mudar a lista', 'erro'); }
         });
         $('btn-presenca-encerrar')?.addEventListener('click', async () => {
-            const ok = await mostrarConfirmacao('O link deixa de funcionar e as respostas são apagadas. A presença marcada aqui no app continua. Encerrar a lista?', '📲 ENCERRAR LISTA');
+            const ok = await mostrarConfirmacao('O link para de funcionar e as respostas são apagadas. A presença marcada aqui no app continua.', 'Encerrar a lista?', { ok: 'Encerrar', perigo: true });
             if (!ok || !presencaCodigo) return;
             const ref = refPresenca();
             pararEscutaPresenca();
@@ -1199,7 +1203,8 @@ document.addEventListener('DOMContentLoaded', () => {
             publicarCronometro();   // o link recebe "fim" e apita junto
             tocarApitoJuiz();
             if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
-            mostrarAlerta('⏰ Fim de jogo! Tempo esgotado.', '⏱️ CRONÔMETRO');
+            estadoBotoesTimer();
+            mostrarAlerta('O tempo da partida acabou.', 'Fim de jogo');
         }
     }
 
@@ -1209,6 +1214,20 @@ document.addEventListener('DOMContentLoaded', () => {
         tempoRestante = tempoTotalSegundos;
         atualizarDisplayTimer();
         publicarCronometro();
+        const t = document.getElementById('tempo-partida-txt');
+        if (t) t.textContent = minutos + ' min';
+        estadoBotoesTimer();
+    }
+    // um botão principal: Iniciar -> Pausar -> Continuar
+    function estadoBotoesTimer() {
+        const rodando = !!timerInterval;
+        const ini = document.getElementById('btn-timer-start'), pau = document.getElementById('btn-timer-pause');
+        if (ini) ini.classList.toggle('hidden', rodando);
+        if (pau) pau.classList.toggle('hidden', !rodando);
+        const txt = document.getElementById('txt-timer-start');
+        if (txt) txt.textContent = tempoRestante > 0 && tempoRestante < tempoTotalSegundos ? 'Continuar' : 'Iniciar';
+        const card = document.getElementById('card-relogio');
+        if (card) { card.classList.toggle('rodando', rodando); card.classList.toggle('fim', tempoRestante <= 0); }
     }
 
     if (selectTempo) {
@@ -1234,6 +1253,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fimEm = Date.now() + tempoRestante * 1000;
             timerInterval = setInterval(tickTimer, 250);
             publicarCronometro();
+            estadoBotoesTimer();
         });
     }
 
@@ -1244,6 +1264,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tickTimer();   // atualiza o tempo restante antes de parar
             pararTimer();
             publicarCronometro();
+            estadoBotoesTimer();
         });
     }
 
@@ -1254,6 +1275,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tempoRestante = tempoTotalSegundos;
             atualizarDisplayTimer();
             publicarCronometro();
+            estadoBotoesTimer();
         });
     }
 
@@ -2028,6 +2050,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderizarCampeonato() {
+        const temJogo = timesSorteados.length >= 2;
+        const vazio = document.getElementById('jogo-vazio'), conteudo = document.getElementById('jogo-conteudo');
+        if (vazio) vazio.classList.toggle('hidden', temJogo);
+        if (conteudo) conteudo.classList.toggle('hidden', !temJogo);
         renderizarSeletorModoDisputa();
         renderizarTabela();
 
@@ -2041,58 +2067,38 @@ document.addEventListener('DOMContentLoaded', () => {
         renderizarArtilharia();
     }
 
+    let seletorModoLigado = false;
     function renderizarSeletorModoDisputa() {
-        const container = document.getElementById('painel-partida-atual');
-        if (!container) return;
-
-        let seletorDiv = document.getElementById('box-seletor-modo');
-        if (!seletorDiv) {
-            seletorDiv = document.createElement('div');
-            seletorDiv.id = 'box-seletor-modo';
-            seletorDiv.style.cssText = 'background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; margin-bottom: 12px;';
-            seletorDiv.innerHTML = `
-                <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 4px;">🎯 Modo de Disputa:</label>
-                <select id="select-modo-disputa" style="width: 100%; padding: 6px; border-radius: 4px; font-weight: bold;">
-                    <option value="todos-contra-todos">Tabela (Todos contra Todos)</option>
-                    <option value="racha-livre">Racha Livre (Vencedor Fica)</option>
-                </select>
-            `;
-            container.parentNode.insertBefore(seletorDiv, container);
-
-            const sel = document.getElementById('select-modo-disputa');
-            if (sel) {
-                sel.value = modoJogoAtual;
-                sel.addEventListener('change', async (e) => {
-                    const novoModo = e.target.value;
-                    if (novoModo === modoJogoAtual) return;
-
-                    const temResultados = partidas.some(p => p.finalizada) || partidasRachaHistorico.length > 0 || Object.keys(artilharia).length > 0;
-                    if (temResultados) {
-                        const ok = await mostrarConfirmacao('Trocar o modo de disputa apaga os resultados e a artilharia deste campeonato. Continuar?', '⚠️ TROCAR MODO');
-                        if (!ok) { e.target.value = modoJogoAtual; return; }
-                    }
-
-                    modoJogoAtual = novoModo;
-                    partidas = [];
-                    partidaAtualIndex = 0;
-                    artilharia = {};
-                    partidasRachaHistorico = [];
-                    placarRacha = { a: 0, b: 0 };
-                    tipoDesempateRacha = null;
-                    inicializarClassificacao();
-                    if (modoJogoAtual === 'racha-livre') {
-                        iniciarModoRachaLivre(true);
-                    } else if (timesSorteados.length >= 2) {
-                        gerarTabelaTodosContraTodos();
-                    }
-                    salvarCampeonatoAtivo();
-                    renderizarCampeonato();
-                });
+        const sel = document.getElementById('select-modo-disputa');
+        const selo = document.getElementById('selo-modo');
+        if (selo) selo.textContent = modoJogoAtual === 'racha-livre' ? 'Racha livre' : 'Tabela';
+        if (!sel) return;
+        sel.value = modoJogoAtual;
+        if (seletorModoLigado) return;
+        seletorModoLigado = true;
+        sel.addEventListener('change', async (e) => {
+            const novoModo = e.target.value;
+            if (novoModo === modoJogoAtual) return;
+            const temResultados = partidas.some(p => p.finalizada) || partidasRachaHistorico.length > 0 || Object.keys(artilharia).length > 0;
+            if (temResultados) {
+                const ok = await mostrarConfirmacao('Os resultados e a artilharia deste campeonato serão apagados.', 'Trocar o modo de disputa?', { ok: 'Trocar', perigo: true });
+                if (!ok) { e.target.value = modoJogoAtual; return; }
             }
-        } else {
-            const sel = document.getElementById('select-modo-disputa');
-            if (sel) sel.value = modoJogoAtual;
-        }
+            modoJogoAtual = novoModo;
+            partidas = [];
+            partidaAtualIndex = 0;
+            artilharia = {};
+            partidasRachaHistorico = [];
+            placarRacha = { a: 0, b: 0 };
+            tipoDesempateRacha = null;
+            inicializarClassificacao();
+            if (modoJogoAtual === 'racha-livre') iniciarModoRachaLivre(true);
+            else if (timesSorteados.length >= 2) gerarTabelaTodosContraTodos();
+            salvarCampeonatoAtivo();
+            renderizarCampeonato();
+            if (window.UI) UI.fecharSheet('sheet-jogo-opcoes');
+            toast(modoJogoAtual === 'racha-livre' ? 'Modo racha livre' : 'Modo tabela');
+        });
     }
 
     function renderizarTabela() {
@@ -2105,8 +2111,8 @@ document.addEventListener('DOMContentLoaded', () => {
         listaClass.forEach(c => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="text-align:left;"><strong>${escapeHtml(c.nome)}</strong></td>
-                <td><strong>${c.p}</strong></td>
+                <td>${escapeHtml(c.nome)}</td>
+                <td class="pts">${c.p}</td>
                 <td>${c.j}</td>
                 <td>${c.v}</td>
                 <td>${c.e}</td>
@@ -2125,10 +2131,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const wrap = document.createElement('div');
         wrap.className = 'stepper-placar';
         const menos = document.createElement('button');
-        menos.type = 'button'; menos.className = 'step-btn'; menos.textContent = '−';
+        menos.type = 'button'; menos.className = 'step-btn'; menos.innerHTML = window.UI ? UI.icone('minus') : '−';
         menos.setAttribute('aria-label', 'Tirar um gol');
         const mais = document.createElement('button');
-        mais.type = 'button'; mais.className = 'step-btn step-mais'; mais.textContent = '+';
+        mais.type = 'button'; mais.className = 'step-btn step-mais'; mais.innerHTML = window.UI ? UI.icone('plus') : '+';
         mais.setAttribute('aria-label', 'Adicionar um gol');
         input.parentNode.insertBefore(wrap, input);
         wrap.append(menos, input, mais);
@@ -2148,14 +2154,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!container) return;
 
         if (timesSorteados.length < 2) {
-            container.innerHTML = '<p class="subtext">Realize o sorteio dos times primeiro no menu Sorteio!</p>';
+            container.innerHTML = '';
             return;
         }
 
         if (partidas.length === 0) {
             container.innerHTML = `
-                <p class="subtext" style="text-align:center;">Nenhuma tabela gerada para este campeonato.</p>
-                <button id="btn-gerar-tabela-direto" class="btn btn-primary" style="margin-top:10px; width:100%;">Gerar Tabela de Confrontos</button>
+                <p class="dica-painel">Ainda não há jogos neste campeonato.</p>
+                <button type="button" id="btn-gerar-tabela-direto" class="btn btn-primary">Gerar os confrontos</button>
             `;
             document.getElementById('btn-gerar-tabela-direto')?.addEventListener('click', () => {
                 gerarTabelaTodosContraTodos();
@@ -2179,7 +2185,7 @@ document.addEventListener('DOMContentLoaded', () => {
             partidas = partidas.concat(novos);
             partidaAtualIndex = partidas.findIndex(x => !x.finalizada);
             salvarCampeonatoAtivo();
-            toast(`🔁 Turno ${novos[0].turno} começou! Os jogos seguem até você finalizar o campeonato.`);
+            toast(`${novos[0].turno}º turno começou`);
             renderizarCampeonato();
             return;
         }
@@ -2190,48 +2196,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const opcoesTimesB = timesSorteados.map(t => `<option value="${t.id}" ${t.id === p.timeB.id ? 'selected' : ''}>${escapeHtml(t.nome)}</option>`).join('');
 
         container.innerHTML = `
-            <p class="subtext" style="text-align:center; margin-bottom: 6px; font-size: 0.8rem;">
-               <strong>Rodada ${p.rodada}</strong>${p.turno > 1 ? ` · ${p.turno}º turno` : ''} - Escolha os times que vão jogar abaixo:
-            </p>
-            <div class="placar-box" style="gap:10px;">
-                <div class="time-placar" style="flex:1;">
-                    <select id="select-mudar-time-a" style="width:100%; padding:6px; font-weight:bold; border-radius:4px; text-align:center; margin-bottom:6px;">
-                        ${opcoesTimesA}
-                    </select>
-                    <input type="number" id="gols-a" value="${p.golsA || 0}" min="0">
+            <p class="partida-info">Rodada ${p.rodada}${p.turno > 1 ? ` · ${p.turno}º turno` : ''}</p>
+            <div class="placar-box">
+                <div class="time-placar">
+                    <select id="select-mudar-time-a" aria-label="Time da esquerda">${opcoesTimesA}</select>
+                    <input type="number" id="gols-a" value="${p.golsA || 0}" min="0" aria-label="Gols do time da esquerda">
                 </div>
-                
-                <span style="font-size:1.2rem; font-weight:bold; align-self:center;">X</span>
-                
-                <div class="time-placar" style="flex:1;">
-                    <select id="select-mudar-time-b" style="width:100%; padding:6px; font-weight:bold; border-radius:4px; text-align:center; margin-bottom:6px;">
-                        ${opcoesTimesB}
-                    </select>
-                    <input type="number" id="gols-b" value="${p.golsB || 0}" min="0">
+                <span class="placar-x">×</span>
+                <div class="time-placar">
+                    <select id="select-mudar-time-b" aria-label="Time da direita">${opcoesTimesB}</select>
+                    <input type="number" id="gols-b" value="${p.golsB || 0}" min="0" aria-label="Gols do time da direita">
                 </div>
             </div>
 
             <div id="box-penaltis" class="penaltis-box hidden">
-                <p class="subtext" style="text-align:center;">Empate! Decisão nos Pênaltis:</p>
-                <div class="form-group-row">
-                    <label id="lbl-pen-a">${escapeHtml(p.timeA.nome)}:</label>
-                    <input type="number" id="pen-a" value="0" min="0">
-                </div>
-                <div class="form-group-row">
-                    <label id="lbl-pen-b">${escapeHtml(p.timeB.nome)}:</label>
-                    <input type="number" id="pen-b" value="0" min="0">
-                </div>
-            </div>
-
-            <div style="margin-bottom:10px;">
-                <label class="subtext">Registrar Gol Individual:</label>
-                <div class="form-group-row">
-                    <select id="select-artilheiro" style="width:70%; padding:6px; border-radius:4px;"></select>
-                    <button id="btn-add-gol" class="btn btn-secondary" style="width:25%;">+ Gol</button>
+                <p class="rotulo">Empate · pênaltis</p>
+                <div class="penaltis-linha">
+                    <label id="lbl-pen-a" for="pen-a">${escapeHtml(p.timeA.nome)}</label>
+                    <input type="number" id="pen-a" value="0" min="0" inputmode="numeric">
+                    <span class="placar-x">×</span>
+                    <input type="number" id="pen-b" value="0" min="0" inputmode="numeric">
+                    <label id="lbl-pen-b" for="pen-b">${escapeHtml(p.timeB.nome)}</label>
                 </div>
             </div>
 
-            <button id="btn-finalizar-partida" class="btn btn-primary">Finalizar Partida</button>
+            <div class="gol-linha">
+                <select id="select-artilheiro" aria-label="Quem fez o gol"></select>
+                <button type="button" id="btn-add-gol" class="btn btn-secondary">${window.UI ? UI.icone('ball', 'i-sm') : ''}Gol</button>
+            </div>
+
+            <button type="button" id="btn-finalizar-partida" class="btn btn-primary">Encerrar partida</button>
         `;
 
         const atualizarListaArtilheiros = () => {
@@ -2242,8 +2236,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const lblPenA = document.getElementById('lbl-pen-a');
             const lblPenB = document.getElementById('lbl-pen-b');
-            if (lblPenA) lblPenA.textContent = `${p.timeA.nome}:`;
-            if (lblPenB) lblPenB.textContent = `${p.timeB.nome}:`;
+            if (lblPenA) lblPenA.textContent = p.timeA.nome;
+            if (lblPenB) lblPenB.textContent = p.timeB.nome;
         };
 
         const selectA = document.getElementById('select-mudar-time-a');
@@ -2311,6 +2305,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 artilharia[chave] = (artilharia[chave] || 0) + 1;
                 salvarCampeonatoAtivo();
                 renderizarArtilharia();
+                toast(`Gol de ${nomeArtilheiro}`);
             });
         }
 
@@ -2318,7 +2313,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnFinPartida) {
             btnFinPartida.addEventListener('click', async () => {
                 if (p.timeA.id === p.timeB.id) {
-                    await mostrarAlerta('Um time não pode jogar contra ele mesmo! Escolha times diferentes.', '⚠️ AVISO');
+                    toast('Escolha dois times diferentes.', 'erro');
                     return;
                 }
 
@@ -2332,7 +2327,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     pA = elPenA ? (parseInt(elPenA.value) || 0) : 0;
                     pB = elPenB ? (parseInt(elPenB.value) || 0) : 0;
                     if (pA === pB) {
-                        await mostrarAlerta('Defina o vencedor nos pênaltis!', '⚽ PÊNALTIS');
+                        toast('Empate: defina o vencedor nos pênaltis.', 'erro');
                         return;
                     }
                 }
@@ -2364,48 +2359,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const filaHtml = filaTimes.length > 0
-            ? filaTimes.map((t, idx) => `<li><strong>${idx + 1}º Próximo:</strong> ${escapeHtml(t.nome)}</li>`).join('')
-            : '<li>Nenhum time na fila de espera.</li>';
+            ? filaTimes.map(t => `<li>${escapeHtml(t.nome)}</li>`).join('')
+            : '<li class="fila-vazia">Ninguém esperando</li>';
 
         container.innerHTML = `
-            <div style="margin-bottom:12px; background:rgba(255,255,255,0.03); padding:8px; border-radius:6px;">
-                <p class="subtext" style="margin-bottom:4px; font-weight:bold;">⏳ Fila de Espera (Próximos a jogar):</p>
-                <ul style="list-style:none; padding:0; margin:0; font-size:0.85rem;">
-                    ${filaHtml}
-                </ul>
-            </div>
-
             <div class="placar-box">
                 <div class="time-placar">
-                    <p><strong>${escapeHtml(timeEmCampoA.nome)}</strong></p>
-                    <input type="number" id="racha-gols-a" value="${placarRacha.a || 0}" min="0">
+                    <p class="time-nome">${escapeHtml(timeEmCampoA.nome)}</p>
+                    <input type="number" id="racha-gols-a" value="${placarRacha.a || 0}" min="0" aria-label="Gols de ${escapeHtml(timeEmCampoA.nome)}">
                 </div>
-                
-                <span style="font-size:1.5rem; font-weight:bold;">X</span>
-                
+                <span class="placar-x">×</span>
                 <div class="time-placar">
-                    <p><strong>${escapeHtml(timeEmCampoB.nome)}</strong></p>
-                    <input type="number" id="racha-gols-b" value="${placarRacha.b || 0}" min="0">
+                    <p class="time-nome">${escapeHtml(timeEmCampoB.nome)}</p>
+                    <input type="number" id="racha-gols-b" value="${placarRacha.b || 0}" min="0" aria-label="Gols de ${escapeHtml(timeEmCampoB.nome)}">
                 </div>
             </div>
 
             <div id="box-desempate-racha" class="penaltis-box hidden">
-                <p class="subtext" style="text-align:center;">Empate! Escolha quem avança:</p>
-                <div style="display:flex; gap:10px; justify-content:center; margin-top:6px;">
-                    <button id="btn-empate-sai-a" class="btn btn-secondary">${escapeHtml(timeEmCampoA.nome)} Avança</button>
-                    <button id="btn-empate-sai-b" class="btn btn-secondary">${escapeHtml(timeEmCampoB.nome)} Avança</button>
+                <p class="rotulo">Empate · quem continua em campo?</p>
+                <div class="dois-botoes">
+                    <button type="button" id="btn-empate-sai-a" class="btn btn-secondary">${escapeHtml(timeEmCampoA.nome)}</button>
+                    <button type="button" id="btn-empate-sai-b" class="btn btn-secondary">${escapeHtml(timeEmCampoB.nome)}</button>
                 </div>
             </div>
 
-            <div style="margin-bottom:10px;">
-                <label class="subtext">Registrar Gol Individual:</label>
-                <div class="form-group-row">
-                    <select id="select-artilheiro-racha" style="width:70%; padding:6px; border-radius:4px;"></select>
-                    <button id="btn-add-gol-racha" class="btn btn-secondary" style="width:25%;">+ Gol</button>
-                </div>
+            <div class="gol-linha">
+                <select id="select-artilheiro-racha" aria-label="Quem fez o gol"></select>
+                <button type="button" id="btn-add-gol-racha" class="btn btn-secondary">${window.UI ? UI.icone('ball', 'i-sm') : ''}Gol</button>
             </div>
 
-            <button id="btn-finalizar-racha" class="btn btn-primary">Finalizar Partida e Rodar Fila</button>
+            <button type="button" id="btn-finalizar-racha" class="btn btn-primary">Encerrar partida e chamar o próximo</button>
+
+            <div class="fila">
+                <p class="rotulo">Próximos na fila</p>
+                <ol>${filaHtml}</ol>
+            </div>
         `;
 
         const selectArt = document.getElementById('select-artilheiro-racha');
@@ -2453,12 +2441,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('btn-empate-sai-a')?.addEventListener('click', () => {
             tipoDesempateRacha = 'A';
-            mostrarAlerta(`${timeEmCampoA.nome} configurado para avançar!`, '🤝 EMPATE');
+            document.getElementById('btn-empate-sai-a')?.classList.add('escolhido');
+            document.getElementById('btn-empate-sai-b')?.classList.remove('escolhido');
         });
 
         document.getElementById('btn-empate-sai-b')?.addEventListener('click', () => {
             tipoDesempateRacha = 'B';
-            mostrarAlerta(`${timeEmCampoB.nome} configurado para avançar!`, '🤝 EMPATE');
+            document.getElementById('btn-empate-sai-b')?.classList.add('escolhido');
+            document.getElementById('btn-empate-sai-a')?.classList.remove('escolhido');
         });
 
         const btnFinRacha = document.getElementById('btn-finalizar-racha');
@@ -2478,7 +2468,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     perdedor = timeEmCampoA;
                 } else {
                     if (!tipoDesempateRacha) {
-                        await mostrarAlerta('Em caso de empate, escolha qual time avança nos botões acima!', '🤝 DESEMPATE');
+                        toast('Empate: escolha quem continua em campo.', 'erro');
                         return;
                     }
                     if (tipoDesempateRacha === 'A') {
@@ -2526,7 +2516,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const partidasFinalizadas = partidas.filter(p => p.finalizada);
         if (partidasFinalizadas.length === 0) {
-            container.innerHTML = '<p class="subtext">Nenhum confronto finalizado ainda.</p>';
+            container.innerHTML = '<p class="dica-painel">Nenhum jogo encerrado ainda.</p>';
             return;
         }
 
@@ -2534,14 +2524,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const b = e.target.closest('[data-corrigir]');
             if (b) abrirCorrigirPlacar(Number(b.dataset.corrigir));
         };
-        container.innerHTML = partidasFinalizadas.map(p => {
-            const penaltisTxt = p.golsA === p.golsB ? ` (Pênaltis: ${p.penaltisA} x ${p.penaltisB})` : '';
-            return `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
-                    <span><strong>Rodada ${p.rodada}:</strong> ${escapeHtml(p.timeA.nome)} ${p.golsA} x ${p.golsB} ${escapeHtml(p.timeB.nome)}${penaltisTxt}</span>
-                    <button type="button" class="btn-corrigir" data-corrigir="${p.idPartida}" aria-label="Corrigir placar">✏️</button>
-                </div>
-            `;
+        container.innerHTML = partidasFinalizadas.slice().reverse().map(p => {
+            const pen = p.golsA === p.golsB ? `<span class="jogo-pen">pên. ${p.penaltisA}–${p.penaltisB}</span>` : '';
+            return `<div class="jogo-linha">
+                    <span class="jogo-rod">R${p.rodada}</span>
+                    <span class="jogo-a ${p.golsA > p.golsB || (p.golsA === p.golsB && p.penaltisA > p.penaltisB) ? 'venceu' : ''}">${escapeHtml(p.timeA.nome)}</span>
+                    <span class="jogo-meio"><span class="jogo-placar">${p.golsA}<i>×</i>${p.golsB}</span>${pen}</span>
+                    <span class="jogo-b ${p.golsB > p.golsA || (p.golsA === p.golsB && p.penaltisB > p.penaltisA) ? 'venceu' : ''}">${escapeHtml(p.timeB.nome)}</span>
+                    <button type="button" class="btn-corrigir" data-corrigir="${p.idPartida}" aria-label="Corrigir placar">${window.UI ? UI.icone('edit', 'i-sm') : 'Editar'}</button>
+                </div>`;
         }).join('');
     }
 
@@ -2551,15 +2542,16 @@ document.addEventListener('DOMContentLoaded', () => {
         container.onclick = null;
 
         if (partidasRachaHistorico.length === 0) {
-            container.innerHTML = '<p class="subtext">Nenhum confronto finalizado ainda.</p>';
+            container.innerHTML = '<p class="dica-painel">Nenhum jogo encerrado ainda.</p>';
             return;
         }
 
-        container.innerHTML = partidasRachaHistorico.map(p => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
-                <span><strong>Jogo ${p.idPartida}:</strong> ${escapeHtml(p.timeA.nome)} ${p.golsA} x ${p.golsB} ${escapeHtml(p.timeB.nome)} (Avançou: ${escapeHtml(p.vencedor)})</span>
-            </div>
-        `).join('');
+        container.innerHTML = partidasRachaHistorico.slice().reverse().map(p => `<div class="jogo-linha">
+                <span class="jogo-rod">J${p.idPartida}</span>
+                <span class="jogo-a ${p.vencedor === p.timeA.nome ? 'venceu' : ''}">${escapeHtml(p.timeA.nome)}</span>
+                <span class="jogo-placar">${p.golsA}<i>×</i>${p.golsB}</span>
+                <span class="jogo-b ${p.vencedor === p.timeB.nome ? 'venceu' : ''}">${escapeHtml(p.timeB.nome)}</span>
+            </div>`).join('');
     }
 
     function renderizarArtilharia() {
@@ -2568,16 +2560,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const lista = Object.entries(artilharia).sort((a, b) => b[1] - a[1]);
         if (lista.length === 0) {
-            container.innerHTML = '<p class="subtext">Nenhum gol marcado ainda.</p>';
+            container.innerHTML = '<p class="dica-painel">Nenhum gol marcado ainda.</p>';
             return;
         }
 
-        container.innerHTML = lista.map(([nome, gols]) => `
-            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
-                <span>⚽ ${escapeHtml(nome)}</span>
-                <strong>${gols} gol(s)</strong>
-            </div>
-        `).join('');
+        container.innerHTML = lista.map(([nome, gols], i) => {
+            const n = String(nome).replace(/\u2024/g, '.');
+            return `<div class="art-linha"><span class="art-pos">${i + 1}</span>${avatarHtml(n)}<span class="art-nome">${escapeHtml(n)}</span><strong class="art-gols">${gols}</strong></div>`;
+        }).join('');
     }
 
     // --- 6. FINALIZAR CAMPEONATO E SALVAR HISTÓRICO ---
@@ -2585,12 +2575,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnFinalizarCamp) {
         btnFinalizarCamp.addEventListener('click', async () => {
             if (timesSorteados.length === 0) {
-                await mostrarAlerta('Não há campeonato ativo para finalizar!', '⚠️ AVISO');
+                toast('Não há campeonato em andamento.');
                 return;
             }
 
-            const confirmou = await mostrarConfirmacao('Tem certeza que deseja finalizar este campeonato e enviá-lo para o histórico?', '🏁 FINALIZAR');
+            const confirmou = await mostrarConfirmacao('O campeonato vai para o histórico, com a tabela, os jogos e a artilharia.', 'Encerrar campeonato?', { ok: 'Encerrar' });
             if (!confirmou) return;
+            if (window.UI) UI.fecharSheet('sheet-jogo-opcoes');
 
             const dataAtual = new Date().toLocaleDateString('pt-BR', {
                 day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -2632,7 +2623,7 @@ document.addEventListener('DOMContentLoaded', () => {
             irParaAba('tab-historico');
             abrirDetalheHistorico(edicaoHistorico.id);
 
-            toast('🏁 Campeonato salvo! Mande o resumo para o grupo 👇');
+            toast('Campeonato salvo no histórico');
         });
     }
 
@@ -2651,6 +2642,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Telas que não têm botão no menu de baixo (detalhe do histórico, caixa do suporte)
     function irParaTelaExtra(id, titulo) { irParaAba(id, false, titulo); }
+
+    // ---------- TELA "JOGO": atalhos, abas e painéis ----------
+    (function ligarTelaJogo() {
+        const $ = id => document.getElementById(id);
+        $('btn-ir-sorteio')?.addEventListener('click', () => irParaAba('tab-sorteio'));
+        $('abrir-ao-vivo')?.addEventListener('click', () => { atualizarCardAoVivo(); if (window.UI) UI.abrirSheet('sheet-ao-vivo'); });
+        $('btn-tempo-partida')?.addEventListener('click', () => { if (window.UI) UI.abrirSheet('sheet-tempo'); });
+        $('btn-jogo-opcoes')?.addEventListener('click', () => { renderizarSeletorModoDisputa(); if (window.UI) UI.abrirSheet('sheet-jogo-opcoes'); });
+        $('seg-jogo')?.addEventListener('click', (e) => {
+            const b = e.target.closest('[data-aba-jogo]');
+            if (!b) return;
+            $('seg-jogo').querySelectorAll('[data-aba-jogo]').forEach(x => x.classList.toggle('on', x === b));
+            document.querySelectorAll('[data-painel-jogo]').forEach(p => p.classList.toggle('hidden', p.dataset.painelJogo !== b.dataset.abaJogo));
+        });
+    })();
 
     // ---------- TELA "MAIS" ----------
     function atualizarTelaMais() {

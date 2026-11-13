@@ -181,103 +181,56 @@
 
         <!-- ABA 3: CAMPEONATO -->
         <section id="tab-campeonato" class="tab-content" data-title="Jogo">
-            <!-- PLACAR AO VIVO (link público, só leitura) -->
-            <div class="card" id="card-ao-vivo">
-                <h2>📡 Placar ao vivo</h2>
-                <p class="subtext">Quem está esperando acompanha a tabela e os resultados no celular, em tempo real, sem precisar de login.</p>
-                <div id="ao-vivo-off">
-                    <button id="btn-ao-vivo-iniciar" class="btn btn-primary">📡 Compartilhar ao vivo</button>
-                </div>
-                <div id="ao-vivo-on" class="hidden">
-                    <input type="text" id="ao-vivo-link" readonly>
-                    <div class="modal-actions">
-                        <button id="btn-ao-vivo-enviar" class="btn btn-success">📲 Enviar link</button>
-                        <button id="btn-ao-vivo-copiar" class="btn btn-secondary">Copiar</button>
-                    </div>
-                    <button id="btn-ao-vivo-parar" class="btn btn-danger" style="margin-top:8px;">Parar de compartilhar</button>
-                </div>
+            <div id="jogo-vazio" class="vazio hidden">
+                <svg class="i"><use href="#i-whistle"/></svg>
+                <h3>Nenhum jogo em andamento</h3>
+                <p>Sorteie os times e toque em Começar jogo. A tabela, os placares e a artilharia ficam aqui.</p>
+                <button type="button" class="btn btn-primary" id="btn-ir-sorteio">Ir para o sorteio</button>
             </div>
+            <div id="jogo-conteudo">
+                <button type="button" class="acesso" id="abrir-ao-vivo">
+                    <span class="acesso-ic"><svg class="i"><use href="#i-live"/></svg></span>
+                    <span class="li-txt"><span class="li-titulo">Placar ao vivo</span><span class="li-sub" id="ao-vivo-status">Quem está esperando acompanha pelo celular</span></span>
+                    <svg class="i i-sm li-seta"><use href="#i-chevron"/></svg>
+                </button>
 
-            <!-- CRONÔMETRO -->
-            <div class="card cronometro-card">
-                <h2>⏱️ Cronômetro da Partida</h2>
-                <div class="timer-display" id="timer-display">10:00</div>
-                
-                <div class="timer-config">
-                    <div class="form-group-row">
-                        <label>Opções de Tempo:</label>
-                        <select id="select-tempo-predefinido">
-                            <option value="5">5 Minutos</option>
-                            <option value="6">6 Minutos</option>
-                            <option value="7">7 Minutos</option>
-                            <option value="8">8 Minutos</option>
-                            <option value="9">9 Minutos</option>
-                            <option value="10" selected>10 Minutos</option>
-                            <option value="11">11 Minutos</option>
-                            <option value="12">12 Minutos</option>
-                            <option value="13">13 Minutos</option>
-                            <option value="14">14 Minutos</option>
-                            <option value="15">15 Minutos</option>
-                        </select>
+                <div class="card relogio" id="card-relogio">
+                    <div class="relogio-topo">
+                        <span class="rotulo">Cronômetro</span>
+                        <button type="button" class="chip" id="btn-tempo-partida"><svg class="i"><use href="#i-clock"/></svg><span id="tempo-partida-txt">10 min</span></button>
                     </div>
-                    <div class="form-group-row">
-                        <label>Ou digite os minutos:</label>
-                        <input type="number" id="input-tempo-custom" min="1" max="60" placeholder="Ex: 10" style="width: 80px; text-align: center;">
+                    <div class="timer-display" id="timer-display">10:00</div>
+                    <div class="relogio-botoes">
+                        <button type="button" id="btn-timer-reset" class="icon-btn" aria-label="Zerar cronômetro"><svg class="i"><use href="#i-reset"/></svg></button>
+                        <button type="button" id="btn-timer-start" class="btn btn-primary"><svg class="i"><use href="#i-play"/></svg><span id="txt-timer-start">Iniciar</span></button>
+                        <button type="button" id="btn-timer-pause" class="btn btn-secondary hidden"><svg class="i"><use href="#i-pause"/></svg>Pausar</button>
                     </div>
                 </div>
 
-                <div class="timer-controls">
-                    <button id="btn-timer-start" class="btn btn-primary">▶️ Iniciar</button>
-                    <button id="btn-timer-pause" class="btn btn-secondary">⏸️ Pausar</button>
-                    <button id="btn-timer-reset" class="btn btn-danger" style="padding:10px;">🔄 Resetar</button>
+                <div class="card partida">
+                    <div class="partida-cab">
+                        <h2>Partida</h2>
+                        <span class="selo" id="selo-modo">Tabela</span>
+                        <button type="button" class="icon-btn" id="btn-jogo-opcoes" aria-label="Opções do jogo"><svg class="i"><use href="#i-dots"/></svg></button>
+                    </div>
+                    <div id="painel-partida-atual"></div>
                 </div>
-            </div>
 
-            <div class="card">
-                <h2>⚔️ Partida em Andamento</h2>
-                <div id="painel-partida-atual">
-                    <p class="subtext">Inicie um campeonato no menu Sorteio!</p>
+                <div class="seg" id="seg-jogo" role="tablist">
+                    <button type="button" class="on" data-aba-jogo="tabela" role="tab">Tabela</button>
+                    <button type="button" data-aba-jogo="jogos" role="tab">Jogos</button>
+                    <button type="button" data-aba-jogo="artilharia" role="tab">Artilharia</button>
                 </div>
-            </div>
-
-            <div class="card">
-                <h2>🏆 Tabela de Classificação</h2>
-                <div class="table-responsive">
-                    <table class="tabela-classificacao">
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>P</th>
-                                <th>J</th>
-                                <th>V</th>
-                                <th>E</th>
-                                <th>D</th>
-                                <th>GP</th>
-                                <th>SG</th>
-                            </tr>
-                        </thead>
-                        <tbody id="body-classificacao"></tbody>
-                    </table>
+                <div class="card painel-jogo" data-painel-jogo="tabela">
+                    <div class="table-responsive">
+                        <table class="tabela-classificacao">
+                            <thead><tr><th>Time</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>SG</th></tr></thead>
+                            <tbody id="body-classificacao"></tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-
-            <div class="card">
-                <h2>📋 Confrontos Realizados</h2>
-                <div id="lista-confrontos-encerrados">
-                    <p class="subtext">Nenhum confronto finalizado ainda.</p>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>🎯 Artilharia do Campeonato</h2>
-                <div id="lista-artilharia">
-                    <p class="subtext">Nenhum gol marcado ainda.</p>
-                </div>
-            </div>
-
-            <!-- Botão Encerrar e Enviar para o Histórico -->
-            <div class="card" id="card-finalizar-camp" style="text-align: center;">
-                <button id="btn-finalizar-campeonato" class="btn btn-danger" style="padding: 12px; font-size: 1rem;">🏁 Finalizar Campeonato e Enviar pro Histórico</button>
+                <div class="card painel-jogo hidden" data-painel-jogo="jogos"><div id="lista-confrontos-encerrados"></div></div>
+                <div class="card painel-jogo hidden" data-painel-jogo="artilharia"><div id="lista-artilharia"></div></div>
             </div>
         </section>
 
@@ -568,6 +521,70 @@
                     <button type="button" id="btn-copiar-lista" class="btn btn-secondary"><svg class="i i-sm"><use href="#i-copy"/></svg>Copiar</button>
                     <button type="button" id="btn-sortear-de-novo" class="btn btn-secondary"><svg class="i i-sm"><use href="#i-reset"/></svg>De novo</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAINÉIS DE BAIXO: jogo -->
+    <div id="sheet-ao-vivo" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-ao-vivo">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab"><h2 id="t-ao-vivo">Placar ao vivo</h2><button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button></div>
+            <div id="card-ao-vivo">
+                <p class="dica-painel">Quem está esperando vê a tabela, os resultados e o cronômetro no celular, em tempo real e sem login.</p>
+                <div id="ao-vivo-off">
+                    <div class="sheet-acoes"><button type="button" id="btn-ao-vivo-iniciar" class="btn btn-primary"><svg class="i"><use href="#i-live"/></svg>Ligar placar ao vivo</button></div>
+                </div>
+                <div id="ao-vivo-on" class="hidden">
+                    <div class="link-linha"><input type="text" id="ao-vivo-link" readonly aria-label="Link do placar ao vivo"></div>
+                    <div class="dois-botoes">
+                        <button type="button" id="btn-ao-vivo-enviar" class="btn btn-primary"><svg class="i"><use href="#i-share"/></svg>Enviar link</button>
+                        <button type="button" id="btn-ao-vivo-copiar" class="btn btn-secondary"><svg class="i"><use href="#i-copy"/></svg>Copiar</button>
+                    </div>
+                    <div class="sheet-acoes"><button type="button" id="btn-ao-vivo-parar" class="btn btn-texto perigo">Desligar o placar ao vivo</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sheet-tempo" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-tempo">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab"><h2 id="t-tempo">Tempo da partida</h2><button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button></div>
+            <div class="campo">
+                <label for="select-tempo-predefinido">Duração</label>
+                <select id="select-tempo-predefinido">
+                    <option value="5">5 minutos</option><option value="6">6 minutos</option><option value="7">7 minutos</option>
+                    <option value="8">8 minutos</option><option value="9">9 minutos</option><option value="10" selected>10 minutos</option>
+                    <option value="11">11 minutos</option><option value="12">12 minutos</option><option value="13">13 minutos</option>
+                    <option value="14">14 minutos</option><option value="15">15 minutos</option>
+                </select>
+            </div>
+            <div class="campo">
+                <label for="input-tempo-custom">Outro tempo (minutos)</label>
+                <input type="number" id="input-tempo-custom" min="1" max="60" inputmode="numeric" placeholder="Ex.: 20">
+            </div>
+            <div class="sheet-acoes"><button type="button" class="btn btn-primary" data-fechar>Pronto</button></div>
+        </div>
+    </div>
+
+    <div id="sheet-jogo-opcoes" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-jogo-opcoes">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab"><h2 id="t-jogo-opcoes">Jogo</h2><button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button></div>
+            <div class="campo">
+                <label for="select-modo-disputa">Modo de disputa</label>
+                <select id="select-modo-disputa">
+                    <option value="todos-contra-todos">Tabela (todos contra todos)</option>
+                    <option value="racha-livre">Racha livre (quem ganha fica)</option>
+                </select>
+                <span class="dica">Trocar o modo apaga os resultados e a artilharia deste campeonato.</span>
+            </div>
+            <div class="lista sheet-menu" style="margin-top:var(--e-5);">
+                <button type="button" class="lista-item perigo" id="btn-finalizar-campeonato"><svg class="i"><use href="#i-flag"/></svg><span class="li-txt"><span class="li-titulo">Encerrar campeonato</span><span class="li-sub">Salva no histórico e libera um novo sorteio</span></span></button>
             </div>
         </div>
     </div>
