@@ -6,10 +6,27 @@
     <title>Cabeção Sorteios Pro</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="img/icon-192.png">
-    <meta name="theme-color" content="#0b0e0c">
-    <link rel="stylesheet" href="css/style.css?v=20261113k">
+    <meta name="theme-color" content="#0f1214">
+    <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/style.css?v=20261113l">
+    <link rel="stylesheet" href="css/base.css?v=20261113l">
 </head>
-<body>
+<body data-aba="tab-jogadores">
+    <!-- ÍCONES (um traço só, 24px). Uso: <svg class="i"><use href="#i-nome"/></svg> -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></symbol>
+        <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor" stroke="none"/></symbol>
+        <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+        <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.2l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.6l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"/></symbol>
+        <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.9 12.2a1.5 1.5 0 0 0 1.5 1.3h6.2a1.5 1.5 0 0 0 1.5-1.3L17.5 7M10.3 11v5.5M13.7 11v5.5"/></symbol>
+        <symbol id="i-glove" viewBox="0 0 24 24"><path d="M7.5 12.5V7a1.5 1.5 0 0 1 3 0v4M10.5 10.5V5.2a1.5 1.5 0 0 1 3 0v5.3M13.5 10.5V6.2a1.5 1.5 0 0 1 3 0v6M16.5 12.2V9.5a1.5 1.5 0 0 1 3 0v4.3a6.7 6.7 0 0 1-6.7 6.7h-.6a5.3 5.3 0 0 1-4.3-2.2l-2.9-4a1.5 1.5 0 0 1 2.3-1.9l1.7 2"/></symbol>
+        <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.8 20a6.2 6.2 0 0 1 12.4 0M15.5 4.6a3.5 3.5 0 0 1 0 6.8M21.2 20a6.2 6.2 0 0 0-3.7-5.7"/></symbol>
+        <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r="1" fill="currentColor" stroke="none"/><circle cx="4.8" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4.8" cy="17.5" r="1" fill="currentColor" stroke="none"/></symbol>
+    </svg>
     <!-- Projeto: Cabeção Sorteios Pro | Desenvolvedor: Carlos Andre | 2026 -->
 
     <!-- ABERTURA: fica até o Firebase dizer se você já está logado (evita piscar a tela de login) -->
@@ -107,43 +124,21 @@
 
         <!-- ABA 1: JOGADORES -->
         <section id="tab-jogadores" class="tab-content active">
-            <div class="card">
-                <h2>👥 Elenco Cadastrado</h2>
-                <div id="filtro-elenco"></div>
-                <div id="lista-jogadores-cadastrados"></div>
-                <button id="btn-apagar-todos" class="btn btn-danger" style="margin-top: 10px; width: 100%;">🗑️ Apagar todos os jogadores</button>
+            <label class="busca">
+                <svg class="i" aria-hidden="true"><use href="#i-search"/></svg>
+                <input type="search" id="busca-elenco" placeholder="Buscar jogador" autocomplete="off" enterkeyhint="search" aria-label="Buscar jogador">
+            </label>
+            <div class="chips" id="chips-elenco" role="group" aria-label="Filtrar elenco">
+                <button type="button" class="chip on" data-pos="todos">Todos</button>
+                <button type="button" class="chip" data-pos="linha">Linha</button>
+                <button type="button" class="chip" data-pos="goleiro">Goleiros</button>
+                <button type="button" class="chip" id="chip-nivel"><svg class="i" aria-hidden="true"><use href="#i-sliders"/></svg>Nível</button>
             </div>
-
-            <div class="card">
-                <h2>📋 Importar Lista em Lote (WhatsApp)</h2>
-                <p class="subtext">Cole a lista do grupo. Cada linha será um jogador cadastrado:</p>
-                <textarea id="lista-lote" rows="4" placeholder="1. Carlos&#10;2. Andre&#10;3. Joao Goleiro&#10;4. Mateus"></textarea>
-                <button id="btn-importar-lote" class="btn btn-primary" style="margin-top:8px;">🚀 Adicionar Todos da Lista</button>
+            <div class="tela-cab">
+                <p class="tela-sub" id="elenco-resumo">Nenhum jogador</p>
+                <button type="button" class="icon-btn" id="btn-elenco-opcoes" aria-label="Opções do elenco"><svg class="i" aria-hidden="true"><use href="#i-dots"/></svg></button>
             </div>
-
-            <div class="card">
-                <h2>➕ Cadastro Individual</h2>
-                <div class="form-group-col">
-                    <input type="text" id="novo-nome" placeholder="Nome do Jogador">
-                    <div class="type-selector">
-                        <label><input type="radio" name="tipo-jogador" value="linha" checked> Linha</label>
-                        <label><input type="radio" name="tipo-jogador" value="goleiro"> Goleiro 🧤</label>
-                    </div>
-                    
-                    <!-- SELETOR DE ESTRELAS -->
-                    <div class="star-rating-input">
-                        <span>Nível do Jogador:</span>
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 6px;">
-                            <button type="button" id="btn-cad-menos" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">−</button>
-                            <span style="font-size: 1.2rem; font-weight: bold; color: #D4AF37; display: flex; align-items: center; gap: 4px;">⭐ <input type="number" id="input-estrelas-cad" class="input-estrelas" step="0.1" min="0.1" max="5" value="3.0" inputmode="decimal" aria-label="Estrelas do jogador"></span>
-                            <button type="button" id="btn-cad-mais" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">+</button>
-                        </div>
-                        <small class="subtext">Digite qualquer valor de 0,1 a 5 (ex.: 1,7 ou 2)</small>
-                    </div>
-
-                    <button id="btn-add-jogador" class="btn btn-secondary" style="margin-top: 8px;">Adicionar Único</button>
-                </div>
-            </div>
+            <div id="lista-jogadores-cadastrados"></div>
         </section>
 
         <!-- ABA 2: SORTEIO -->
@@ -344,35 +339,119 @@
     </div>
 
     <!-- Modal de Edição -->
-    <div id="modal-edicao" class="modal hidden">
-        <div class="modal-content card">
-            <h2>✏️ Editar Jogador</h2>
-            <input type="hidden" id="edit-id">
-            <div class="form-group-col">
-                <input type="text" id="edit-nome" placeholder="Nome">
-                <div class="type-selector">
-                    <label><input type="radio" name="edit-tipo" value="linha" id="edit-linha"> Linha</label>
-                    <label><input type="radio" name="edit-tipo" value="goleiro" id="edit-goleiro"> Goleiro 🧤</label>
+    <!-- PAINÉIS DE BAIXO: elenco -->
+    <div id="sheet-novo-jogador" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-novo-jogador">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab">
+                <h2 id="t-novo-jogador">Novo jogador</h2>
+                <button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+            </div>
+            <div class="seg seg-alvo" id="seg-novo-modo" role="tablist">
+                <button type="button" class="on" data-modo="um" role="tab">Um jogador</button>
+                <button type="button" data-modo="lista" role="tab">Colar lista</button>
+            </div>
+            <div id="novo-modo-um">
+                <div class="campo">
+                    <label for="novo-nome">Nome</label>
+                    <input type="text" id="novo-nome" placeholder="Ex.: Carlos" autocomplete="off" maxlength="40" enterkeyhint="done">
                 </div>
-                
-                <!-- SELETOR DE ESTRELAS (EDIÇÃO) -->
-                <div class="form-group-col" style="margin-top: 10px;">
-                    <label class="subtext">Nível do Jogador:</label>
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 6px;">
-                            <button type="button" id="btn-edit-menos" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">−</button>
-                            <span style="font-size: 1.2rem; font-weight: bold; color: #D4AF37; display: flex; align-items: center; gap: 4px;">⭐ <input type="number" id="input-estrelas-edit" class="input-estrelas" step="0.1" min="0.1" max="5" value="3.0" inputmode="decimal" aria-label="Estrelas do jogador"></span>
-                            <button type="button" id="btn-edit-mais" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">+</button>
-                        </div>
-                        <small class="subtext">Digite qualquer valor de 0,1 a 5 (ex.: 1,7 ou 2)</small>
+                <div class="campo">
+                    <span class="rotulo">Posição</span>
+                    <div class="seg">
+                        <label><input type="radio" name="tipo-jogador" value="linha" checked><span>Linha</span></label>
+                        <label><input type="radio" name="tipo-jogador" value="goleiro"><span><svg class="i i-sm"><use href="#i-glove"/></svg>Goleiro</span></label>
+                    </div>
                 </div>
-
-                <button id="btn-salvar-edicao" class="btn btn-primary" style="margin-top: 10px;">Salvar Alterações</button>
-                <button id="btn-fechar-modal" class="btn btn-secondary">Cancelar</button>
+                <div class="campo">
+                    <span class="rotulo">Nível</span>
+                    <div class="stepper">
+                        <button type="button" id="btn-cad-menos" aria-label="Diminuir nível"><svg class="i"><use href="#i-minus"/></svg></button>
+                        <div class="valor"><svg class="i i-cheio"><use href="#i-star"/></svg><input type="text" id="input-estrelas-cad" value="3,0" inputmode="decimal" maxlength="3" autocomplete="off" aria-label="Nível do jogador"></div>
+                        <button type="button" id="btn-cad-mais" aria-label="Aumentar nível"><svg class="i"><use href="#i-plus"/></svg></button>
+                    </div>
+                    <span class="dica">De 0,1 a 5. É o que equilibra os times no sorteio.</span>
+                </div>
+                <div class="sheet-acoes"><button type="button" id="btn-add-jogador" class="btn btn-primary">Adicionar jogador</button></div>
+            </div>
+            <div id="novo-modo-lista" class="hidden">
+                <div class="campo">
+                    <label for="lista-lote">Lista do grupo</label>
+                    <textarea id="lista-lote" rows="7" placeholder="1. Carlos&#10;2. André&#10;3. João"></textarea>
+                    <span class="dica">Um nome por linha. Números, Pix e links são ignorados. Todos entram na linha com nível 3.</span>
+                </div>
+                <div class="sheet-acoes"><button type="button" id="btn-importar-lote" class="btn btn-primary">Adicionar todos</button></div>
             </div>
         </div>
     </div>
 
-    
+    <div id="modal-edicao" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-editar">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab">
+                <h2 id="t-editar">Editar jogador</h2>
+                <button type="button" class="icon-btn" id="btn-fechar-modal" aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+            </div>
+            <input type="hidden" id="edit-id">
+            <div class="campo">
+                <label for="edit-nome">Nome</label>
+                <input type="text" id="edit-nome" autocomplete="off" maxlength="40">
+            </div>
+            <div class="campo">
+                <span class="rotulo">Posição</span>
+                <div class="seg">
+                    <label><input type="radio" name="edit-tipo" value="linha" id="edit-linha"><span>Linha</span></label>
+                    <label><input type="radio" name="edit-tipo" value="goleiro" id="edit-goleiro"><span><svg class="i i-sm"><use href="#i-glove"/></svg>Goleiro</span></label>
+                </div>
+            </div>
+            <div class="campo">
+                <span class="rotulo">Nível</span>
+                <div class="stepper">
+                    <button type="button" id="btn-edit-menos" aria-label="Diminuir nível"><svg class="i"><use href="#i-minus"/></svg></button>
+                    <div class="valor"><svg class="i i-cheio"><use href="#i-star"/></svg><input type="text" id="input-estrelas-edit" value="3,0" inputmode="decimal" maxlength="3" autocomplete="off" aria-label="Nível do jogador"></div>
+                    <button type="button" id="btn-edit-mais" aria-label="Aumentar nível"><svg class="i"><use href="#i-plus"/></svg></button>
+                </div>
+            </div>
+            <div class="sheet-acoes">
+                <button type="button" id="btn-salvar-edicao" class="btn btn-primary">Salvar</button>
+                <button type="button" id="btn-excluir-jogador" class="btn btn-texto perigo">Excluir jogador</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sheet-filtro-elenco" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-filtro-elenco">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab">
+                <h2 id="t-filtro-elenco">Filtrar por nível</h2>
+                <button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+            </div>
+            <div id="filtro-elenco"></div>
+            <div class="sheet-acoes"><button type="button" class="btn btn-primary" data-fechar>Ver jogadores</button></div>
+        </div>
+    </div>
+
+    <div id="sheet-elenco-opcoes" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-elenco-opcoes">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab">
+                <h2 id="t-elenco-opcoes">Elenco</h2>
+                <button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+            </div>
+            <div class="lista sheet-menu">
+                <button type="button" class="lista-item" id="btn-elenco-colar"><svg class="i"><use href="#i-list"/></svg><span class="li-txt"><span class="li-titulo">Colar lista do grupo</span><span class="li-sub">Cadastra vários nomes de uma vez</span></span></button>
+                <button type="button" class="lista-item perigo" id="btn-apagar-todos"><svg class="i"><use href="#i-trash"/></svg><span class="li-txt"><span class="li-titulo">Apagar todos os jogadores</span><span class="li-sub">Não dá para desfazer</span></span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AÇÃO PRINCIPAL DA TELA (aparece só na aba certa: body[data-aba]) -->
+    <button type="button" class="fab" id="btn-novo-jogador" data-so-aba="tab-jogadores"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>Adicionar</button>
+
     <!-- MENU INFERIOR -->
     <nav class="nav-tabs">
         <div class="nav-tabs-inner">
@@ -431,15 +510,16 @@
         window.dispatchEvent(new Event('firebase-ready'));
     </script>
     <!-- ordem importa: logica -> remoto -> auth -> app -> monetizacao -->
-    <script src="js/logica.js?v=20261113k"></script>
-    <script src="js/apito.js?v=20261113k"></script>
-    <script src="js/remoto.js?v=20261113k"></script>
-    <script src="js/auth.js?v=20261113k"></script>
-    <script src="js/app.js?v=20261113k"></script>
-    <script src="js/monetizacao.js?v=20261113k"></script>
-    <script src="js/icones.js?v=20261113k"></script>
-    <script src="js/metricas.js?v=20261113k"></script>
-    <script src="js/imagem-times.js?v=20261113k"></script>
+    <script src="js/logica.js?v=20261113l"></script>
+    <script src="js/ui.js?v=20261113l"></script>
+    <script src="js/apito.js?v=20261113l"></script>
+    <script src="js/remoto.js?v=20261113l"></script>
+    <script src="js/auth.js?v=20261113l"></script>
+    <script src="js/app.js?v=20261113l"></script>
+    <script src="js/monetizacao.js?v=20261113l"></script>
+    <script src="js/icones.js?v=20261113l"></script>
+    <script src="js/metricas.js?v=20261113l"></script>
+    <script src="js/imagem-times.js?v=20261113l"></script>
     <script>
         // Funciona sem internet: guarda o app no aparelho (sw.js)
         if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {

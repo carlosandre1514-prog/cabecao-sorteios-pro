@@ -9,9 +9,12 @@ controlar campeonato, artilharia e histórico. Tem plano Pro e interruptor remot
 index.html            telas, menu inferior + inicialização do Firebase (único <script type="module">)
 manifest.json         PWA
 politica-privacidade.html
-css/style.css
+css/style.css         estilos antigos (sendo substituídos aos poucos)
+css/base.css          base visual nova: cores, espaços, tipos e componentes (lista, painel de baixo, seletor...)
+fonts/                fonte Inter (licença OFL em fonts/LICENSE-Inter.txt), guardada para funcionar offline
 img/                  logo e ícones (já redimensionados)
 js/
+  ui.js               🧩 painel de baixo (UI.abrirSheet), ícones do sprite (UI.icone), títulos limpos
   logica.js           ⚙️ regras puras: sorteio, tabela, pontos, filtros  (TEM TESTES)
   remoto.js           🔌 desligar app / bloquear versão antiga / VERSAO_ATUAL_APP
   js/apito.js         🔔 apito de juiz de fim de partida (6 s), usado no app e no link
@@ -131,3 +134,10 @@ fica em `js/apito.js` e é o mesmo no app e no link. Regras do Firebase: `docs/C
 - **Caixa do racha** (aba Caixa, Pro): saldo, entradas/saídas do mês, mensalistas (quem pagou/quem deve),
   cobrança pronta no WhatsApp (individual ou do grupo), lançamentos e "puxar diárias pagas da lista de presença".
   Fica em `usuarios/<uid>/[rachas/<id>/]caixa`. Lógica: `Logica.resumoCaixa` (com testes).
+
+## Novo visual (em andamento)
+Base em `css/base.css` (tokens + componentes) e ícones num sprite SVG no topo do `index.html` (`<use href="#i-nome">`).
+A tela **Jogadores** já está no padrão novo: busca, filtros (Todos/Linha/Goleiros/Nível), lista com toque para editar,
+botão flutuante "Adicionar" e painéis de baixo (novo jogador, colar lista, editar, filtro, opções). Regras do padrão:
+sem emoji em títulos e botões, letra maiúscula só no começo da frase, uma ação principal por tela, confirmação com o
+nome da ação ("Excluir", "Apagar todos") e em vermelho quando não tem volta.

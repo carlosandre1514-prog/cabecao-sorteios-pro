@@ -8,7 +8,7 @@
 //
 // AO LANÇAR VERSÃO NOVA: troque VERSAO abaixo pelo mesmo ?v= usado no index.html.
 // =====================================================================
-const VERSAO = '20261113k';
+const VERSAO = '20261113l';
 const CACHE = 'cabecao-' + VERSAO;
 const FIREBASE = 'https://www.gstatic.com/firebasejs/11.0.0/';
 
@@ -16,8 +16,8 @@ const PRECACHE = [
     './', 'index.html', 'ao-vivo.html', 'presenca.html', 'manifest.json',
     'termos-uso.html', 'politica-privacidade.html',
     'img/icon-192.png', 'img/icon-512.png', 'img/icon-512-maskable.png',
-    'css/style.css?v=' + VERSAO,
-    ...['logica', 'apito', 'remoto', 'auth', 'app', 'monetizacao', 'icones', 'metricas', 'imagem-times']
+    'css/style.css?v=' + VERSAO, 'css/base.css?v=' + VERSAO, 'fonts/inter-latin.woff2',
+    ...['logica', 'ui', 'apito', 'remoto', 'auth', 'app', 'monetizacao', 'icones', 'metricas', 'imagem-times']
         .map(n => 'js/' + n + '.js?v=' + VERSAO),
     'js/vendor/qrcode.js?v=' + VERSAO,
     FIREBASE + 'firebase-app.js', FIREBASE + 'firebase-auth.js', FIREBASE + 'firebase-database.js'
