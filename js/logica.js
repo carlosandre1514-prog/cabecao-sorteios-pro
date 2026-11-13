@@ -594,6 +594,95 @@
         return s + crc16Pix(s);
     }
 
+    // ---------- Plano Pro: assinatura e teste grátis ----------
+    // plano = planos/<uid> { ativo, ate? }, teste = testes/<uid> { inicio } (horário do servidor)
+    // -> { pro, origem: 'plano'|'teste'|null, ate (ms|null), diasTeste (restantes), testeUsado }
+    function statusPlano(plano, teste, agora, diasTeste) {
+        agora = agora == null ? Date.now() : Number(agora);
+        diasTeste = Number(diasTeste) || 0;
+        plano = plano || {}; teste = teste || {};
+        const planoOk = !!plano.ativo && (!plano.ate || Number(plano.ate) > agora);
+        const inicio = Number(teste.inicio) || 0;
+        const fimTeste = inicio ? inicio + diasTeste * 864e5 : 0;
+        const testeOk = !!inicio && diasTeste > 0 && agora < fimTeste;
+        return {
+            pro: planoOk || testeOk,
+            origem: planoOk ? 'plano' : testeOk ? 'teste' : null,
+            ate: planoOk ? (plano.ate ? Number(plano.ate) : null) : testeOk ? fimTeste : null,
+            diasTeste: testeOk ? Math.max(1, Math.ceil((fimTeste - agora) / 864e5)) : 0,
+            testeUsado: !!inicio
+        };
+    }
+    function reais(v) { return 'R$ ' + (Number(v) || 0).toFixed(2).replace('.', ','); }
+    // quanto o anual economiza em relação a 12 mensalidades (em %)
+    function economiaAnual(mensal, anual) {
+        mensal = Number(mensal) || 0; anual = Number(anual) || 0;
+        return mensal > 0 && anual > 0 ? Math.max(0, Math.round((1 - anual / (mensal * 12)) * 100)) : 0;
+    }
+
+    // ---------- Controle de caixa do racha ----------
+    // caixa = { config: { mensalidade, diaria, vencimento (dia do mês) }, mensalistas: { idJogador: true },
+    //           lancamentos: { id: { tipo: 'entrada'|'saida', valor, desc, data (ms), mes ('2026-11'),
+    //                                categoria: 'mensalidade'|'diaria'|'quadra'|'material'|'outros', jogadorId?, origem? } } }
+    const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    function mesISO(ts) {
+        const d = new Date(ts == null ? Date.now() : ts);
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    }
+    function nomeMes(mes) {
+        const [a, m] = String(mes).split('-').map(Number);
+        return (MESES[(m || 1) - 1] || '') + ' de ' + a;
+    }
+    function somarMes(mes, n) {
+        const [a, m] = String(mes).split('-').map(Number);
+        const d = new Date(a, (m - 1) + n, 1);
+        return mesISO(d.getTime());
+    }
+    function resumoCaixa(caixa, jogadores, mes) {
+        caixa = caixa || {};
+        const cfg = Object.assign({ mensalidade: 0, diaria: 0, vencimento: 10 }, caixa.config || {});
+        const lanc = Object.entries(caixa.lancamentos || {}).filter(([, l]) => l && (l.tipo === 'entrada' || l.tipo === 'saida'))
+            .map(([id, l]) => Object.assign({ id }, l, { valor: Math.round((Number(l.valor) || 0) * 100) / 100 }));
+        const soma = lista => Math.round(lista.reduce((a, l) => a + (l.tipo === 'entrada' ? l.valor : -l.valor), 0) * 100) / 100;
+        const doMes = lanc.filter(l => l.mes === mes).sort((a, b) => (b.data || 0) - (a.data || 0));
+        const entradasMes = Math.round(doMes.filter(l => l.tipo === 'entrada').reduce((a, l) => a + l.valor, 0) * 100) / 100;
+        const saidasMes = Math.round(doMes.filter(l => l.tipo === 'saida').reduce((a, l) => a + l.valor, 0) * 100) / 100;
+        const mensal = caixa.mensalistas || {};
+        const mensalistas = Object.values(jogadores || {}).filter(j => j && mensal[String(j.id)])
+            .map(j => {
+                const pg = doMes.find(l => l.categoria === 'mensalidade' && String(l.jogadorId) === String(j.id));
+                return { id: String(j.id), nome: String(j.nome), pago: !!pg, lancId: pg ? pg.id : null };
+            })
+            .sort((a, b) => (a.pago - b.pago) || a.nome.localeCompare(b.nome));
+        const devedores = mensalistas.filter(m => !m.pago);
+        return {
+            config: cfg, saldo: soma(lanc), saldoMes: Math.round((entradasMes - saidasMes) * 100) / 100,
+            entradasMes, saidasMes, lancamentos: doMes, mensalistas, devedores,
+            pagaram: mensalistas.length - devedores.length,
+            previsto: Math.round(mensalistas.length * (Number(cfg.mensalidade) || 0) * 100) / 100,
+            aReceber: Math.round(devedores.length * (Number(cfg.mensalidade) || 0) * 100) / 100
+        };
+    }
+    // mensagem para o grupo com quem ainda não pagou a mensalidade
+    function textoCobrancaGrupo(r, mes, nomeRacha, pix) {
+        const L = ['💰 *MENSALIDADE DE ' + nomeMes(mes).toUpperCase() + '*' + (nomeRacha ? ' — ' + nomeRacha : '')];
+        if (r.config.mensalidade) L.push('Valor: ' + reais(r.config.mensalidade) + (r.config.vencimento ? ' · vence dia ' + r.config.vencimento : ''));
+        if (!r.devedores.length) { L.push('', '✅ Todo mundo pagou! Valeu, galera 🙌'); return L.join('\n'); }
+        L.push('', '⏳ *Ainda não pagaram (' + r.devedores.length + '):*');
+        r.devedores.forEach((d, i) => L.push((i + 1) + '. ' + d.nome));
+        if (r.pagaram) L.push('', '✅ Já pagaram: ' + r.pagaram);
+        if (pix && pix.chave) L.push('', '💠 Pix: ' + pix.chave + (pix.nome ? ' (' + pix.nome + ')' : ''));
+        L.push('', 'Pagou? Me avisa aqui 👍');
+        return L.join('\n');
+    }
+    function textoCobrancaIndividual(nome, r, mes, nomeRacha, pix) {
+        const primeiro = String(nome || '').trim().split(/\s+/)[0] || '';
+        let t = 'Fala ' + primeiro + '! 👋 A mensalidade de ' + nomeMes(mes) + (nomeRacha ? ' do ' + nomeRacha : ' do racha')
+            + (r.config.mensalidade ? ' (' + reais(r.config.mensalidade) + ')' : '') + ' ainda tá em aberto.';
+        if (pix && pix.chave) t += '\n💠 Pix: ' + pix.chave + (pix.nome ? ' (' + pix.nome + ')' : '');
+        return t + '\nValeu! ⚽';
+    }
+
     return {
         embaralhar, idUnico, chaveSegura, limparMapa, normalizarTime, compararVersoes,
         filtrarLinhasLote, sortearTimes, gerarPartidas, novaClassificacao,
@@ -602,6 +691,7 @@
         gravarNoCaminho, lerDoCaminho, diaISO, ultimosDias, resumirMetricas,
         nomeDaChave, resumoCampeonato, textoResumo, proximoTurno, resumirPresenca,
         normalizarNome, acharPorNome, CORES_RACHA, corRacha, hexParaRgb, textoListaWhatsApp,
-        crc16Pix, normalizarChavePix, montarPix
+        crc16Pix, normalizarChavePix, montarPix, statusPlano, reais, economiaAnual,
+        mesISO, nomeMes, somarMes, resumoCaixa, textoCobrancaGrupo, textoCobrancaIndividual
     };
 });

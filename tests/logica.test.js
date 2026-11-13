@@ -351,3 +351,46 @@ t('Pix copia e cola: CRC oficial, chaves e código completo válido', () => {
     assert.strictEqual(L.montarPix({ chave: '' }), '');
     assert.ok(L.montarPix({ chave: 'a@b.co', nome: 'X', cidade: 'Y' }).includes('0503***'));   // sem valor e sem txid
 });
+
+t('plano Pro: assinatura, teste grátis de 7 dias e economia do anual', () => {
+    const dia = 864e5, agora = 100 * dia;
+    assert.deepStrictEqual(L.statusPlano(null, null, agora, 7), { pro: false, origem: null, ate: null, diasTeste: 0, testeUsado: false });
+    const t1 = L.statusPlano(null, { inicio: agora - 2 * dia }, agora, 7);
+    assert.ok(t1.pro && t1.origem === 'teste' && t1.diasTeste === 5 && t1.testeUsado);
+    const acabou = L.statusPlano(null, { inicio: agora - 8 * dia }, agora, 7);
+    assert.ok(!acabou.pro && acabou.testeUsado);                                   // teste só uma vez
+    assert.strictEqual(L.statusPlano({ ativo: true, ate: agora + dia }, null, agora, 7).origem, 'plano');
+    assert.ok(!L.statusPlano({ ativo: true, ate: agora - 1 }, null, agora, 7).pro);  // assinatura vencida
+    assert.ok(L.statusPlano({ ativo: true }, null, agora, 7).pro);                    // vitalício
+    assert.strictEqual(L.economiaAnual(9.9, 59.9), 50);
+    assert.strictEqual(L.reais(59.9), 'R$ 59,90');
+});
+
+t('caixa: saldo, mês, mensalistas pagos/devendo e cobrança', () => {
+    assert.strictEqual(L.mesISO(new Date(2026, 10, 13).getTime()), '2026-11');
+    assert.strictEqual(L.nomeMes('2026-11'), 'novembro de 2026');
+    assert.strictEqual(L.somarMes('2026-12', 1), '2027-01'); assert.strictEqual(L.somarMes('2026-01', -1), '2025-12');
+    const js = [{ id: 1, nome: 'Ana Souza' }, { id: 2, nome: 'Bia' }, { id: 3, nome: 'Caio' }];
+    const caixa = {
+        config: { mensalidade: 50, diaria: 15, vencimento: 10 },
+        mensalistas: { 1: true, 2: true },
+        lancamentos: {
+            a: { tipo: 'entrada', valor: 50, mes: '2026-11', categoria: 'mensalidade', jogadorId: 1, data: 3 },
+            b: { tipo: 'entrada', valor: 15, mes: '2026-11', categoria: 'diaria', jogadorId: 3, data: 2 },
+            c: { tipo: 'saida', valor: 120.5, mes: '2026-11', categoria: 'quadra', desc: 'Quadra', data: 1 },
+            d: { tipo: 'entrada', valor: 200, mes: '2026-10', categoria: 'mensalidade', jogadorId: 2, data: 0 }
+        }
+    };
+    const r = L.resumoCaixa(caixa, js, '2026-11');
+    assert.strictEqual(r.saldo, 144.5);                 // 50 + 15 - 120,5 + 200 (outubro também conta no saldo)
+    assert.strictEqual(r.entradasMes, 65); assert.strictEqual(r.saidasMes, 120.5); assert.strictEqual(r.saldoMes, -55.5);
+    assert.deepStrictEqual(r.mensalistas.map(m => [m.nome, m.pago]), [['Bia', false], ['Ana Souza', true]]);   // quem deve primeiro
+    assert.strictEqual(r.pagaram, 1); assert.strictEqual(r.aReceber, 50); assert.strictEqual(r.previsto, 100);
+    assert.strictEqual(r.lancamentos[0].id, 'a');      // mais recente primeiro
+    const g = L.textoCobrancaGrupo(r, '2026-11', 'Pelada dos Crias', { chave: '+5511999998888', nome: 'Carlos' });
+    assert.ok(g.startsWith('💰 *MENSALIDADE DE NOVEMBRO DE 2026* — Pelada dos Crias'));
+    assert.ok(g.includes('⏳ *Ainda não pagaram (1):*\n1. Bia') && g.includes('💠 Pix: +5511999998888 (Carlos)'));
+    assert.ok(L.textoCobrancaIndividual('Ana Souza', r, '2026-11', 'Pelada', null).startsWith('Fala Ana! 👋 A mensalidade de novembro de 2026 do Pelada (R$ 50,00)'));
+    const todos = L.resumoCaixa(Object.assign({}, caixa, { mensalistas: { 1: true } }), js, '2026-11');
+    assert.ok(L.textoCobrancaGrupo(todos, '2026-11', '', null).includes('Todo mundo pagou'));
+});

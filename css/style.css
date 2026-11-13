@@ -601,3 +601,54 @@ input[type="text"], input[type="number"], input[type="password"], input[type="em
 .dica-pix { min-height: 1em; margin: 6px 0 0; font-size: 0.78rem; color: var(--mudo); word-break: break-all; }
 .dica-pix.ok { color: var(--neon); font-weight: 700; }
 .dica-pix.erro { color: var(--verm); font-weight: 700; }
+
+/* ---------- 14. PRO: teste grátis + planos mensal/anual ---------- */
+.btn-teste { font-size: 1.05rem; padding: 16px; }
+.pro-sem-cartao { text-align: center; font-size: 0.75rem; color: var(--mudo); margin: -2px 0 0; }
+.pro-ou { display: flex; align-items: center; gap: 10px; color: var(--mudo); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin: 4px 0; }
+.pro-ou::before, .pro-ou::after { content: ''; flex: 1; height: 1px; background: var(--linha); }
+.planos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.plano-opcao { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 18px 8px 12px; border-radius: 16px; cursor: pointer; font: inherit; color: var(--txt); background: rgba(0,0,0,0.3); border: 2px solid var(--linha); transition: border-color .2s, transform .12s; }
+.plano-opcao:active { transform: scale(0.98); }
+.plano-opcao.on { border-color: var(--neon); background: rgba(var(--neon-rgb),0.08); }
+.plano-nome { font-size: 0.8rem; font-weight: 800; color: var(--mudo); text-transform: uppercase; letter-spacing: 0.6px; }
+.plano-preco { font-size: 1.35rem; font-weight: 900; }
+.plano-opcao small { font-size: 0.7rem; color: var(--mudo); text-align: center; }
+.plano-selo { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 0.62rem; font-weight: 900; padding: 3px 8px; border-radius: 99px; background: linear-gradient(135deg, #f1d36b, var(--ouro)); color: #231b05; }
+.pro-teste-ativo, .pro-ok { text-align: center; font-size: 0.92rem; padding: 10px; border-radius: 12px; background: rgba(var(--neon-rgb),0.08); border: 1px solid rgba(var(--neon-rgb),0.3); }
+.pro-pix-det summary { cursor: pointer; text-align: center; font-size: 0.82rem; color: var(--mudo); text-decoration: underline; }
+.pro-pix-det .pro-pix { margin-top: 8px; }
+
+/* ---------- 15. CAIXA DO RACHA ---------- */
+.caixa-bloqueado { text-align: center; }
+.caixa-cadeado { font-size: 2rem; margin-bottom: 4px; }
+.caixa-bloqueado .pro-beneficios { text-align: left; }
+.mes-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.mes-nav b { font-size: 1.05rem; }
+.mes-nav button { width: 40px; height: 40px; border-radius: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--linha); color: var(--txt); font-size: 1.4rem; cursor: pointer; }
+.caixa-saldo { text-align: center; margin-bottom: 12px; }
+.caixa-saldo small { display: block; color: var(--mudo); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
+.caixa-saldo strong { font-size: 2.3rem; font-weight: 900; color: var(--neon); font-variant-numeric: tabular-nums; }
+.caixa-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.caixa-tiles > div { background: rgba(0,0,0,0.28); border: 1px solid var(--linha); border-radius: 12px; padding: 8px 4px; text-align: center; }
+.caixa-tiles span { display: block; font-size: 0.66rem; color: var(--mudo); font-weight: 700; }
+.caixa-tiles b { font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+.pos { color: var(--neon) !important; } .neg { color: var(--verm) !important; }
+.cx-progresso { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--mudo); margin-bottom: 4px; }
+.cx-progresso b { color: var(--txt); }
+.barra-cx { height: 8px; background: rgba(255,255,255,0.07); border-radius: 99px; overflow: hidden; margin-bottom: 8px; }
+.barra-cx > div { height: 100%; background: linear-gradient(90deg, var(--neon), var(--verde)); border-radius: 99px; }
+.cx-pessoa { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--linha); }
+.cx-pessoa:last-of-type { border-bottom: none; }
+.cx-pessoa .nm { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cx-pessoa .btn-icone { width: 34px; height: 34px; font-size: 0.9rem; }
+.cx-tudo-pago { text-align: center; color: var(--neon); font-weight: 800; margin: 10px 0 0; }
+.cx-lanc { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--linha); }
+.cx-lanc:last-child { border-bottom: none; }
+.cx-ic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; background: rgba(0,0,0,0.3); }
+.cx-desc { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cx-desc b { font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cx-desc small { color: var(--mudo); font-size: 0.72rem; }
+.cx-lanc strong { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 0.92rem; }
+.cx-escolha { max-height: 50vh; overflow-y: auto; }
+.cx-escolha .item-presenca { display: block; margin-bottom: 6px; }

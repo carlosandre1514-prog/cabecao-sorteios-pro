@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0b0e0c">
-    <link rel="stylesheet" href="css/style.css?v=20261113j">
+    <link rel="stylesheet" href="css/style.css?v=20261113k">
 </head>
 <body>
     <!-- Projeto: Cabeção Sorteios Pro | Desenvolvedor: Carlos Andre | 2026 -->
@@ -321,6 +321,11 @@
             </div>
         </section>
 
+        <!-- CAIXA DO RACHA (Pro): mensalistas, diárias, gastos e saldo -->
+        <section id="tab-financeiro" class="tab-content">
+            <div id="conteudo-financeiro"></div>
+        </section>
+
         <section id="tab-ranking" class="tab-content">
             <div class="card">
                 <h2>Ranking de gols</h2>
@@ -375,6 +380,7 @@
             <button class="tab-btn" data-tab="tab-sorteio" data-title="Sorteio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>Sorteio</button>
             <button class="tab-btn" data-tab="tab-campeonato" data-title="Campeonato"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 4h3v2a3 3 0 0 1-3 3"/><path d="M7 4H4v2a3 3 0 0 0 3 3"/></svg>Campeonato</button>
             <button class="tab-btn" data-tab="tab-historico" data-title="Histórico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
+            <button class="tab-btn" data-tab="tab-financeiro" data-title="Caixa"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="14" rx="3"/><path d="M2.5 10h19"/><path d="M16 15h2"/><path d="M6 6l9-3 1.5 3"/></svg>Caixa</button>
             <button class="tab-btn" data-tab="tab-ranking" data-title="Ranking"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 21h19"/><rect x="9" y="9" width="6" height="12" rx="1"/><rect x="2.8" y="14" width="5.4" height="7" rx="1"/><rect x="15.8" y="16" width="5.4" height="5" rx="1"/></svg>Ranking</button>
         </div>
     </nav>
@@ -425,15 +431,15 @@
         window.dispatchEvent(new Event('firebase-ready'));
     </script>
     <!-- ordem importa: logica -> remoto -> auth -> app -> monetizacao -->
-    <script src="js/logica.js?v=20261113j"></script>
-    <script src="js/apito.js?v=20261113j"></script>
-    <script src="js/remoto.js?v=20261113j"></script>
-    <script src="js/auth.js?v=20261113j"></script>
-    <script src="js/app.js?v=20261113j"></script>
-    <script src="js/monetizacao.js?v=20261113j"></script>
-    <script src="js/icones.js?v=20261113j"></script>
-    <script src="js/metricas.js?v=20261113j"></script>
-    <script src="js/imagem-times.js?v=20261113j"></script>
+    <script src="js/logica.js?v=20261113k"></script>
+    <script src="js/apito.js?v=20261113k"></script>
+    <script src="js/remoto.js?v=20261113k"></script>
+    <script src="js/auth.js?v=20261113k"></script>
+    <script src="js/app.js?v=20261113k"></script>
+    <script src="js/monetizacao.js?v=20261113k"></script>
+    <script src="js/icones.js?v=20261113k"></script>
+    <script src="js/metricas.js?v=20261113k"></script>
+    <script src="js/imagem-times.js?v=20261113k"></script>
     <script>
         // Funciona sem internet: guarda o app no aparelho (sw.js)
         if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {

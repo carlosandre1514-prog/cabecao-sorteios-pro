@@ -23,6 +23,8 @@ js/
   metricas.js         📊 contadores anônimos de uso (painel só do admin)
   imagem-times.js     📸 imagem dos times sorteados para o WhatsApp
 sw.js                 📴 service worker: app abre sem internet
+database.rules.json   🔒 TODAS as regras do Realtime Database (firebase deploy --only database)
+functions/            💳 Mercado Pago: criarCheckout + webhook que libera o Pro (docs/MERCADO-PAGO.md)
 tests/
   logica.test.js      testes das regras         -> node tests/logica.test.js
   fumaca.test.js      app inteiro com navegador falso -> node tests/fumaca.test.js
@@ -120,3 +122,12 @@ fica em `js/apito.js` e é o mesmo no app e no link. Regras do Firebase: `docs/C
   nome). O código é o BR Code estático do Banco Central, gerado no próprio celular (`Logica.montarPix`, CRC conferido
   com o exemplo oficial, com testes); o QR usa `js/vendor/qrcode.js` (qrcode-generator, MIT). O dinheiro cai direto
   na conta do organizador, sem taxa; depois o jogador aperta "Já paguei" e o organizador confirma.
+- **Teste grátis de 7 dias + plano anual**: tela do Pro com "🎁 Testar 7 dias grátis" (1 por conta, `testes/<uid>`
+  com horário do servidor) e cartões Anual (em destaque, com a economia) / Mensal. Preços e dias em
+  `configuracoes/monetizacao` (`preco_mensal`, `preco_anual`, `dias_teste`). Lógica: `Logica.statusPlano` (com testes).
+- **Pro automático (Mercado Pago)**: `functions/` (Cloud Functions, plano Blaze). O app chama `criarCheckout`; quando o
+  pagamento é aprovado o `webhookMercadoPago` consulta o pagamento no Mercado Pago e grava `planos/<uid>`; o app escuta
+  e libera na hora. Passo a passo em `docs/MERCADO-PAGO.md`; testes: `cd functions && npm test`.
+- **Caixa do racha** (aba Caixa, Pro): saldo, entradas/saídas do mês, mensalistas (quem pagou/quem deve),
+  cobrança pronta no WhatsApp (individual ou do grupo), lançamentos e "puxar diárias pagas da lista de presença".
+  Fica em `usuarios/<uid>/[rachas/<id>/]caixa`. Lógica: `Logica.resumoCaixa` (com testes).

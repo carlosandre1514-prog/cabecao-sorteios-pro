@@ -25,7 +25,7 @@ const document = {
 const alertas = [];
 const win = { listeners: {}, addEventListener(t, f) { (this.listeners[t] = this.listeners[t] || []).push(f); }, dispatchEvent(e) { (this.listeners[e.type] || []).forEach(f => f(e)); }, open() {}, scrollTo() {} };
 const ctx = vm.createContext(Object.assign(win, {
-    window: win, document, self: win, console: { log() {}, error() {}, warn() {} }, setInterval: () => 0, clearInterval() {}, setTimeout: f => { setImmediate(f); return 0; }, history: { replaceState() {}, pushState() {} }, location: { pathname: '/', href: 'https://x.test/index.html' }, clearTimeout() {}, URL, crypto: require('crypto').webcrypto,
+    window: win, document, self: win, console: { log() {}, error() {}, warn() {} }, setInterval: () => 0, clearInterval() {}, setTimeout: f => { setImmediate(f); return 0; }, history: { replaceState() {}, pushState() {} }, location: { pathname: '/', href: 'https://x.test/index.html' }, clearTimeout() {}, URL, URLSearchParams, crypto: require('crypto').webcrypto,
     localStorage: { m: new Map(), getItem(k) { return this.m.has(k) ? this.m.get(k) : null; }, setItem(k, v) { this.m.set(k, String(v)); }, removeItem(k) { this.m.delete(k); } }, navigator: {}, Event: class { constructor(t) { this.type = t; } },
     Date, Math, JSON, Object, Array, Number, String, Set, Promise, parseInt, parseFloat, isFinite, Infinity, encodeURIComponent
 }));

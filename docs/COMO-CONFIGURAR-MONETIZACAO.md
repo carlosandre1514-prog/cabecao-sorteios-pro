@@ -1,3 +1,7 @@
+> **Atalho:** todas as regras do banco estão juntas em `database.rules.json` (na raiz do projeto). Copie o arquivo
+> inteiro em Realtime Database → Regras → Publicar, ou rode `firebase deploy --only database`.
+> Mercado Pago com liberação automática do Pro: `docs/MERCADO-PAGO.md`.
+
 # Monetização – Cabeção Sorteios Pro (v1.1.0)
 
 ## 1. Configuração remota (Firebase > Realtime Database)
