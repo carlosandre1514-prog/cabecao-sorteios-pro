@@ -1168,7 +1168,10 @@ document.addEventListener('DOMContentLoaded', () => {
         while (el && el.dataset && el.dataset.pai && n++ < 5) el = document.getElementById(el.dataset.pai);
         return el ? el.id : id;
     }
+    // telas só do administrador (e-mail de configuracoes/admin_email)
+    const TELAS_ADMIN = ['tab-admin', 'tab-caixa', 'tab-metricas'];
     function irParaAba(id, semHistorico, titulo) {
+        if (TELAS_ADMIN.includes(id) && !souAdmin) id = 'tab-mais';
         const alvo = document.getElementById(id);
         if (!alvo) return;
         const btn = document.querySelector(`.tab-btn[data-tab="${abaRaiz(id)}"]`);
