@@ -1,3 +1,7 @@
+> **Atalho:** todas as regras do banco estão juntas em `database.rules.json` (na raiz do projeto). Copie o arquivo
+> inteiro em Realtime Database → Regras → Publicar, ou rode `firebase deploy --only database`.
+> Mercado Pago com liberação automática do Pro: `docs/MERCADO-PAGO.md`.
+
 # Monetização – Cabeção Sorteios Pro (v1.1.0)
 
 ## 1. Configuração remota (Firebase > Realtime Database)
@@ -134,3 +138,108 @@ Cole em Realtime Database → Regras → Publicar. Esta versão substitui a ante
 
 - Qualquer usuário logado envia mensagem; só o administrador lê e marca como resolvido.
 - Os perfis de racha ficam dentro de `usuarios/<uid>/rachas/<idDoRacha>/...` (mesma regra de `usuarios`, nada a mudar). O "Racha principal" continua nos caminhos de antes (`usuarios/<uid>/jogadores`, `historico`...), então nenhum dado antigo é perdido.
+
+
+---
+
+## Métricas (painel "📊 Métricas do app") e convite do placar ao vivo
+
+O app conta, por dia, eventos anônimos (sorteios, imagens enviadas, visitas ao placar ao vivo,
+cliques em "Criar meu racha", quem abriu a tela do Pro, quem clicou em Assinar...). Só o e-mail de
+`configuracoes/admin_email` enxerga o painel (menu lateral → **Métricas do app**).
+
+Acrescente estes nós nas regras (mantenha os que já existem):
+
+```json
+"metricas": {
+  ".read": "auth != null && auth.token.email === root.child('configuracoes/admin_email').val()",
+  "$dia": {
+    "$evento": {
+      ".write": "$dia.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && $evento.matches(/^[a-z_]{1,40}$/)",
+      ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() : 0) + 1"
+    }
+  }
+},
+"metricas_ativos": {
+  ".read": "auth != null && auth.token.email === root.child('configuracoes/admin_email').val()",
+  "$dia": {
+    "$uid": {
+      ".write": "auth != null && auth.uid === $uid",
+      ".validate": "newData.val() === true"
+    }
+  }
+}
+```
+
+- Cada gravação só consegue somar **+1** (ninguém consegue zerar ou inflar de uma vez).
+- `metricas` aceita escrita sem login porque a página pública `ao-vivo.html` também conta visitas.
+- Sem essas regras o app funciona normalmente; só o painel fica vazio.
+
+### Link do botão "Criar meu racha grátis" (página do placar ao vivo)
+Crie `configuracoes/divulgacao/link` com o link da Play Store (ou do app web).
+Sem esse nó, o botão abre o `index.html` do mesmo site.
+
+### Como ler o funil
+`Sorteios → Imagens enviadas → Visitas ao placar → Cliques em Criar meu racha → Cadastros`
+mostra se o app está se espalhando sozinho. `Bateram no limite → Abriram o Pro → Clicaram em Assinar`
+mostra onde a venda trava.
+
+---
+
+## Lista de presença por link (`presenca.html?c=CODIGO`)
+
+Na aba **Sorteio**, "📲 Criar lista e enviar no grupo" gera um link. Cada jogador abre, digita o próprio nome e
+responde **Vou** ou **Não vou**, sem login. Quem não está no elenco pode "pedir para entrar". O app do organizador
+escuta as respostas e marca a presença sozinho; se houver limite de vagas na linha, quem confirmou depois vai para a
+lista de espera (goleiros não ocupam vaga).
+
+Acrescente este nó nas regras (mantenha os que já existem):
+
+```json
+"presenca": {
+  "$codigo": {
+    ".read": true,
+    ".write": "auth != null && (!data.exists() || data.child('dono').val() === auth.uid)",
+    "dono": { ".validate": "newData.val() === auth.uid" },
+    "aberta": { ".validate": "newData.isBoolean()" },
+    "limite": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 200" },
+    "pagos": { "$id": { ".validate": "newData.val() === true" } },
+    "promovidos": { "$id": { ".validate": "newData.isNumber()" } },
+    "respostas": {
+      "$id": {
+        ".write": "root.child('presenca/' + $codigo + '/aberta').val() === true || (auth != null && root.child('presenca/' + $codigo + '/dono').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['status', 'em']) && $id.matches(/^[A-Za-z0-9_-]{1,40}$/)",
+        "status": { ".validate": "newData.val() === 'vou' || newData.val() === 'nao'" },
+        "em": { ".validate": "newData.isNumber()" },
+        "nome": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+        "convidado": { ".validate": "newData.isBoolean()" },
+        "goleiro": { ".validate": "newData.isBoolean()" },
+        "removido": { ".validate": "newData.isBoolean()" },
+        "paguei": { ".validate": "newData.isNumber()" },
+        "$outro": { ".validate": false }
+      }
+    }
+  }
+}
+```
+
+- Só o dono (organizador logado) cria, fecha, reabre, ajusta ou apaga a lista, mexe nos nomes e marca quem **pagou**
+  (`pagos/<id>`). Pela página o jogador só consegue **avisar** "Já paguei" (`respostas/<id>/paguei`): ele fica
+  "🕐 pagou (a confirmar)" até o organizador conferir e tocar em **Confirmar**. Depois do prazo, o app mostra
+  "N jogadores sem pagamento confirmado" (quem avisou que pagou não conta: o organizador confere antes).
+- **Vagas:** o organizador escolhe quantos times e quantos de linha por time (ex.: 4 x 4 = 16 na linha + 4 goleiros,
+  1 por time, igual ao sorteio). Passou disso, vira **suplente**, em ordem de confirmação. Se tiver menos goleiros que
+  times, tudo bem (o sorteio já reparte os goleiros do Time 1 para baixo).
+- **Desistência / falta de pagamento:** o organizador toca no ✕ ao lado do nome, um por um (às vezes
+  o pessoal paga em cima da hora), e **escolhe qual suplente entra** no lugar (o primeiro da fila vem marcado).
+  Também pode tocar em **Subir** num suplente a qualquer hora: ele ganha a vaga garantida (`promovidos/<id>`) e, se a
+  lista estiver cheia, quem confirmou por último vira suplente (o app avisa quem antes de confirmar). A pessoa vê "O organizador tirou você da lista"; se confirmar de novo,
+  volta para o fim da fila de suplentes.
+- Qualquer pessoa com o link responde, mas só enquanto a lista estiver **aberta**. "Fechar lista" congela as respostas.
+- Não dá para listar todas as listas (não há leitura em `presenca` inteiro); o código tem 8 caracteres sorteados.
+- A página pública mostra **só os nomes** dos jogadores, nunca as estrelas.
+- **Pix copia e cola** (`presenca/<codigo>/pix` = chave, nome, cidade, valor): só o dono grava (já coberto pela regra
+  de escrita do `$codigo`, nada novo a publicar). A chave fica visível para quem tem o link, como quando o organizador
+  manda a chave no grupo.
+- Limitação conhecida: como não há login na página, alguém com o link poderia responder no lugar de outro.
+  Para um grupo de pelada isso é aceitável; se virar problema, dá para exigir login anônimo do Firebase.

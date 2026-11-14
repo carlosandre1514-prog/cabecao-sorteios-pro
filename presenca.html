@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Lista do racha · Cabeção Sorteios Pro</title>
+    <meta name="description" content="Confirme se você vai no racha.">
+    <link rel="icon" type="image/png" href="img/icon-192.png">
+    <meta name="theme-color" content="#0f1214">
+    <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/style.css?v=95f21c47d2">
+    <link rel="stylesheet" href="css/base.css?v=95f21c47d2">
+    <style>
+        .app-container { padding-bottom: 32px; }
+        body { background-image: radial-gradient(ellipse 90% 30% at 50% -10%, rgba(var(--verde-rgb), 0.14), transparent 70%); }
+        .hero { display: flex; align-items: center; gap: 14px; padding: calc(22px + env(safe-area-inset-top)) 6px 14px; animation: entra .45s ease both; }
+        .hero-escudo { width: 76px; height: 76px; border-radius: 20px; object-fit: contain; flex: none; background: rgba(0,0,0,.35); border: 1px solid rgba(var(--neon-rgb), .35); padding: 4px; box-shadow: none; }
+        .hero-txt { min-width: 0; }
+        .hero-kicker { color: var(--neon); font-weight: 900; font-size: .7rem; letter-spacing: 1.6px; }
+        .hero h1 { font-size: 1.65rem; line-height: 1.1; font-weight: 900; letter-spacing: -.4px; margin: 2px 0 8px; overflow-wrap: anywhere; }
+        .hero-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 99px; font-size: .75rem; font-weight: 700; background: rgba(0,0,0,.35); border: 1px solid var(--linha); color: var(--txt); }
+        .chip.fechada { color: var(--verm); border-color: rgba(222,90,104,.45); }
+        @keyframes entra { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        main .card { animation: entra .4s ease both; }
+        main .card:nth-child(2) { animation-delay: .05s; } main .card:nth-child(3) { animation-delay: .1s; } main .card:nth-child(4) { animation-delay: .15s; }
+        main.sem-anim .card { animation: none; }
+        .vagas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .vaga-box { background: rgba(0,0,0,.28); border: 1px solid var(--linha); border-radius: 14px; padding: 12px; }
+        .vaga-box strong { display: block; font-size: 1.9rem; line-height: 1; font-weight: 900; color: var(--neon); font-variant-numeric: tabular-nums; }
+        .vaga-box strong small { font-size: 1rem; color: var(--mudo); font-weight: 700; }
+        .vaga-box > span { font-size: .78rem; color: var(--mudo); font-weight: 700; }
+        .vaga-box .barra { margin: 8px 0 0; height: 6px; }
+        .status-vagas { margin: 10px 0 0; font-size: .85rem; font-weight: 700; }
+        .status-vagas.lotado { color: var(--ouro); }
+        .av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: .78rem; font-weight: 900; color: #0b0e0c; }
+        .av.grande { width: 64px; height: 64px; font-size: 1.4rem; margin: 0 auto 8px; box-shadow: 0 0 0 3px rgba(var(--neon-rgb), .35); }
+        .sub-lista { font-size: .72rem; font-weight: 900; letter-spacing: 1px; color: var(--mudo); margin: 14px 0 2px; }
+        .sub-lista:first-of-type { margin-top: 4px; }
+        .linha-pessoa.vazia { color: var(--mudo); opacity: .55; }
+        .linha-pessoa.vazia .av { background: transparent !important; border: 1px dashed var(--mudo); }
+        main { display: flex; flex-direction: column; gap: 12px; }
+        .aviso-centro { text-align: center; padding: 40px 10px; color: var(--mudo); }
+        .contador { display: flex; align-items: baseline; gap: 8px; }
+        .contador strong { font-size: 2.2rem; color: var(--neon); line-height: 1; }
+        .barra { height: 10px; background: rgba(255, 255, 255, 0.07); border-radius: 99px; overflow: hidden; margin: 10px 0 4px; }
+        .barra > div { height: 100%; background: linear-gradient(90deg, var(--neon), var(--verde)); border-radius: 99px; transition: width .4s; }
+        .tag-fechada { display: inline-block; background: rgba(222, 90, 104, 0.15); color: var(--verm); border-radius: 99px; padding: 3px 10px; font-size: .78rem; font-weight: 800; }
+        .eu { text-align: center; }
+        .eu .nome-eu { font-size: 1.5rem; font-weight: 800; margin: 2px 0 6px; }
+        .eu .estado { font-weight: 800; margin-bottom: 12px; }
+        .estado.vou { color: var(--neon); } .estado.nao { color: var(--verm); } .estado.espera { color: var(--ouro); }
+        .botoes-resposta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .botoes-resposta .btn { margin: 0; }
+        .link-discreto { background: none; border: none; color: var(--mudo); text-decoration: underline; font: inherit; font-size: .85rem; margin-top: 12px; cursor: pointer; }
+        .linha-pessoa { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--linha); }
+        .linha-pessoa:last-child { border-bottom: none; }
+        .linha-pessoa .pos { min-width: 20px; color: var(--mudo); font-weight: 800; font-size: .8rem; }
+        .linha-pessoa .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .linha-pessoa .tag { margin-left: auto; font-size: .72rem; color: var(--mudo); white-space: nowrap; }
+        .linha-pessoa.sou-eu { color: var(--neon); font-weight: 800; }
+        .lista-curta { color: var(--mudo); font-size: .9rem; line-height: 1.6; }
+        .entrar-form { display: grid; gap: 8px; }
+        .entrar-form label { display: flex; gap: 8px; align-items: center; color: var(--mudo); font-size: .9rem; }
+        .linha-pessoa .tag.pago { color: var(--neon); font-weight: 700; }
+        .linha-pessoa .tag.atrasado { color: var(--verm); font-weight: 700; }
+        .pag-eu { margin: -4px 0 12px; padding: 10px; border-radius: 12px; font-size: .95rem; font-weight: 800; color: var(--ouro); background: rgba(221, 180, 60, 0.08); border: 1px solid rgba(221, 180, 60, 0.3); }
+        .pag-eu span { display: block; font-size: .78rem; font-weight: 600; opacity: .85; }
+        .pag-eu.ok { color: var(--neon); background: rgba(45, 167, 98, 0.1); border-color: rgba(45, 167, 98, 0.45); }
+        .pag-eu.atrasado { color: var(--verm); background: rgba(222, 90, 104, 0.08); border-color: rgba(222, 90, 104, 0.4); }
+        .pag-eu.aguardando { color: #e7c75e; }
+        .pag-eu .link-discreto { margin-top: 4px; }
+        .btn-pagar { margin: 8px 0 0 !important; background: linear-gradient(135deg, #e7c75e, var(--ouro)); color: #1d1606; }
+        .linha-pessoa .tag.aguardando { color: #e7c75e; font-weight: 700; }
+        .card-pag { border-color: rgba(221, 180, 60, 0.4); }
+        .pix-box { margin: 10px 0 2px; padding: 14px; border-radius: 16px; background: #0f1b19; border: 1px solid rgba(50, 188, 173, 0.45); color: var(--txt); text-align: center; }
+        .pix-topo { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .pix-logo { font-weight: 900; color: #5fe0cf; font-size: 1rem; }
+        .pix-valor { font-size: 1.5rem; font-weight: 900; color: #fff; }
+        .pix-qr { width: 190px; height: 190px; image-rendering: pixelated; background: #fff; border-radius: 12px; padding: 6px; display: block; margin: 0 auto 12px; }
+        .btn-pix { background: linear-gradient(135deg, #5fe0cf, #32bcad); color: #062420; margin: 0 !important; }
+        .pix-ajuda { margin: 10px 0 0; font-size: .78rem; font-weight: 500; color: var(--mudo); line-height: 1.5; }
+        .pix-ajuda strong { color: var(--txt); }
+        .dica-nome { min-height: 1.2em; margin: 0; font-size: .85rem; color: var(--mudo); }
+        .dica-nome.achou { color: var(--neon); font-weight: 700; }
+        #meu-nome { font-size: 1.1rem; padding: 14px; }
+        .hidden { display: none !important; }
+        .cta-app { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; border-color: rgba(147, 213, 75, 0.35); }
+        .cta-app .cta-logo { width: 56px; height: 56px; border-radius: 12px; }
+        .cta-app .btn { grid-column: 1 / -1; text-align: center; text-decoration: none; display: block; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="hero" id="hero">
+            <img src="img/icon-192.png" alt="" class="hero-escudo" id="escudo">
+            <div class="hero-txt">
+                <small class="hero-kicker">LISTA DO RACHA</small>
+                <h1 id="titulo">Carregando...</h1>
+                <div class="hero-chips" id="chips"><span id="quando"></span></div>
+            </div>
+        </header>
+
+        <main id="conteudo">
+            <div class="aviso-centro"><div class="spinner" style="margin:0 auto 12px;"></div>Abrindo a lista...</div>
+        </main>
+
+        <!-- CONVITE: quem confirma presença também organiza racha -->
+        <div class="card cta-app" style="margin-top:12px;">
+            <img src="img/icon-192.png" alt="" class="cta-logo">
+            <div>
+                <h2 style="margin:0 0 4px;">Organiza um racha?</h2>
+                <p class="subtext" style="margin:0;">Lista de presença por link, sorteio de times equilibrados e placar ao vivo. É grátis.</p>
+            </div>
+            <a id="cta-link" class="btn btn-primary" href="index.html">Criar meu racha grátis</a>
+        </div>
+        <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro</p>
+    </div>
+
+    <script src="js/logica.js?v=95f21c47d2"></script>
+    <script src="js/vendor/qrcode.js?v=95f21c47d2"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+        import { getDatabase, ref, onValue, get, set, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+        // Mesma configuração do app. Não precisa de login: quem tem o link responde.
+        const app = initializeApp({
+            apiKey: "AIzaSyCt4kqF8LcHkR7bn3gvF-1ZcpjVW3FH8YA",
+            authDomain: "studio-7737408264-35a36.firebaseapp.com",
+            databaseURL: "https://studio-7737408264-35a36-default-rtdb.firebaseio.com",
+            projectId: "studio-7737408264-35a36",
+            storageBucket: "studio-7737408264-35a36.firebasestorage.app",
+            messagingSenderId: "35330544724",
+            appId: "1:35330544724:web:d9e200c94f376a86ae09c1"
+        });
+        const db = getDatabase(app);
+        const $ = id => document.getElementById(id);
+        // texto da página sem emoji (o goleiro vira o ícone de luva)
+        const RE_EMOJI = /[\u{1F000}-\u{1FAFF}\u{2300}-\u{23FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu;
+        const LUVA = '<svg class="i i-sm" viewBox="0 0 24 24" aria-label="goleiro" role="img" style="vertical-align:-3px;margin-right:4px"><path d="M7.5 12.5V7a1.5 1.5 0 0 1 3 0v4M10.5 10.5V5.2a1.5 1.5 0 0 1 3 0v5.3M13.5 10.5V6.2a1.5 1.5 0 0 1 3 0v6M16.5 12.2V9.5a1.5 1.5 0 0 1 3 0v4.3a6.7 6.7 0 0 1-6.7 6.7h-.6a5.3 5.3 0 0 1-4.3-2.2l-2.9-4a1.5 1.5 0 0 1 2.3-1.9l1.7 2"/></svg>';
+        const limpar = h => String(h).replace(/🧤\s?/g, LUVA).replace(RE_EMOJI, '');
+
+        const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const codigo = (new URLSearchParams(location.search).get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const chaveEu = 'cabecao_presenca_eu_' + codigo;
+        const lerEu = () => { try { return localStorage.getItem(chaveEu); } catch (e) { return null; } };
+        const gravarEu = v => { try { v ? localStorage.setItem(chaveEu, v) : localStorage.removeItem(chaveEu); } catch (e) { /* ignora */ } };
+
+        // ---------- métricas anônimas + link do convite ----------
+        const hoje = Logica.diaISO();
+        const contar = ev => set(ref(db, 'metricas/' + hoje + '/' + ev), increment(1)).catch(() => {});
+        get(ref(db, 'configuracoes/divulgacao/link')).then(s => {
+            const u = String(s.exists() ? s.val() : '');
+            if (/^https?:\/\//i.test(u)) $('cta-link').href = u;
+        }).catch(() => {});
+        $('cta-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            const destino = $('cta-link').href, ir = () => { location.href = destino; };
+            Promise.race([contar('presenca_cta'), new Promise(r => setTimeout(r, 600))]).then(ir, ir);
+        });
+
+        let lista = null;      // presenca/<codigo>
+        let eu = lerEu();      // id do jogador escolhido neste aparelho
+        let trocando = false;  // mostrando a grade de nomes para escolher outro
+
+        function aviso(msg) { $('conteudo').innerHTML = `<div class="card aviso-centro">${limpar(msg)}</div>`; }
+
+        async function responder(id, status, extra) {
+            if (!lista || !lista.aberta) return;
+            const atual = (lista.respostas || {})[id];
+            // mantém o horário original enquanto continuar "vou" (não perde a vaga ao tocar de novo)
+            const em = (atual && atual.status === 'vou' && status === 'vou') ? atual.em : Date.now();
+            // convidado mudando a resposta: mantém o nome (senão ele some da lista)
+            const doConvidado = (atual && atual.convidado) ? { nome: atual.nome, convidado: true, goleiro: !!atual.goleiro } : {};
+            if (atual && atual.paguei && status === 'vou') doConvidado.paguei = atual.paguei;   // não perde o "já paguei"
+            const dados = Object.assign({ status, em }, doConvidado, extra || {});
+            try {
+                await set(ref(db, 'presenca/' + codigo + '/respostas/' + id), dados);
+                contar('presenca_resposta');
+            } catch (e) {
+                alert('Não foi possível salvar. A lista pode ter sido fechada pelo organizador. (' + ((e && e.code) || 'erro') + ')');
+            }
+        }
+
+        // "Já paguei": o jogador avisa; só vira PAGO quando o organizador confirmar no app
+        async function marcarPaguei(id, sim) {
+            if (!lista || !(lista.respostas || {})[id]) return;
+            try {
+                await set(ref(db, 'presenca/' + codigo + '/respostas/' + id + '/paguei'), sim ? Date.now() : null);
+                if (sim) contar('presenca_paguei');
+            } catch (e) {
+                alert('Não foi possível salvar. A lista pode ter sido fechada pelo organizador. (' + ((e && e.code) || 'erro') + ')');
+            }
+        }
+
+        // cor do racha (🎨 Personalizar no app)
+        let visualAplicado = '';
+        function aplicarVisual(v) {
+            const chave = JSON.stringify(v || {});
+            if (chave === visualAplicado) return;
+            visualAplicado = chave;
+            v = v || {};
+            const c = Logica.corRacha(v.cor), raiz = document.documentElement.style;
+            raiz.setProperty('--neon', c.a); raiz.setProperty('--verde', c.b);
+            raiz.setProperty('--neon-rgb', Logica.hexParaRgb(c.a)); raiz.setProperty('--verde-rgb', Logica.hexParaRgb(c.b));
+            $('escudo').src = /^data:image\//.test(v.escudo || '') ? v.escudo : 'img/icon-192.png';
+        }
+        // avatar com as iniciais (cor fixa por nome)
+        function avatar(nome, grande) {
+            const n = String(nome || '?').trim();
+            const partes = n.split(/\s+/);
+            const ini = ((partes[0] || '?')[0] + (partes.length > 1 ? partes[partes.length - 1][0] : (partes[0][1] || ''))).toUpperCase();
+            let h = 0; for (const ch of n) h = (h * 31 + ch.charCodeAt(0)) % 360;
+            return `<span class="av${grande ? ' grande' : ''}" style="background:hsl(${h} 62% 68%)">${esc(ini)}</span>`;
+        }
+        let primeiraVez = true;
+
+        // ---------- Pix copia e cola + QR Code (gerado aqui no celular, padrão do Banco Central) ----------
+        let pixAtual = '';
+        function codigoPix(d, pessoa, nomeRacha) {
+            const px = d.pix || {};
+            if (!px.chave) return '';
+            return Logica.montarPix({
+                chave: px.chave, nome: px.nome, cidade: px.cidade, valor: px.valor,
+                txid: codigo + String(pessoa.nome || '').replace(/[^A-Za-z0-9]/g, ''),        // aparece no extrato do organizador
+                mensagem: nomeRacha + ' - ' + pessoa.nome
+            });
+        }
+        function qrDataUrl(texto) {
+            try {
+                const q = qrcode(0, 'M'); q.addData(texto); q.make();
+                return q.createDataURL(5, 2);
+            } catch (e) { return ''; }
+        }
+        function caixaPix(d, pessoa, nomeRacha) {
+            const cod = codigoPix(d, pessoa, nomeRacha);
+            pixAtual = cod;
+            if (!cod) return '';
+            const px = d.pix;
+            const qr = qrDataUrl(cod);
+            return `<div class="pix-box">
+                <div class="pix-topo"><span class="pix-logo">Pix</span>${px.valor ? `<strong class="pix-valor">R$ ${Number(px.valor).toFixed(2).replace('.', ',')}</strong>` : ''}</div>
+                ${qr ? `<img class="pix-qr" src="${qr}" alt="QR Code do Pix">` : ''}
+                <button class="btn btn-pix" data-copiar-pix>📋 Copiar código Pix</button>
+                <p class="pix-ajuda">No app do banco: <strong>Pix → Pix Copia e Cola</strong> e cole o código.${px.valor ? '' : ' Digite o valor combinado.'}<br>Recebedor: <strong>${esc(String(px.nome || '').toUpperCase())}</strong></p>
+            </div>`;
+        }
+        async function copiarPix(botao) {
+            if (!pixAtual) return;
+            let ok = false;
+            try { await navigator.clipboard.writeText(pixAtual); ok = true; } catch (e) {
+                const ta = document.createElement('textarea'); ta.value = pixAtual; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.select();
+                try { ok = document.execCommand('copy'); } catch (e2) { /* ignora */ }
+                ta.remove();
+            }
+            const original = botao.textContent;
+            botao.textContent = ok ? '✅ Código copiado! Cole no app do banco' : 'Não deu para copiar: segure no QR Code';
+            setTimeout(() => { botao.textContent = original; }, 2500);
+            if (ok) contar('presenca_pix_copiado');
+        }
+
+        function desenhar() {
+            const d = lista;
+            aplicarVisual(d.visual);
+            const nomeRacha = (d.visual && d.visual.nome) || d.titulo || 'Lista do racha';
+            document.title = nomeRacha + ' · Lista';
+            $('titulo').textContent = nomeRacha;
+            $('chips').innerHTML = (d.quando ? `<span class="chip">${esc(d.quando)}</span>` : '')
+                + (d.times ? `<span class="chip">${d.times} times de ${d.porTime} + goleiro</span>` : '')
+                + (d.aberta ? '' : '<span class="chip fechada">Lista fechada</span>');
+            const r = Logica.resumirPresenca(d.jogadores, d.respostas, d.limite, { vagasGoleiro: d.vagasGoleiro, pagos: d.pagos, prazo: d.prazo, promovidos: d.promovidos });
+            const fmtPrazo = ms => new Date(ms).toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            const jogadores = Object.values(d.jogadores || {}).filter(Boolean);
+            const todos = jogadores.map(j => ({ id: String(j.id), nome: String(j.nome), goleiro: !!j.g }))
+                .concat(r.convidados.map(c => ({ id: c.id, nome: c.nome, goleiro: c.goleiro, convidado: true })));
+            // convidado que o organizador colocou no elenco: passa a ser o jogador novo
+            if (eu && !todos.some(p => p.id === eu) && d.migrados && d.migrados[eu]) { eu = String(d.migrados[eu]); gravarEu(eu); }
+            const meu = todos.find(p => p.id === eu);
+            if (eu && !meu) { eu = null; gravarEu(null); }
+            const resp = d.respostas || {};
+            const estadoDe = id => {
+                if (r.confirmados.some(c => c.id === id)) return 'vou';
+                const ie = r.espera.findIndex(c => c.id === id);
+                if (ie >= 0) return 'espera:' + (ie + 1);
+                if (resp[id] && resp[id].status === 'nao') return 'nao';
+                return '';
+            };
+            let h = '';
+
+            // vagas
+            const lim = r.limite, vg = r.vagasGoleiro;
+            const pct = (a, b) => Math.min(100, Math.round(a / b * 100));
+            const faltam = lim ? Math.max(0, lim - r.linhaConfirmados) : 0;
+            h += `<div class="card">
+                <div class="vagas">
+                    <div class="vaga-box"><strong>${r.linhaConfirmados}${lim ? `<small>/${lim}</small>` : ''}</strong><span>na linha</span>${lim ? `<div class="barra"><div style="width:${pct(r.linhaConfirmados, lim)}%"></div></div>` : ''}</div>
+                    <div class="vaga-box"><strong>${r.goleirosConfirmados}${vg ? `<small>/${vg}</small>` : ''}</strong><span>🧤 goleiros</span>${vg ? `<div class="barra"><div style="width:${pct(r.goleirosConfirmados, vg)}%"></div></div>` : ''}</div>
+                </div>
+                <p class="status-vagas ${lim && !faltam ? 'lotado' : ''}">${!lim ? '✅ Sem limite de vagas' : faltam ? `🔥 Faltam ${faltam} vaga${faltam > 1 ? 's' : ''} na linha` : '⚡ Linha lotada! Quem confirmar agora entra como suplente'}</p>
+                <p class="subtext" style="margin:4px 0 0;">${r.espera.length ? `⏳ ${r.espera.length} suplente(s) · ` : ''}${r.naoVao.length} não vão · ${r.semResposta.length} sem resposta</p>
+            </div>`;
+            if (d.pagamento || d.prazo) h += `<div class="card card-pag">
+                <h2 style="margin-bottom:6px;">💰 Pagamento</h2>
+                ${d.pagamento ? `<p style="margin:0 0 4px;font-weight:700;">${esc(d.pagamento)}</p>` : ''}
+                ${d.pix && d.pix.chave ? `<p class="subtext" style="margin:0 0 4px;">💠 Pix para <strong>${esc(String(d.pix.nome || '').toUpperCase())}</strong>. Confirme seu nome na lista para ver o QR Code e o copia e cola.</p>` : ''}
+                ${d.prazo ? `<p class="subtext" style="margin:0;${r.prazoVencido ? 'color:var(--verm);' : ''}">⏰ Pagar até <strong>${esc(fmtPrazo(d.prazo))}</strong>${r.prazoVencido ? ' — prazo encerrado' : ''}. Quem não pagar pode perder a vaga para o suplente.</p>` : ''}
+            </div>`;
+
+            // eu
+            if (meu && !trocando) {
+                const est = estadoDe(meu.id);
+                const removido = resp[meu.id] && resp[meu.id].removido && est === 'nao';
+                const txt = est === 'vou' ? '✅ Você está confirmado!' : est.startsWith('espera') ? `⏳ Você é suplente (${est.split(':')[1]}º da fila)` : removido ? '❌ O organizador tirou você da lista' : est === 'nao' ? '❌ Você marcou que não vai' : 'Você ainda não respondeu';
+                const minhaVaga = r.confirmados.find(c => c.id === meu.id);
+                const pagTxt = !minhaVaga || !(d.prazo || d.pagamento || (d.pagos && Object.keys(d.pagos).length)) ? ''
+                    : minhaVaga.pago ? '<div class="pag-eu ok">💰 Pago ✔ <span>confirmado pelo organizador</span></div>'
+                    : minhaVaga.aConfirmar ? `<div class="pag-eu aguardando">🕐 Você marcou que pagou <span>aguardando confirmação do organizador</span>
+                        ${d.aberta ? '<button class="link-discreto" data-paguei="nao">Desfazer</button>' : ''}</div>`
+                    : `<div class="pag-eu ${minhaVaga.atrasado ? 'atrasado' : ''}">⏳ Pagamento pendente${d.prazo ? ' — até ' + esc(fmtPrazo(d.prazo)) : ''}
+                        ${caixaPix(d, meu, nomeRacha)}
+                        ${d.aberta ? `<button class="btn btn-pagar" data-paguei="sim">💸 Já paguei${d.pix && d.pix.chave ? ' (avisar o organizador)' : ''}</button>` : ''}</div>`;
+                const cls = est === 'vou' ? 'vou' : est.startsWith('espera') ? 'espera' : est === 'nao' ? 'nao' : '';
+                h += `<div class="card eu">
+                    ${avatar(meu.nome, true)}
+                    <div class="nome-eu">${meu.goleiro ? '🧤 ' : ''}${esc(meu.nome)}</div>
+                    <div class="estado ${cls}">${txt}</div>
+                    ${pagTxt}
+                    ${d.aberta ? `<div class="botoes-resposta">
+                        <button class="btn btn-success" data-resp="vou">✅ Vou</button>
+                        <button class="btn btn-danger" data-resp="nao">❌ Não vou</button>
+                    </div>` : '<p class="subtext">A lista foi fechada. Fale com o organizador para mudar.</p>'}
+                    <button class="link-discreto" data-trocar>Não é você? Digitar outro nome</button>
+                </div>`;
+            } else if (d.aberta) {
+                h += `<div class="card">
+                    <h2>Confirme sua presença</h2>
+                    <p class="subtext">Digite seu nome e toque em <strong>Vou</strong> ou <strong>Não vou</strong>.</p>
+                    <div class="entrar-form">
+                        <input id="meu-nome" list="nomes-elenco" maxlength="40" placeholder="Seu nome ou apelido" autocomplete="off" enterkeyhint="done">
+                        <datalist id="nomes-elenco">${todos.map(p => `<option value="${esc(p.nome)}">`).join('')}</datalist>
+                        <p id="dica-nome" class="dica-nome"></p>
+                        <label id="linha-goleiro" class="hidden"><input type="checkbox" id="meu-goleiro"> Sou goleiro</label>
+                        <div class="botoes-resposta">
+                            <button class="btn btn-success" data-digitado="vou">✅ Vou</button>
+                            <button class="btn btn-danger" data-digitado="nao">❌ Não vou</button>
+                        </div>
+                    </div>
+                    ${trocando && meu ? '<button class="link-discreto" data-cancelar>Cancelar</button>' : ''}
+                </div>`;
+            }
+
+            // listas
+            const temPag = !!(d.prazo || d.pagamento || (d.pagos && Object.keys(d.pagos).length));
+            const tagPag = p => p.pago === undefined || !temPag ? (p.convidado ? '<span class="tag">convidado</span>' : '')
+                : p.pago ? '<span class="tag pago">pago</span>'
+                : p.aConfirmar ? '<span class="tag aguardando">🕐 pagou (a confirmar)</span>'
+                : `<span class="tag ${p.atrasado ? 'atrasado' : ''}">${p.atrasado ? '⚠️ não pagou' : '⏳ a pagar'}</span>`;
+            const linha = (p, i) => `<div class="linha-pessoa ${p.id === eu ? 'sou-eu' : ''}"><span class="pos">${i + 1}</span>${avatar(p.nome)}<span class="nm">${p.goleiro ? '🧤 ' : ''}${esc(p.nome)}</span>${tagPag(p)}</div>`;
+            const vazia = i => `<div class="linha-pessoa vazia"><span class="pos">${i + 1}</span><span class="av"></span><span class="nm">vaga aberta</span></div>`;
+            const doLinha = r.confirmados.filter(c => !c.goleiro), doGol = r.confirmados.filter(c => c.goleiro);
+            const vagasAbertas = (n, ini) => Array.from({ length: Math.max(0, Math.min(n, 6)) }, (_, k) => vazia(ini + k)).join('');
+            h += `<div class="card"><h2>✅ Confirmados (${r.confirmados.length})</h2>
+                ${r.confirmados.length || lim ? `<p class="sub-lista">LINHA</p>${doLinha.map(linha).join('')}${lim ? vagasAbertas(lim - doLinha.length, doLinha.length) : ''}
+                ${doGol.length || vg ? `<p class="sub-lista">GOLEIROS</p>${doGol.map(linha).join('')}${vg ? vagasAbertas(vg - doGol.length, doGol.length) : ''}` : ''}`
+                : '<p class="subtext">Ninguém confirmou ainda. Seja o primeiro!</p>'}</div>`;
+            if (r.espera.length) h += `<div class="card"><h2>⏳ Suplentes (${r.espera.length})</h2><p class="subtext">Se alguém desistir ou não pagar, o primeiro suplente entra.</p>${r.espera.map(linha).join('')}</div>`;
+            if (r.naoVao.length) h += `<div class="card"><h2>❌ Não vão (${r.naoVao.length})</h2><p class="lista-curta">${r.naoVao.map(p => esc(p.nome) + (p.removido ? ' (retirado)' : '')).join(', ')}</p></div>`;
+            if (r.semResposta.length) h += `<div class="card"><h2>🤔 Ainda não responderam (${r.semResposta.length})</h2><p class="lista-curta">${r.semResposta.map(p => esc(p.nome)).join(', ')}</p></div>`;
+
+            const antes = $('meu-nome') ? { nome: $('meu-nome').value, gol: $('meu-goleiro').checked, foco: document.activeElement === $('meu-nome') } : null;
+            $('conteudo').classList.toggle('sem-anim', !primeiraVez);
+            primeiraVez = false;
+            h = limpar(h);
+            $('conteudo').innerHTML = h;
+            if (antes && $('meu-nome')) {
+                $('meu-nome').value = antes.nome; $('meu-goleiro').checked = antes.gol;
+                if (antes.foco) $('meu-nome').focus();
+            }
+            todasPessoas = todos;
+            atualizarDica();
+        }
+
+        // mostra se o nome digitado já está na lista (evita nome repetido) ou se entra como convidado
+        let todasPessoas = [];
+        function atualizarDica() {
+            const campo = $('meu-nome'), dica = $('dica-nome');
+            if (!campo || !dica) return;
+            const nome = campo.value.trim();
+            const achou = Logica.acharPorNome(todasPessoas, nome);
+            $('linha-goleiro').classList.toggle('hidden', !nome || !!achou);
+            dica.className = 'dica-nome' + (achou ? ' achou' : '');
+            dica.textContent = !nome ? '' : achou ? `✔ Você está na lista: ${achou.nome}` : 'Nome novo: você entra como convidado do racha.';
+        }
+        async function enviarDigitado(status, botao) {
+            const nome = ($('meu-nome').value || '').trim().replace(/\s+/g, ' ').slice(0, 40);
+            if (!nome) { $('meu-nome').focus(); $('dica-nome').textContent = 'Digite seu nome primeiro 👆'; return; }
+            botao.disabled = true;
+            const achou = Logica.acharPorNome(todasPessoas, nome);
+            if (achou) {
+                eu = achou.id; gravarEu(eu); trocando = false;
+                await responder(achou.id, status);
+            } else {
+                const id = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+                eu = id; gravarEu(id); trocando = false;
+                await responder(id, status, { nome, convidado: true, goleiro: !!$('meu-goleiro').checked });
+            }
+            botao.disabled = false;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        $('conteudo').addEventListener('click', async (e) => {
+            const b = e.target.closest('button');
+            if (!b || !lista) return;
+            if (b.dataset.digitado) { await enviarDigitado(b.dataset.digitado, b); return; }
+            if (b.hasAttribute('data-copiar-pix')) { await copiarPix(b); return; }
+            if (b.dataset.paguei && eu) { b.disabled = true; await marcarPaguei(eu, b.dataset.paguei === 'sim'); return; }
+            if (b.dataset.resp && eu) { b.disabled = true; await responder(eu, b.dataset.resp); return; }
+            if (b.hasAttribute('data-trocar')) { trocando = true; desenhar(); return; }
+            if (b.hasAttribute('data-cancelar')) { trocando = false; desenhar(); return; }
+        });
+
+        $('conteudo').addEventListener('input', (e) => { if (e.target.id === 'meu-nome') atualizarDica(); });
+        $('conteudo').addEventListener('keydown', (e) => {
+            if (e.target.id === 'meu-nome' && e.key === 'Enter') { e.preventDefault(); const b = document.querySelector('[data-digitado="vou"]'); if (b) b.click(); }
+        });
+
+        if (codigo.length !== 8) {
+            $('titulo').textContent = 'Link inválido';
+            aviso('Este link não está completo. Peça o link de novo para quem organiza o racha.');
+        } else {
+            contar('presenca_visita');
+            onValue(ref(db, 'presenca/' + codigo), (snap) => {
+                if (!snap.exists()) {
+                    $('titulo').textContent = 'Lista encerrada';
+                    aviso('Esta lista não existe mais, ou o organizador encerrou o link.');
+                    return;
+                }
+                lista = snap.val();
+                desenhar();
+            }, () => {
+                $('titulo').textContent = 'Sem conexão';
+                aviso('Não foi possível carregar. Confira sua internet — a página tenta de novo sozinha.');
+            });
+        }
+    </script>
+</body>
+</html>

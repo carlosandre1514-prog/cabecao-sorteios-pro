@@ -1,0 +1,15 @@
+{
+  "name": "cabecao-sorteios-functions",
+  "private": true,
+  "description": "Liberação automática do Pro pelo Mercado Pago",
+  "main": "index.js",
+  "engines": { "node": "20" },
+  "scripts": {
+    "test": "node teste-pro.js && node teste-handlers.js",
+    "deploy": "firebase deploy --only functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.0"
+  }
+}

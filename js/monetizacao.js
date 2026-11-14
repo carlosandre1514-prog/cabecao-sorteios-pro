@@ -15,15 +15,26 @@
 //     limite_historico_gratis: 3
 //     patrocinador: { ativo: true, texto: "...", link: "https://...", imagem: "https://..." }
 //
-//  planos/{uid}  (somente VOCÊ cria/edita, pelo Console ou Cloud Function)
+//     preco_mensal: 9.9 / preco_anual: 59.9   -> preços dos dois planos (o anual aparece em destaque)
+//     dias_teste: 7                            -> teste grátis (0 desliga); 1 por conta, em testes/{uid}
+//     checkout_api: "https://...criarCheckout"  -> Mercado Pago automático (functions/); sem ele usa os links:
+//     link_checkout_mensal / link_checkout_anual (ou link_checkout)
+//
+//  planos/{uid}  (somente VOCÊ ou a função do Mercado Pago cria/edita)
 //     ativo: true
 //     ate: 1798761600000               -> timestamp em ms (opcional; sem "ate" = vitalício)
 // =====================================================================
 (function () {
     const CONFIG_PADRAO = {
         ativo: true,
-        preco_texto: 'R$ 9,90/mês',
+        preco_texto: '',
+        preco_mensal: 9.9,
+        preco_anual: 59.9,
+        dias_teste: 7,
+        checkout_api: '',
         link_checkout: '',
+        link_checkout_mensal: '',
+        link_checkout_anual: '',
         chave_pix: '',
         nome_pix: '',
         whatsapp_suporte: '',
@@ -34,27 +45,36 @@
 
     let config = JSON.parse(JSON.stringify(CONFIG_PADRAO));
     let plano = { ativo: false, ate: null };
+    let teste = null;              // testes/<uid> = { inicio } (horário do servidor)
     let usuario = null;
+    let planoEscolhido = 'anual';
+    let eraAssinante = null;       // para avisar "Pro liberado!" quando o pagamento cair (mesmo durante o teste)
+    let pararEscutas = [];
+    // lido já ao carregar o arquivo: o app.js limpa o endereço (?pro=...) quando abre
+    const retornoPagamento = (() => { try { return new URLSearchParams(location.search).get('pro'); } catch (e) { return null; } })();
 
     function esc(t) {
         return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
         }[c]));
     }
-
     function urlSegura(u) {
         return /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
     }
+    function guardar(chave, v) { try { localStorage.setItem(chave, JSON.stringify(v)); } catch (e) { /* ignora */ } }
+    function lembrar(chave) { try { return JSON.parse(localStorage.getItem(chave) || 'null'); } catch (e) { return null; } }
+    const avisar = (msg, tipo) => { if (typeof window.toast === 'function') window.toast(msg, tipo); };
 
+    function status() { return Logica.statusPlano(plano, teste, Date.now(), config.dias_teste); }
     function isPro() {
         if (!config.ativo) return true; // monetização desligada = tudo liberado
-        if (!plano.ativo) return false;
-        return !plano.ate || Number(plano.ate) > Date.now();
+        return status().pro;
     }
-
     function dataPro() {
-        return plano.ate ? new Date(Number(plano.ate)).toLocaleDateString('pt-BR') : null;
+        const st = status();
+        return st.ate ? new Date(st.ate).toLocaleDateString('pt-BR') : null;
     }
+    const podeTestar = () => config.ativo && Number(config.dias_teste) > 0 && !!usuario && !status().testeUsado && !isPro();
 
     // ---------- Limites ----------
     function limiteJogadores() {
@@ -62,6 +82,56 @@
     }
     function limiteHistorico() {
         return isPro() ? Infinity : Number(config.limite_historico_gratis) || 3;
+    }
+
+    // ---------- Teste grátis ----------
+    async function iniciarTeste() {
+        if (!podeTestar()) return;
+        const { ref, set } = window.firebaseFns;
+        try {
+            await set(ref(window.firebaseDb, 'testes/' + usuario.uid), { inicio: { '.sv': 'timestamp' } });
+            teste = { inicio: Date.now() };       // o "escutar" corrige com o horário do servidor
+            guardar('cabecao_teste_' + usuario.uid, teste);
+            if (window.Metricas) Metricas.evento('teste_iniciado');
+            fecharModal();
+            atualizarTudo();
+            avisar(`🎁 Pronto! Você tem ${config.dias_teste} dias de Pro grátis. Aproveite tudo!`);
+        } catch (e) {
+            const cod = String((e && (e.code || e.message)) || 'erro');
+            avisar(/permission/i.test(cod) ? 'Não deu para ativar o teste (regras do Firebase: "testes").' : 'Sem conexão. Tente de novo.', 'erro');
+        }
+    }
+
+    // ---------- Assinar ----------
+    async function assinar(qual, botao) {
+        if (window.Metricas) Metricas.evento('pro_assinar_' + qual);
+        if (window.Metricas) Metricas.evento('pro_assinar');
+        const api = urlSegura(config.checkout_api);
+        if (api && usuario) {
+            // Mercado Pago automático: a função cria o pagamento e, quando ele é aprovado, libera o Pro sozinha
+            if (botao) { botao.disabled = true; botao.setAttribute('aria-busy', 'true'); }
+            try {
+                const token = await window.firebaseAuth.currentUser.getIdToken();
+                const volta = location.href.split('#')[0].split('?')[0];
+                const r = await fetch(api, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                    body: JSON.stringify({ plano: qual, voltar: volta })
+                });
+                const j = await r.json().catch(() => ({}));
+                if (!r.ok || !urlSegura(j.url)) throw new Error(j.erro || ('HTTP ' + r.status));
+                location.href = j.url;
+                return;
+            } catch (e) {
+                console.error('Checkout:', e);
+                avisar('Não consegui abrir o pagamento. Tente de novo em instantes.', 'erro');
+            } finally {
+                if (botao) { botao.disabled = false; botao.removeAttribute('aria-busy'); }
+            }
+            return;
+        }
+        const link = urlSegura(config['link_checkout_' + qual]) || urlSegura(config.link_checkout);
+        if (link) window.open(link, '_blank');
     }
 
     // ---------- Modal do plano Pro ----------
@@ -73,34 +143,31 @@
         m.style.zIndex = '100000';
         m.innerHTML = `
             <div class="modal-content card pro-modal">
-                <button class="pro-close" id="pro-fechar" aria-label="Fechar">✕</button>
-                <div class="pro-badge-topo">⭐ PRO</div>
+                <button class="pro-close icon-btn" id="pro-fechar" aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+                <div class="pro-badge-topo">PRO</div>
                 <h2 id="pro-titulo" style="justify-content:center;">Cabeção Sorteios Pro</h2>
                 <p id="pro-motivo" class="subtext" style="text-align:center;"></p>
                 <ul class="pro-beneficios">
-                    <li>👥 Jogadores <strong>ilimitados</strong></li>
-                    <li>📜 Histórico <strong>completo</strong> de campeonatos</li>
-                    <li>🚫 Sem banners de patrocinador</li>
-                    <li>🏅 Selo Pro no seu perfil</li>
-                    <li>🚀 Acesso antecipado às novidades</li>
+                    <li><svg class="i i-sm"><use href="#i-qr"/></svg><span><strong>Pix copia e cola</strong> e QR Code na lista de presença</span></li>
+                    <li><svg class="i i-sm"><use href="#i-wallet"/></svg><span><strong>Caixa do racha</strong>: mensalistas, quem deve e cobrança</span></li>
+                    <li><svg class="i i-sm"><use href="#i-palette"/></svg><span><strong>Escudo e cor</strong> do racha no app, na lista e nas imagens</span></li>
+                    <li><svg class="i i-sm"><use href="#i-users"/></svg><span>Jogadores <strong>ilimitados</strong> e histórico <strong>completo</strong></span></li>
+                    <li><svg class="i i-sm"><use href="#i-check"/></svg><span>Sem anúncios de patrocinador</span></li>
                 </ul>
-                <div class="pro-preco" id="pro-preco"></div>
                 <div id="pro-acoes" class="form-group-col"></div>
             </div>`;
         document.body.appendChild(m);
         m.querySelector('#pro-fechar').addEventListener('click', fecharModal);
         m.addEventListener('click', e => { if (e.target === m) fecharModal(); });
     }
-
     function fecharModal() {
         const m = document.getElementById('modal-pro');
         if (m) m.classList.add('hidden');
     }
-
     function copiar(texto, btn) {
         const ok = () => {
             const original = btn.textContent;
-            btn.textContent = '✅ Copiado!';
+            btn.textContent = 'Copiado';
             setTimeout(() => (btn.textContent = original), 1800);
         };
         if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -120,58 +187,92 @@
         document.body.removeChild(ta);
     }
 
+    function htmlPlanos() {
+        const mensal = Number(config.preco_mensal) || 0, anual = Number(config.preco_anual) || 0;
+        const eco = Logica.economiaAnual(mensal, anual);
+        const cartao = (qual, titulo, preco, sub, selo) => `
+            <button type="button" class="plano-opcao ${planoEscolhido === qual ? 'on' : ''}" data-plano="${qual}">
+                ${selo ? `<span class="plano-selo">${selo}</span>` : ''}
+                <span class="plano-nome">${titulo}</span>
+                <strong class="plano-preco">${preco}</strong>
+                <small>${sub}</small>
+            </button>`;
+        return `<div class="planos">
+            ${anual ? cartao('anual', 'Anual', Logica.reais(anual), `${Logica.reais(anual / 12)}/mês · 1 pagamento`, eco ? `ECONOMIZE ${eco}%` : 'MAIS ESCOLHIDO') : ''}
+            ${mensal ? cartao('mensal', 'Mensal', Logica.reais(mensal), 'por mês', '') : ''}
+        </div>`;
+    }
+
     function abrirModal(motivo) {
         criarModal();
+        if (window.Metricas) Metricas.evento(isPro() ? 'pro_detalhes' : 'pro_aberto');
         const m = document.getElementById('modal-pro');
         const acoes = m.querySelector('#pro-acoes');
-        m.querySelector('#pro-motivo').textContent = motivo || 'Libere todos os recursos e apoie o desenvolvimento do app!';
-        m.querySelector('#pro-preco').textContent = isPro() ? '' : (config.preco_texto || '');
-        acoes.innerHTML = '';
+        m.querySelector('#pro-motivo').textContent = motivo || 'Libere todos os recursos e organize o racha sem dor de cabeça.';
+        const st = status();
+        const temCompra = !!(urlSegura(config.checkout_api) || urlSegura(config.link_checkout) || urlSegura(config.link_checkout_mensal) || urlSegura(config.link_checkout_anual));
+        if (!(Number(config.preco_anual) > 0)) planoEscolhido = 'mensal';
+        let h = '';
 
-        if (isPro()) {
+        if (config.ativo && st.origem === 'plano') {
             const ate = dataPro();
-            acoes.innerHTML = `<p class="subtext" style="text-align:center;font-size:.95rem;">✅ Você já é <strong>Pro</strong>${ate ? ' até <strong>' + ate + '</strong>' : ''}. Obrigado por apoiar!</p>`;
+            h = `<p class="pro-ok">Você é <strong>Pro</strong>${ate ? ' até <strong>' + ate + '</strong>' : ''}. Obrigado por apoiar!</p>`;
         } else {
-            const link = urlSegura(config.link_checkout);
-            if (link) {
-                const b = document.createElement('button');
-                b.className = 'btn btn-primary';
-                b.textContent = '💳 Assinar o Plano Pro';
-                b.onclick = () => window.open(link, '_blank');
-                acoes.appendChild(b);
+            if (st.origem === 'teste') {
+                h += `<p class="pro-teste-ativo">Teste grátis: falta${st.diasTeste > 1 ? 'm' : ''} <strong>${st.diasTeste} dia${st.diasTeste > 1 ? 's' : ''}</strong>. Assine para não perder nada.</p>`;
+            } else if (podeTestar()) {
+                h += `<button class="btn btn-primary btn-teste" data-acao-pro="teste">Testar ${config.dias_teste} dias grátis</button>
+                    <p class="pro-sem-cartao">Sem cartão e sem compromisso. Depois você decide.</p>
+                    <div class="pro-ou">ou assine agora</div>`;
             }
-
-            if (config.chave_pix) {
-                const box = document.createElement('div');
-                box.className = 'pro-pix';
-                box.innerHTML = `<small>Ou pague via <strong>Pix</strong>${config.nome_pix ? ' para ' + esc(config.nome_pix) : ''}:</small><code>${esc(config.chave_pix)}</code>`;
-                const bp = document.createElement('button');
-                bp.className = 'btn btn-success';
-                bp.textContent = '📋 Copiar chave Pix';
-                bp.onclick = () => copiar(config.chave_pix, bp);
-                box.appendChild(bp);
-                acoes.appendChild(box);
+            if (temCompra) {
+                h += htmlPlanos();
+                h += `<button class="btn ${podeTestar() ? 'btn-secondary' : 'btn-primary'}" data-acao-pro="assinar">Assinar plano ${planoEscolhido}</button>
+                    <p class="pro-sem-cartao">Pix ou cartão pelo Mercado Pago. O Pro libera sozinho quando o pagamento é aprovado.</p>`;
             }
-
-            const zap = String(config.whatsapp_suporte || '').replace(/\D/g, '');
-            if (zap) {
-                const bz = document.createElement('button');
-                bz.className = 'btn btn-secondary';
-                bz.textContent = '✅ Já paguei – enviar comprovante';
-                bz.onclick = () => {
-                    const email = usuario && usuario.email ? usuario.email : '(sem e-mail)';
-                    const uid = usuario ? usuario.uid : '';
-                    const msg = `Olá! Já fiz o pagamento do Plano Pro do Cabeção Sorteios.\nE-mail: ${email}\nID: ${uid}`;
-                    window.open('https://wa.me/' + zap + '?text=' + encodeURIComponent(msg), '_blank');
-                };
-                acoes.appendChild(bz);
+            if (config.chave_pix && !urlSegura(config.checkout_api)) {
+                h += `<details class="pro-pix-det"><summary>Prefere Pix direto?</summary><div class="pro-pix">
+                    <small>Pix${config.nome_pix ? ' para ' + esc(config.nome_pix) : ''}:</small><code>${esc(config.chave_pix)}</code>
+                    <button class="btn btn-success" data-acao-pro="pix">Copiar chave Pix</button>
+                    ${String(config.whatsapp_suporte || '').replace(/\D/g, '') ? '<button class="btn btn-secondary" data-acao-pro="comprovante">Já paguei, enviar comprovante</button>' : ''}
+                </div></details>`;
             }
-
-            if (!link && !config.chave_pix) {
-                acoes.innerHTML = '<p class="subtext" style="text-align:center;">🚧 Plano Pro em breve! Fique de olho nas novidades.</p>';
+            if (!temCompra && !config.chave_pix && !podeTestar() && st.origem !== 'teste') {
+                h = '<p class="subtext" style="text-align:center;">O plano Pro chega em breve.</p>';
             }
         }
+        acoes.innerHTML = h;
+        acoes.onclick = (e) => {
+            const pl = e.target.closest('[data-plano]');
+            if (pl) {
+                planoEscolhido = pl.dataset.plano;
+                acoes.querySelectorAll('[data-plano]').forEach(b => b.classList.toggle('on', b === pl));
+                const ba = acoes.querySelector('[data-acao-pro="assinar"]');
+                if (ba) ba.textContent = 'Assinar plano ' + planoEscolhido;
+                return;
+            }
+            const b = e.target.closest('[data-acao-pro]');
+            if (!b) return;
+            const acao = b.dataset.acaoPro;
+            if (acao === 'teste') iniciarTeste();
+            if (acao === 'assinar') assinar(planoEscolhido, b);
+            if (acao === 'pix') { if (window.Metricas) Metricas.evento('pro_pix_copiado'); copiar(config.chave_pix, b); }
+            if (acao === 'comprovante') {
+                if (window.Metricas) Metricas.evento('pro_comprovante');
+                const zap = String(config.whatsapp_suporte || '').replace(/\D/g, '');
+                const email = usuario && usuario.email ? usuario.email : '(sem e-mail)';
+                const msg = `Olá! Já fiz o pagamento do Plano Pro (${planoEscolhido}) do Cabeção Sorteios.\nE-mail: ${email}\nID: ${usuario ? usuario.uid : ''}`;
+                window.open('https://wa.me/' + zap + '?text=' + encodeURIComponent(msg), '_blank');
+            }
+        };
         m.classList.remove('hidden');
+    }
+
+    // Para os recursos Pro: true se pode usar; senão abre o Pro (com o teste grátis em destaque)
+    function exigirPro(motivo) {
+        if (isPro()) return true;
+        abrirModal(motivo);
+        return false;
     }
 
     // ---------- Painel no menu lateral ----------
@@ -186,20 +287,17 @@
             sec.className = 'drawer-section';
             links.insertBefore(sec, links.firstChild);
         }
-        const pro = isPro();
+        const st = status();
         const ate = dataPro();
+        const rotulo = st.origem === 'plano' ? 'Pro' + (ate ? ' até ' + ate : '')
+            : st.origem === 'teste' ? `Teste grátis · ${st.diasTeste} dia${st.diasTeste > 1 ? 's' : ''}` : 'Plano grátis';
         sec.innerHTML = `
-            <h4>⭐ Meu Plano</h4>
-            <div class="plano-status ${pro ? 'plano-pro' : 'plano-gratis'}">
-                ${pro ? '⭐ PRO' + (ate ? ' até ' + ate : '') : '🆓 Plano Grátis'}
-            </div>
-            ${pro ? '' : `<p class="about-text" style="margin:8px 0;">Até ${limiteJogadores()} jogadores e ${limiteHistorico()} campeonatos no histórico.</p>`}
-            <button class="btn btn-primary" id="btn-drawer-pro" style="margin-top:6px;">${pro ? '⭐ Detalhes do Pro' : '🚀 Seja Pro'}</button>
-            ${(!pro && config.chave_pix) ? '<button class="btn btn-secondary" id="btn-drawer-apoio" style="margin-top:8px;">☕ Apoiar com Pix</button>' : ''}
+            <h4>Meu plano</h4>
+            <div class="plano-status ${st.pro ? 'plano-pro' : 'plano-gratis'}">${rotulo}</div>
+            ${st.pro ? '' : `<p class="about-text" style="margin:8px 0;">Até ${limiteJogadores()} jogadores e ${limiteHistorico()} campeonatos no histórico.</p>`}
+            <button class="btn btn-primary" id="btn-drawer-pro" style="margin-top:6px;">${st.origem === 'plano' ? 'Detalhes do plano' : podeTestar() ? `Testar o Pro por ${config.dias_teste} dias` : 'Conhecer o Pro'}</button>
         `;
         sec.querySelector('#btn-drawer-pro').onclick = () => { abrirModal(); };
-        const ap = sec.querySelector('#btn-drawer-apoio');
-        if (ap) ap.onclick = () => abrirModal('Gostou do app? Ajude a mantê-lo no ar com qualquer valor via Pix. 💚');
     }
 
     // ---------- Banner de patrocinador (some para quem é Pro) ----------
@@ -227,7 +325,12 @@
     function atualizarTudo() {
         atualizarDrawer();
         atualizarPatrocinador();
-        document.body.classList.toggle('is-pro', isPro() && config.ativo);
+        const pro = isPro();
+        document.body.classList.toggle('is-pro', pro && config.ativo);
+        // o pagamento caiu enquanto o app estava aberto
+        const assinante = status().origem === 'plano';
+        if (eraAssinante === false && assinante && config.ativo) avisar('⭐ Pagamento aprovado! Seu Pro está liberado. Obrigado!');
+        if (usuario) eraAssinante = assinante;
         if (typeof window.aoMudarPlano === 'function') window.aoMudarPlano();
     }
 
@@ -237,34 +340,75 @@
         return get(ref(window.firebaseDb, 'configuracoes/monetizacao')).then(s => {
             if (s.exists()) {
                 const c = s.val() || {};
+                guardar('cabecao_monetizacao', c);
                 config = Object.assign({}, CONFIG_PADRAO, c, {
                     patrocinador: Object.assign({}, CONFIG_PADRAO.patrocinador, c.patrocinador || {})
                 });
             }
-        }).catch(e => console.log('Monetização: usando configuração padrão.', e));
+        }).catch(e => {
+            // sem internet: usa a última configuração que veio do Firebase
+            const c = lembrar('cabecao_monetizacao');
+            if (c) config = Object.assign({}, CONFIG_PADRAO, c, {
+                patrocinador: Object.assign({}, CONFIG_PADRAO.patrocinador, c.patrocinador || {})
+            });
+            console.log('Monetização: sem conexão, usando configuração salva/padrão.', e);
+        });
     }
 
-    function carregarPlano(uid) {
-        const { ref, get } = window.firebaseFns;
-        return get(ref(window.firebaseDb, 'planos/' + uid)).then(s => {
-            plano = s.exists() ? (s.val() || { ativo: false }) : { ativo: false, ate: null };
-        }).catch(() => { plano = { ativo: false, ate: null }; });
+    // plano e teste ficam "escutados": quando o Mercado Pago aprova, o Pro aparece na hora
+    function escutarPlano(uid) {
+        pararEscutas.forEach(f => { try { f(); } catch (e) { /* ignora */ } });
+        pararEscutas = [];
+        plano = lembrar('cabecao_plano_' + uid) || { ativo: false, ate: null };   // sem internet: vale o último lido
+        teste = lembrar('cabecao_teste_' + uid);
+        const { ref, onValue } = window.firebaseFns;
+        if (typeof onValue !== 'function') return;
+        const escuta = (caminho, aplicar) => {
+            const parar = onValue(ref(window.firebaseDb, caminho), s => {
+                if (!usuario || usuario.uid !== uid) return;
+                aplicar(s.exists() ? s.val() : null);
+                atualizarTudo();
+            }, () => { /* sem permissão ou sem internet: fica o que estava salvo */ });
+            if (typeof parar === 'function') pararEscutas.push(parar);
+        };
+        escuta('planos/' + uid, v => { plano = v || { ativo: false, ate: null }; guardar('cabecao_plano_' + uid, plano); });
+        escuta('testes/' + uid, v => { teste = v; guardar('cabecao_teste_' + uid, teste); });
+    }
+
+    // volta do Mercado Pago: index.html?pro=ok|pendente|erro
+    function verificarRetornoPagamento() {
+        const r = retornoPagamento;
+        if (!r) return;
+        try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) { /* ignora */ }
+        setTimeout(() => {
+            if (r === 'ok') avisar('✅ Pagamento recebido! O Pro libera sozinho em instantes.');
+            else if (r === 'pendente') avisar('⏳ Pagamento em análise. Quando aprovar, o Pro libera sozinho.');
+            else avisar('O pagamento não foi concluído. Você pode tentar de novo pelo menu → Meu Plano.', 'erro');
+        }, 1200);
     }
 
     function iniciar() {
         atualizarTudo();
+        verificarRetornoPagamento();
         aoFirebasePronto(() => {
             window.firebaseFns.onAuthStateChanged(window.firebaseAuth, async user => {
                 usuario = user || null;
+                eraAssinante = null;
                 await carregarConfig();
-                if (user) await carregarPlano(user.uid); else plano = { ativo: false, ate: null };
+                if (user) escutarPlano(user.uid);
+                else { pararEscutas.forEach(f => { try { f(); } catch (e) { /* ignora */ } }); pararEscutas = []; plano = { ativo: false, ate: null }; teste = null; }
                 atualizarTudo();
             });
         });
+        // o teste grátis acaba sozinho: confere de hora em hora
+        setInterval(() => { if (usuario) atualizarTudo(); }, 3600 * 1000);
     }
 
     window.Monetizacao = {
         isPro,
+        exigirPro,
+        status,
+        iniciarTeste,
         limiteJogadores,
         limiteHistorico,
         abrirModal,
@@ -272,6 +416,7 @@
         checarLimiteJogadores(qtdAtual, qtdNova) {
             const lim = limiteJogadores();
             if (qtdAtual + qtdNova <= lim) return true;
+            if (window.Metricas) Metricas.evento('limite_jogadores');
             abrirModal(`O plano grátis permite até ${lim} jogadores. Seja Pro para cadastrar quantos quiser!`);
             return false;
         }

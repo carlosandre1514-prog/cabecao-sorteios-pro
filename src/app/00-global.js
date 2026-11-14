@@ -1,0 +1,72 @@
+// =====================================================================
+// app.js — TELAS e ESTADO do app (login, jogadores, sorteio, campeonato, histórico)
+//
+// Onde procurar cada erro:
+//   cálculo de sorteio / tabela / pontos  -> js/logica.js  (tem testes)
+//   bloquear app / versão mínima          -> js/remoto.js
+//   plano Pro, limites, patrocinador      -> js/monetizacao.js
+//   login (formulário)                    -> js/auth.js
+//   salvar/carregar no Firebase, telas    -> ESTE arquivo
+// =====================================================================
+
+// --- VARIÁVEIS GLOBAIS ---
+let modoJogoAtual = 'todos-contra-todos'; // 'todos-contra-todos' ou 'racha-livre'
+
+// Variáveis do modo racha livre
+let filaTimes = [];
+let timeEmCampoA = null;
+let timeEmCampoB = null;
+let partidasRachaHistorico = [];
+let placarRacha = { a: 0, b: 0 }; // placar da partida em andamento (modo racha)
+let tipoDesempateRacha = null;
+
+// --- FUNÇÕES DE CONTROLE DO MENU LATERAL (DRAWER) ---
+function toggleDrawer() {
+    const drawer = document.getElementById('side-drawer');
+    const overlay = document.getElementById('drawer-overlay');
+    if (drawer && overlay) {
+        drawer.classList.toggle('open');
+        overlay.classList.toggle('hidden');
+    }
+}
+
+// Aviso rápido no topo (não trava a tela). tipo: 'ok' | 'erro'
+function toast(mensagem, tipo = 'ok') {
+    const box = document.getElementById('toasts');
+    if (!box) return;
+    const el = document.createElement('div');
+    el.className = 'toast' + (tipo === 'erro' ? ' erro' : '');
+    el.setAttribute('role', tipo === 'erro' ? 'alert' : 'status');
+    el.textContent = window.UI ? UI.semEmoji(mensagem) : mensagem;
+    box.appendChild(el);
+    setTimeout(() => { el.classList.add('saindo'); setTimeout(() => el.remove(), 320); }, 2800);
+}
+
+function esconderSplash() {
+    const sp = document.getElementById('splash');
+    if (!sp || sp.classList.contains('saindo')) return;
+    sp.classList.add('saindo');
+    setTimeout(() => sp.remove(), 350);
+}
+function mostrarCarregando(on, texto) {
+    const el = document.getElementById('carregando-dados');
+    if (!el) return;
+    if (texto) document.getElementById('carregando-texto').textContent = texto;
+    el.classList.toggle('hidden', !on);
+}
+
+async function fazerLogout() {
+    try {
+        if (window.firebaseAuth && window.firebaseFns) {
+            await window.firebaseFns.signOut(window.firebaseAuth);
+            const d = document.getElementById('side-drawer');
+            if (d && d.classList.contains('open')) toggleDrawer();
+        } else {
+            console.warn("Módulo de autenticação do Firebase não encontrado.");
+        }
+    } catch (error) {
+        console.error("Erro ao fazer logout:", error);
+        await mostrarAlerta("Erro ao sair da conta. Tente novamente.", "❌ ERRO");
+    }
+}
+

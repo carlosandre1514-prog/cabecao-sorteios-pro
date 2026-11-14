@@ -25,8 +25,8 @@ const document = {
 const alertas = [];
 const win = { listeners: {}, addEventListener(t, f) { (this.listeners[t] = this.listeners[t] || []).push(f); }, dispatchEvent(e) { (this.listeners[e.type] || []).forEach(f => f(e)); }, open() {}, scrollTo() {} };
 const ctx = vm.createContext(Object.assign(win, {
-    window: win, document, self: win, console: { log() {}, error() {}, warn() {} }, setInterval: () => 0, clearInterval() {}, setTimeout: f => { setImmediate(f); return 0; }, history: { replaceState() {}, pushState() {} }, location: { pathname: '/', href: 'https://x.test/index.html' }, clearTimeout() {}, URL, crypto: require('crypto').webcrypto,
-    localStorage: { getItem: () => null, setItem() {}, removeItem() {} }, navigator: {}, Event: class { constructor(t) { this.type = t; } },
+    window: win, document, self: win, console: { log() {}, error() {}, warn() {} }, setInterval: () => 0, clearInterval() {}, setTimeout: f => { setImmediate(f); return 0; }, history: { replaceState() {}, pushState() {} }, location: { pathname: '/', href: 'https://x.test/index.html' }, clearTimeout() {}, URL, URLSearchParams, crypto: require('crypto').webcrypto,
+    localStorage: { m: new Map(), getItem(k) { return this.m.has(k) ? this.m.get(k) : null; }, setItem(k, v) { this.m.set(k, String(v)); }, removeItem(k) { this.m.delete(k); } }, navigator: {}, Event: class { constructor(t) { this.type = t; } },
     Date, Math, JSON, Object, Array, Number, String, Set, Promise, parseInt, parseFloat, isFinite, Infinity, encodeURIComponent
 }));
 win.scrollTo = () => {};
@@ -51,6 +51,8 @@ const gravados = [];
 const authCbs = [];
 let falhasGet = 0;      // quantas leituras do banco vão falhar antes de funcionar ("Client is offline")
 let loginErro = null;   // erro que o signIn vai devolver
+let semRede = false;
+const ouvintes = {};    // onValue: caminho -> callback (o teste "empurra" dados do banco)    // true = gravações ficam presas (sem internet)
 win.firebaseAuth = {};
 win.firebaseDb = {};
 win.firebaseFns = {
@@ -58,11 +60,13 @@ win.firebaseFns = {
     ref: (db, caminho) => caminho,
     signInWithEmailAndPassword: () => loginErro ? Promise.reject(loginErro) : Promise.resolve({}),
     get: caminho => falhasGet-- > 0 ? Promise.reject(Object.assign(new Error('Client is offline'), { code: 'unavailable' })) : Promise.resolve({ exists: () => true, val: () => JSON.parse(JSON.stringify(banco[caminho.split('/').pop()] ? banco[caminho.split('/').pop()] : banco)) }),
-    set: (caminho, v) => { gravados.push([caminho, v]); return Promise.resolve(); }
+    set: (caminho, v) => { gravados.push([caminho, v]); return semRede ? new Promise(() => {}) : Promise.resolve(); },
+    increment: n => ({ '.sv': { increment: n } }),
+    onValue: (caminho, cb) => { ouvintes[caminho] = cb; return () => { if (ouvintes[caminho] === cb) delete ouvintes[caminho]; }; }
 };
 win.firebaseReady = true;
 
-['js/logica.js', 'js/remoto.js', 'js/auth.js', 'js/app.js', 'js/monetizacao.js', 'js/icones.js'].forEach(rodar);
+['js/logica.js', 'js/ui.js', 'js/remoto.js', 'js/auth.js', 'js/app.js', 'js/monetizacao.js', 'js/metricas.js'].forEach(rodar);
 (document.listeners.DOMContentLoaded || []).forEach(f => f());
 assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (antes dependia de um setTimeout de 500ms)');
 
@@ -126,8 +130,9 @@ assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (a
 
     // histórico: tocar no campeonato abre a tela de detalhe
     els['container-historico'].onclick({ target: { closest: s => s.includes('abrir-hist') ? { dataset: { id: '9' } } : null } });
-    assert.ok(els['conteudo-hist-detalhe'].innerHTML.includes('Voltar') && els['conteudo-hist-detalhe'].innerHTML.includes('Time 1'), 'detalhe do histórico deveria abrir');
+    assert.ok(els['conteudo-hist-detalhe'].innerHTML.includes('Campeão') && els['conteudo-hist-detalhe'].innerHTML.includes('Time 1'), 'detalhe do histórico deveria abrir');
     assert.ok(els['lista-confrontos-encerrados'].innerHTML.includes('data-corrigir="2"'), 'confronto finalizado deveria ter o botão de corrigir placar');
+    assert.ok(els['conteudo-hist-detalhe'].innerHTML.includes('btn-resumo-imagem') && els['conteudo-hist-detalhe'].innerHTML.includes('btn-resumo-texto'), 'detalhe deveria ter os botões de enviar o resumo');
     console.log('✅ histórico abre a tela completa e confrontos têm "corrigir placar"');
 
     // perfis de racha: lista, troca e gravação no caminho do racha
@@ -144,6 +149,92 @@ assert.ok(authCbs.length >= 1, 'app.js deveria registrar o monitor de sessão (a
     await tick(30);
     assert.ok(els['sub-racha'].textContent.includes('Racha principal'), 'deveria voltar ao racha principal');
     console.log('✅ rachas: listar, trocar, gravar no caminho certo e voltar ao principal');
+
+    // modo Tabela: depois do último jogo do turno, um novo turno começa sozinho
+    authCbs.forEach(cb => cb(null));
+    els['btn-finalizar-partida'].listeners = {};   // só o botão da tela atual
+    authCbs.forEach(cb => cb({ uid: 'u1', email: 'a@b.com' }));
+    await tick(10);
+    els['gols-a'].value = '1'; els['gols-b'].value = '0';
+    els['btn-finalizar-partida'].fire('click');
+    await tick(10);
+    const ultimoCamp = gravados.filter(([c]) => c === 'usuarios/u1/campeonatoAtivo').pop();
+    assert.ok(ultimoCamp && ultimoCamp[1].partidas.length > 2 && ultimoCamp[1].partidas.some(p => p.turno >= 2 && !p.finalizada), 'deveria gerar o turno 2 em vez de parar a tabela');
+    console.log('✅ tabela sem fim: novo turno começa sozinho até finalizar o campeonato');
+
+    // LISTA DE PRESENÇA: cria, publica os nomes e marca a presença conforme as respostas
+    {
+        // o modal "Nova lista" é criado com createElement: os campos dele saem deste mapa
+        const campos = {
+            '#pr-quando': Object.assign(new El('q'), { value: 'Sábado 16h' }),
+            '#pr-times': Object.assign(new El('t'), { value: '2' }),
+            '#pr-linha': Object.assign(new El('l'), { value: '1' }),     // 2 times x 1 = 2 vagas na linha + 2 goleiros
+            '#pr-zerar': Object.assign(new El('z'), { checked: true }),
+            '#pr-cancelar': new El('c'), '#pr-criar': new El('cr')
+        };
+        const criarOriginal = document.createElement;
+        document.createElement = t => { const e = new El(t); e.querySelector = sel => campos[sel] || new El(sel); return e; };
+        els['btn-presenca-criar'].fire('click');
+        document.createElement = criarOriginal;
+        await campos['#pr-criar'].onclick();
+        await tick(3);
+    }
+    const gLista = gravados.filter(([c]) => /^presenca\/[2-9A-HJ-NP-Z]{8}$/.test(c)).pop();
+    assert.ok(gLista && gLista[1].dono === 'u1' && gLista[1].aberta === true && gLista[1].limite === 2 && gLista[1].vagasGoleiro === 2 && gLista[1].jogadores.some(j => j.nome === 'Ana'), 'deveria criar presenca/<codigo> com dono, limite e nomes');
+    const codLista = gLista[0].split('/')[1];
+    assert.ok(gravados.some(([c, v]) => c === 'usuarios/u1/presenca' && v.codigo === codLista), 'deveria lembrar o código da lista no usuário');
+    assert.ok(els['presenca-link'].value.endsWith('presenca.html?c=' + codLista), 'link da lista deveria aparecer');
+    const ouvinte = ouvintes['presenca/' + codLista];
+    assert.ok(ouvinte, 'app deveria escutar as respostas da lista');
+    // Zeca e Yuri (convidados) pegam as 2 vagas da linha; Ana confirma depois -> suplente; Bia é goleira
+    const nomes = gLista[1].jogadores; const idDe = n => nomes.find(j => j.nome === n).id;
+    ouvinte({ exists: () => true, val: () => Object.assign({}, gLista[1], { respostas: {
+        cz: { status: 'vou', em: 1, nome: 'Zeca', convidado: true },
+        cy: { status: 'vou', em: 1.5, nome: 'Yuri', convidado: true },
+        [idDe('Bia')]: { status: 'vou', em: 2 }, [idDe('Ana')]: { status: 'vou', em: 3 }
+    } }) });
+    await tick(3);
+    const ultJog = gravados.filter(([c]) => c === 'usuarios/u1/jogadores').pop()[1];
+    const pres = n => ultJog.find(j => j.nome === n).presente;
+    assert.ok(pres('Bia') && !pres('Ana'), 'goleira confirmada presente; Ana na espera fica ausente');
+    assert.ok(els['presenca-convidados'].innerHTML.includes('Zeca') && els['presenca-convidados'].innerHTML.includes('data-add-conv="cz"'), 'convidado deveria aparecer para adicionar');
+    assert.ok(els['qtd-times'].value === '2' && els['qtd-por-time'].value === '1', 'configuração da lista deveria ir para o sorteio');
+    // organizador marca pago e tira alguém (o suplente sobe)
+    const antesAcoes = gravados.length;
+    els['card-presenca'].fire('click', { target: { closest: sel => sel === '[data-pago]' ? { dataset: { pago: 'cz' } } : null } });
+    await tick(3);
+    assert.ok(gravados.slice(antesAcoes).some(([c, v]) => c === 'presenca/' + codLista + '/pagos/cz' && v === true), 'deveria marcar pago');
+    console.log('✅ lista de presença: times x linha viram vagas, sorteio recebe a configuração e o organizador marca pago');
+
+    // métricas: sorteio conta +1 em metricas/<dia>/sorteio
+    assert.ok(gravados.some(([c, v]) => /^metricas\/\d{4}-\d{2}-\d{2}\/sorteio$/.test(c) && v['.sv']), 'sorteio deveria contar nas métricas');
+    assert.ok(gravados.some(([c, v]) => /^metricas_ativos\/\d{4}-\d{2}-\d{2}\/u1$/.test(c) && v === true), 'deveria contar usuário ativo');
+    console.log('✅ métricas: eventos e usuário ativo contados');
+
+    // SEM INTERNET: o banco não responde -> abre com a cópia do aparelho, sem erro na tela
+    authCbs.forEach(cb => cb(null));
+    falhasGet = 1000; semRede = true;
+    authCbs.forEach(cb => cb({ uid: 'u1', email: 'a@b.com' }));
+    await tick(40);
+    assert.ok(els['modal-alerta-custom'].classList.contains('hidden'), 'sem internet com cópia salva não deve mostrar erro');
+    assert.ok(els['carregando-dados'].classList.contains('hidden'), 'a tela "carregando" deve sumir sem internet');
+    assert.ok(els['body-classificacao'].children.some(c => c.innerHTML.includes('Time 1')), 'campeonato da cópia local deveria aparecer');
+    document.getElementById('novo-nome').value = 'Offline';
+    els['btn-add-jogador'].fire('click');
+    await tick(3);
+    const pend = JSON.parse(ctx.localStorage.getItem('cabecao_pendentes_u1') || '{}');
+    assert.ok(pend.jogadores, 'jogador cadastrado sem internet deveria ficar pendente');
+    console.log('✅ sem internet: abre com a cópia do aparelho e guarda o que mudou');
+
+    // internet volta (app reaberto): o que ficou pendente é reenviado por cima do que veio da nuvem
+    authCbs.forEach(cb => cb(null));
+    falhasGet = 0; semRede = false;
+    const antesSync = gravados.length;
+    authCbs.forEach(cb => cb({ uid: 'u1', email: 'a@b.com' }));
+    await tick(10);
+    assert.ok(gravados.slice(antesSync).some(([c, v]) => c === 'usuarios/u1/jogadores' && v.some(j => j.nome === 'Offline')), 'pendente deveria subir para a nuvem');
+    assert.ok(!JSON.parse(ctx.localStorage.getItem('cabecao_pendentes_u1') || '{}').jogadores, 'pendente confirmado deveria sair da lista');
+    console.log('✅ internet de volta: pendências reenviadas');
 
     // logout limpa estado e não grava lixo
     const antes = gravados.length;

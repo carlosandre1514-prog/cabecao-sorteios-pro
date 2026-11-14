@@ -6,10 +6,56 @@
     <title>Cabeção Sorteios Pro</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="img/icon-192.png">
-    <meta name="theme-color" content="#0b0e0c">
-    <link rel="stylesheet" href="css/style.css?v=20261020d">
+    <meta name="theme-color" content="#0f1214">
+    <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/style.css?v=95f21c47d2">
+    <link rel="stylesheet" href="css/base.css?v=95f21c47d2">
 </head>
-<body>
+<body data-aba="tab-jogadores">
+    <!-- ÍCONES (um traço só, 24px). Uso: <svg class="i"><use href="#i-nome"/></svg> -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></symbol>
+        <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor" stroke="none"/></symbol>
+        <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+        <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.2l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.6l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"/></symbol>
+        <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.9 12.2a1.5 1.5 0 0 0 1.5 1.3h6.2a1.5 1.5 0 0 0 1.5-1.3L17.5 7M10.3 11v5.5M13.7 11v5.5"/></symbol>
+        <symbol id="i-glove" viewBox="0 0 24 24"><path d="M7.5 12.5V7a1.5 1.5 0 0 1 3 0v4M10.5 10.5V5.2a1.5 1.5 0 0 1 3 0v5.3M13.5 10.5V6.2a1.5 1.5 0 0 1 3 0v6M16.5 12.2V9.5a1.5 1.5 0 0 1 3 0v4.3a6.7 6.7 0 0 1-6.7 6.7h-.6a5.3 5.3 0 0 1-4.3-2.2l-2.9-4a1.5 1.5 0 0 1 2.3-1.9l1.7 2"/></symbol>
+        <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.8 20a6.2 6.2 0 0 1 12.4 0M15.5 4.6a3.5 3.5 0 0 1 0 6.8M21.2 20a6.2 6.2 0 0 0-3.7-5.7"/></symbol>
+        <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 6l-6 6 6 6"/></symbol>
+        <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+        <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16.5 4.5H20V8M4 19.5L20 4.5M20 16v3.5h-3.5M14.5 14.5l5.5 5M4 4.5l5.3 5"/></symbol>
+        <symbol id="i-whistle" viewBox="0 0 24 24"><path d="M3.5 13.5a5 5 0 1 0 10 0 5 5 0 0 0-1-3H21V7H9.5"/><path d="M9.5 7V4.5M6.5 7.6l-1.4-1.4"/><circle cx="8.5" cy="13.5" r="1.4"/></symbol>
+        <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10.5h18M16 15h2M6.5 6l8.5-2.5L16.5 6"/></symbol>
+        <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+        <symbol id="i-podium" viewBox="0 0 24 24"><path d="M3 20.5h18"/><rect x="9" y="8.5" width="6" height="12" rx="1"/><rect x="3.5" y="13.5" width="5.5" height="7" rx="1"/><rect x="15" y="15.5" width="5.5" height="5" rx="1"/></symbol>
+        <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 20.5h8M12 16.5v4M7 4h10v5a5 5 0 0 1-10 0zM17 5.5h2.5V7a3 3 0 0 1-3 3M7 5.5H4.5V7a3 3 0 0 0 3 3"/></symbol>
+        <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.2 0 1.8-.8 1.6-1.8-.3-1.3.6-2.2 1.9-2.2h1.8A3.2 3.2 0 0 0 20.5 13 8.9 8.9 0 0 0 12 3.5z"/><circle cx="7.8" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10.5" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="8" r="1" fill="currentColor" stroke="none"/></symbol>
+        <symbol id="i-crown" viewBox="0 0 24 24"><path d="M4 8l4 4 4-6 4 6 4-4-1.5 10h-13z"/></symbol>
+        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20l1-4.2A7.5 7.5 0 1 1 20 12.5z"/></symbol>
+        <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3.5H7.5A1.5 1.5 0 0 0 6 5v14a1.5 1.5 0 0 0 1.5 1.5h9A1.5 1.5 0 0 0 18 19V7.5z"/><path d="M14 3.5v4h4M9 12h6M9 15.5h6"/></symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+        <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 4.5H7a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h7M16 8l4 4-4 4M20 12H10"/></symbol>
+        <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 6 .4l2.6-2.6a4 4 0 0 0-5.7-5.7l-1.2 1.2M14 10a4 4 0 0 0-6-.4l-2.6 2.6a4 4 0 0 0 5.7 5.7l1.2-1.2"/></symbol>
+        <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3.5v11M8 7.5l4-4 4 4M5.5 12v6.5a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V12"/></symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"/></symbol>
+        <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M20.5 16l-5-5-8.5 8.5"/></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+        <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z"/></symbol>
+        <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8.5 5.5v13M15.5 5.5v13"/></symbol>
+        <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3L4.5 9M4.5 4.5V9H9"/></symbol>
+        <symbol id="i-live" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></symbol>
+        <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5.5 21V4.5M5.5 5h11l-2 4 2 4h-11"/></symbol>
+        <symbol id="i-ball" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5l3.4 2.5-1.3 4h-4.2l-1.3-4zM12 3.5v4M15.4 10l4.3-1.2M14.1 14l2.6 3.8M9.9 14l-2.6 3.8M8.6 10L4.3 8.8"/></symbol>
+        <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4.5 19.5l1-4.2L16 4.8a2.1 2.1 0 0 1 3 3L8.6 18.4z"/><path d="M14 6.8l3 3"/></symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="15" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></symbol>
+        <symbol id="i-qr" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5zM14 18.5V20M20 14v1"/></symbol>
+        <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r="1" fill="currentColor" stroke="none"/><circle cx="4.8" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4.8" cy="17.5" r="1" fill="currentColor" stroke="none"/></symbol>
+    </svg>
     <!-- Projeto: Cabeção Sorteios Pro | Desenvolvedor: Carlos Andre | 2026 -->
 
     <!-- ABERTURA: fica até o Firebase dizer se você já está logado (evita piscar a tela de login) -->
@@ -38,7 +84,7 @@
                 <input type="email" id="auth-email" placeholder="Seu e-mail" autocomplete="email" inputmode="email" autocapitalize="none">
                 <div class="senha-wrap">
                     <input type="password" id="auth-password" placeholder="Sua senha (mínimo 6 caracteres)" autocomplete="current-password">
-                    <button type="button" id="btn-ver-senha" class="btn-olho" aria-label="Mostrar senha">👁️</button>
+                    <button type="button" id="btn-ver-senha" class="btn-olho" aria-label="Mostrar senha">Mostrar</button>
                 </div>
                 <button type="button" id="btn-esqueci-senha" class="link-discreto">Esqueci minha senha</button>
 
@@ -54,46 +100,33 @@
     </div>
 
     <!-- MENU LATERAL -->
-    <div id="drawer-overlay" class="drawer-overlay hidden" onclick="toggleDrawer()"></div>
-    <aside id="side-drawer" class="side-drawer">
+    <div id="drawer-overlay" class="drawer-overlay hidden"></div>
+    <aside id="side-drawer" class="side-drawer" aria-label="Menu">
         <div class="drawer-header">
-            <button class="drawer-close-btn" onclick="toggleDrawer()" aria-label="Fechar menu">✕</button>
+            <button type="button" class="icon-btn drawer-close-btn" id="btn-fechar-menu" aria-label="Fechar menu"><svg class="i"><use href="#i-x"/></svg></button>
             <div class="drawer-profile-container">
-                <div class="drawer-profile-icon" id="perfil-avatar" title="Trocar foto" role="button" tabindex="0"><svg class="profile-avatar-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg><img id="perfil-foto" class="hidden" alt="Foto de perfil"></div>
+                <div class="drawer-profile-icon" id="perfil-avatar" title="Trocar foto" role="button" tabindex="0"><svg class="i"><use href="#i-users"/></svg><img id="perfil-foto" class="hidden" alt="Foto de perfil"></div>
                 <input type="file" id="perfil-arq" accept="image/*" class="hidden">
-                <div class="perfil-dados"><button type="button" id="perfil-apelido" class="perfil-apelido">Definir apelido ✏️</button><p id="drawer-user-email" class="drawer-user-info">Carregando...</p></div>
+                <div class="perfil-dados"><button type="button" id="perfil-apelido" class="perfil-apelido">Definir apelido</button><p id="drawer-user-email" class="drawer-user-info">Carregando...</p></div>
             </div>
         </div>
         <div class="drawer-links">
             <div class="drawer-section" id="drawer-rachas">
                 <h4>Meus rachas</h4>
                 <div id="lista-rachas"></div>
-                <button type="button" id="btn-novo-racha" class="btn btn-secondary">＋ Criar perfil de racha</button>
+                <button type="button" id="btn-novo-racha" class="btn btn-secondary"><svg class="i i-sm"><use href="#i-plus"/></svg>Novo racha</button>
+                <button type="button" id="btn-personalizar" class="btn btn-texto"><svg class="i i-sm"><use href="#i-palette"/></svg>Cara do racha</button>
             </div>
-            <div class="drawer-section">
-                <h4>Ajuda e legal</h4>
-                <button type="button" id="btn-suporte" class="drawer-link">💬 Falar com o suporte <span>›</span></button>
-                <button type="button" id="btn-caixa-suporte" class="drawer-link admin hidden">📥 Caixa do suporte (só admin) <span>›</span></button>
-                <a class="drawer-link" href="termos-uso.html">📄 Termos de uso <span>›</span></a>
-                <a class="drawer-link" href="politica-privacidade.html">🔒 Política de privacidade <span>›</span></a>
-            </div>
-            <div class="drawer-section">
-                <h4>Sobre o aplicativo</h4>
-                <p class="about-text">Organize rachas com times equilibrados, controle o placar, a tabela e a artilharia e guarde o histórico das suas peladas.</p>
-                <p class="about-version">Versão <span id="versao-app"></span> Pro · Desenvolvido por Carlos Andre · 2026</p>
-            </div>
-        </div>
-        <div class="drawer-footer">
-            <button id="btn-logout" class="btn btn-danger" onclick="fazerLogout()">🚪 Sair da conta</button>
         </div>
     </aside>
 
     <div class="app-container">
         <header class="app-header">
             <div class="header-content">
-                <button class="btn-menu-hamburguer" onclick="toggleDrawer()" aria-label="Abrir menu">☰</button>
+                <button type="button" class="icon-btn" id="btn-menu" aria-label="Abrir menu"><svg class="i"><use href="#i-menu"/></svg></button>
+                <button type="button" class="icon-btn hidden" id="btn-voltar" aria-label="Voltar"><svg class="i"><use href="#i-back"/></svg></button>
                 <div class="header-titulos">
-                    <h1 id="titulo-tela">Jogadores</h1>
+                    <h1 id="titulo-tela">Elenco</h1>
                     <p id="sub-racha">Cabeção Sorteios Pro</p>
                 </div>
                 <img src="img/icon-192.png" alt="Logo" class="app-logo">
@@ -104,253 +137,510 @@
         <div id="banner-patrocinador" class="banner-patrocinador hidden"></div>
 
         <!-- ABA 1: JOGADORES -->
-        <section id="tab-jogadores" class="tab-content active">
-            <div class="card">
-                <h2>👥 Elenco Cadastrado</h2>
-                <div id="filtro-elenco"></div>
-                <div id="lista-jogadores-cadastrados"></div>
-                <button id="btn-apagar-todos" class="btn btn-danger" style="margin-top: 10px; width: 100%;">🗑️ Apagar todos os jogadores</button>
+        <section id="tab-jogadores" class="tab-content active" data-title="Elenco">
+            <label class="busca">
+                <svg class="i" aria-hidden="true"><use href="#i-search"/></svg>
+                <input type="search" id="busca-elenco" placeholder="Buscar jogador" autocomplete="off" enterkeyhint="search" aria-label="Buscar jogador">
+            </label>
+            <div class="chips" id="chips-elenco" role="group" aria-label="Filtrar elenco">
+                <button type="button" class="chip on" data-pos="todos">Todos</button>
+                <button type="button" class="chip" data-pos="linha">Linha</button>
+                <button type="button" class="chip" data-pos="goleiro">Goleiros</button>
+                <button type="button" class="chip" id="chip-nivel"><svg class="i" aria-hidden="true"><use href="#i-sliders"/></svg>Nível</button>
             </div>
-
-            <div class="card">
-                <h2>📋 Importar Lista em Lote (WhatsApp)</h2>
-                <p class="subtext">Cole a lista do grupo. Cada linha será um jogador cadastrado:</p>
-                <textarea id="lista-lote" rows="4" placeholder="1. Carlos&#10;2. Andre&#10;3. Joao Goleiro&#10;4. Mateus"></textarea>
-                <button id="btn-importar-lote" class="btn btn-primary" style="margin-top:8px;">🚀 Adicionar Todos da Lista</button>
+            <div class="tela-cab">
+                <p class="tela-sub" id="elenco-resumo">Nenhum jogador</p>
+                <button type="button" class="icon-btn" id="btn-elenco-opcoes" aria-label="Opções do elenco"><svg class="i" aria-hidden="true"><use href="#i-dots"/></svg></button>
             </div>
-
-            <div class="card">
-                <h2>➕ Cadastro Individual</h2>
-                <div class="form-group-col">
-                    <input type="text" id="novo-nome" placeholder="Nome do Jogador">
-                    <div class="type-selector">
-                        <label><input type="radio" name="tipo-jogador" value="linha" checked> Linha</label>
-                        <label><input type="radio" name="tipo-jogador" value="goleiro"> Goleiro 🧤</label>
-                    </div>
-                    
-                    <!-- SELETOR DE ESTRELAS -->
-                    <div class="star-rating-input">
-                        <span>Nível do Jogador:</span>
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 6px;">
-                            <button type="button" id="btn-cad-menos" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">−</button>
-                            <span style="font-size: 1.2rem; font-weight: bold; color: #D4AF37; display: flex; align-items: center; gap: 4px;">⭐ <input type="number" id="input-estrelas-cad" class="input-estrelas" step="0.1" min="0.1" max="5" value="3.0" inputmode="decimal" aria-label="Estrelas do jogador"></span>
-                            <button type="button" id="btn-cad-mais" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">+</button>
-                        </div>
-                        <small class="subtext">Digite qualquer valor de 0,1 a 5 (ex.: 1,7 ou 2)</small>
-                    </div>
-
-                    <button id="btn-add-jogador" class="btn btn-secondary" style="margin-top: 8px;">Adicionar Único</button>
-                </div>
-            </div>
+            <div id="lista-jogadores-cadastrados"></div>
         </section>
 
         <!-- ABA 2: SORTEIO -->
-        <section id="tab-sorteio" class="tab-content">
-            <div class="card">
-                <h2>1. Quem veio jogar hoje?</h2>
-                <p class="subtext">Marque quem está presente no racha do dia:</p>
-                <div id="filtro-presenca"></div>
-                <div id="lista-presenca"></div>
+        <section id="tab-sorteio" class="tab-content" data-title="Sorteio">
+            <button type="button" class="acesso" id="abrir-lista-link">
+                <span class="acesso-ic"><svg class="i"><use href="#i-link"/></svg></span>
+                <span class="li-txt"><span class="li-titulo">Lista de presença por link</span><span class="li-sub" id="lista-link-status">Mande no grupo: quem confirmar já fica marcado</span></span>
+                <svg class="i i-sm li-seta"><use href="#i-chevron"/></svg>
+            </button>
+            <label class="busca">
+                <svg class="i" aria-hidden="true"><use href="#i-search"/></svg>
+                <input type="search" id="busca-presenca" placeholder="Buscar jogador" autocomplete="off" enterkeyhint="search" aria-label="Buscar jogador">
+            </label>
+            <div class="chips" id="chips-presenca" role="group" aria-label="Filtrar presença">
+                <button type="button" class="chip on" data-pres="todos">Todos</button>
+                <button type="button" class="chip" data-pres="presentes">Presentes</button>
+                <button type="button" class="chip" data-pres="fora">Fora</button>
+                <button type="button" class="chip" id="chip-nivel-presenca"><svg class="i" aria-hidden="true"><use href="#i-sliders"/></svg>Nível</button>
             </div>
-
-            <div class="card">
-                <h2>2. Configurar Times</h2>
-                <div class="form-group-row">
-                    <label>Quantidade de Times:</label>
-                    <input type="number" id="qtd-times" value="3" min="2" max="8">
-                </div>
-                <div class="form-group-row">
-                    <label>Jogadores de linha por time:</label>
-                    <input type="number" id="qtd-por-time" value="6" min="3" max="12">
-                </div>
-                <p class="subtext">Goleiros são sorteados à parte: 1 por time, a partir do Time 1. O último time fica com o que sobrar.</p>
-                <button id="btn-sortear" class="btn btn-primary">⚡ Realizar Sorteio Equilibrado</button>
+            <div class="tela-cab">
+                <p class="tela-sub" id="presenca-resumo-tela">Ninguém marcado</p>
+                <button type="button" class="icon-btn" id="btn-presenca-opcoes" aria-label="Opções da presença"><svg class="i" aria-hidden="true"><use href="#i-dots"/></svg></button>
             </div>
-
-            <div id="resultado-sorteio" class="card hidden">
-                <h2>Times Definidos</h2>
-                <div id="times-sorteados-container"></div>
-                <button id="btn-iniciar-campeonato" class="btn btn-success" style="margin-top:10px;">🚀 Iniciar Campeonato</button>
-            </div>
+            <div id="lista-presenca"></div>
         </section>
 
         <!-- ABA 3: CAMPEONATO -->
-        <section id="tab-campeonato" class="tab-content">
-            <!-- PLACAR AO VIVO (link público, só leitura) -->
-            <div class="card" id="card-ao-vivo">
-                <h2>📡 Placar ao vivo</h2>
-                <p class="subtext">Quem está esperando acompanha a tabela e os resultados no celular, em tempo real, sem precisar de login.</p>
-                <div id="ao-vivo-off">
-                    <button id="btn-ao-vivo-iniciar" class="btn btn-primary">📡 Compartilhar ao vivo</button>
-                </div>
-                <div id="ao-vivo-on" class="hidden">
-                    <input type="text" id="ao-vivo-link" readonly>
-                    <div class="modal-actions">
-                        <button id="btn-ao-vivo-enviar" class="btn btn-success">📲 Enviar link</button>
-                        <button id="btn-ao-vivo-copiar" class="btn btn-secondary">Copiar</button>
-                    </div>
-                    <button id="btn-ao-vivo-parar" class="btn btn-danger" style="margin-top:8px;">Parar de compartilhar</button>
-                </div>
+        <section id="tab-campeonato" class="tab-content" data-title="Jogo">
+            <div id="jogo-vazio" class="vazio hidden">
+                <svg class="i"><use href="#i-whistle"/></svg>
+                <h3>Nenhum jogo em andamento</h3>
+                <p>Sorteie os times e toque em Começar jogo. A tabela, os placares e a artilharia ficam aqui.</p>
+                <button type="button" class="btn btn-primary" id="btn-ir-sorteio">Ir para o sorteio</button>
             </div>
+            <div id="jogo-conteudo">
+                <button type="button" class="acesso" id="abrir-ao-vivo">
+                    <span class="acesso-ic"><svg class="i"><use href="#i-live"/></svg></span>
+                    <span class="li-txt"><span class="li-titulo">Placar ao vivo</span><span class="li-sub" id="ao-vivo-status">Quem está esperando acompanha pelo celular</span></span>
+                    <svg class="i i-sm li-seta"><use href="#i-chevron"/></svg>
+                </button>
 
-            <!-- CRONÔMETRO -->
-            <div class="card cronometro-card">
-                <h2>⏱️ Cronômetro da Partida</h2>
-                <div class="timer-display" id="timer-display">10:00</div>
-                
-                <div class="timer-config">
-                    <div class="form-group-row">
-                        <label>Opções de Tempo:</label>
-                        <select id="select-tempo-predefinido">
-                            <option value="5">5 Minutos</option>
-                            <option value="6">6 Minutos</option>
-                            <option value="7">7 Minutos</option>
-                            <option value="8">8 Minutos</option>
-                            <option value="9">9 Minutos</option>
-                            <option value="10" selected>10 Minutos</option>
-                            <option value="11">11 Minutos</option>
-                            <option value="12">12 Minutos</option>
-                            <option value="13">13 Minutos</option>
-                            <option value="14">14 Minutos</option>
-                            <option value="15">15 Minutos</option>
-                        </select>
+                <div class="card relogio" id="card-relogio">
+                    <div class="relogio-topo">
+                        <span class="rotulo">Cronômetro</span>
+                        <button type="button" class="chip" id="btn-tempo-partida"><svg class="i"><use href="#i-clock"/></svg><span id="tempo-partida-txt">10 min</span></button>
                     </div>
-                    <div class="form-group-row">
-                        <label>Ou digite os minutos:</label>
-                        <input type="number" id="input-tempo-custom" min="1" max="60" placeholder="Ex: 10" style="width: 80px; text-align: center;">
+                    <div class="timer-display" id="timer-display">10:00</div>
+                    <div class="relogio-botoes">
+                        <button type="button" id="btn-timer-reset" class="icon-btn" aria-label="Zerar cronômetro"><svg class="i"><use href="#i-reset"/></svg></button>
+                        <button type="button" id="btn-timer-start" class="btn btn-primary"><svg class="i"><use href="#i-play"/></svg><span id="txt-timer-start">Iniciar</span></button>
+                        <button type="button" id="btn-timer-pause" class="btn btn-secondary hidden"><svg class="i"><use href="#i-pause"/></svg>Pausar</button>
                     </div>
                 </div>
 
-                <div class="timer-controls">
-                    <button id="btn-timer-start" class="btn btn-primary">▶️ Iniciar</button>
-                    <button id="btn-timer-pause" class="btn btn-secondary">⏸️ Pausar</button>
-                    <button id="btn-timer-reset" class="btn btn-danger" style="padding:10px;">🔄 Resetar</button>
+                <div class="card partida">
+                    <div class="partida-cab">
+                        <h2>Partida</h2>
+                        <span class="selo" id="selo-modo">Tabela</span>
+                        <button type="button" class="icon-btn" id="btn-jogo-opcoes" aria-label="Opções do jogo"><svg class="i"><use href="#i-dots"/></svg></button>
+                    </div>
+                    <div id="painel-partida-atual"></div>
                 </div>
-            </div>
 
-            <div class="card">
-                <h2>⚔️ Partida em Andamento</h2>
-                <div id="painel-partida-atual">
-                    <p class="subtext">Inicie um campeonato no menu Sorteio!</p>
+                <div class="seg" id="seg-jogo" role="tablist">
+                    <button type="button" class="on" data-aba-jogo="tabela" role="tab">Tabela</button>
+                    <button type="button" data-aba-jogo="jogos" role="tab">Jogos</button>
+                    <button type="button" data-aba-jogo="artilharia" role="tab">Artilharia</button>
                 </div>
-            </div>
-
-            <div class="card">
-                <h2>🏆 Tabela de Classificação</h2>
-                <div class="table-responsive">
-                    <table class="tabela-classificacao">
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>P</th>
-                                <th>J</th>
-                                <th>V</th>
-                                <th>E</th>
-                                <th>D</th>
-                                <th>GP</th>
-                                <th>SG</th>
-                            </tr>
-                        </thead>
-                        <tbody id="body-classificacao"></tbody>
-                    </table>
+                <div class="card painel-jogo" data-painel-jogo="tabela">
+                    <div class="table-responsive">
+                        <table class="tabela-classificacao">
+                            <thead><tr><th>Time</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>SG</th></tr></thead>
+                            <tbody id="body-classificacao"></tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-
-            <div class="card">
-                <h2>📋 Confrontos Realizados</h2>
-                <div id="lista-confrontos-encerrados">
-                    <p class="subtext">Nenhum confronto finalizado ainda.</p>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>🎯 Artilharia do Campeonato</h2>
-                <div id="lista-artilharia">
-                    <p class="subtext">Nenhum gol marcado ainda.</p>
-                </div>
-            </div>
-
-            <!-- Botão Encerrar e Enviar para o Histórico -->
-            <div class="card" id="card-finalizar-camp" style="text-align: center;">
-                <button id="btn-finalizar-campeonato" class="btn btn-danger" style="padding: 12px; font-size: 1rem;">🏁 Finalizar Campeonato e Enviar pro Histórico</button>
+                <div class="card painel-jogo hidden" data-painel-jogo="jogos"><div id="lista-confrontos-encerrados"></div></div>
+                <div class="card painel-jogo hidden" data-painel-jogo="artilharia"><div id="lista-artilharia"></div></div>
             </div>
         </section>
 
         <!-- ABA 4: HISTÓRICO -->
-        <section id="tab-hist-detalhe" class="tab-content">
+        <section id="tab-hist-detalhe" class="tab-content" data-title="Campeonato" data-pai="tab-historico">
             <div id="conteudo-hist-detalhe"></div>
         </section>
 
-        <section id="tab-caixa" class="tab-content">
+        <section id="tab-caixa" class="tab-content" data-title="Caixa do suporte" data-pai="tab-mais">
             <div class="card">
-                <h2>📥 Mensagens para o suporte</h2>
+                <h2>Mensagens para o suporte</h2>
                 <p class="subtext">Tela visível só para o e-mail do administrador.</p>
             </div>
             <div id="lista-caixa"></div>
         </section>
 
-        <section id="tab-ranking" class="tab-content">
+        <!-- PAINEL DO ADMINISTRADOR (só o e-mail de configuracoes/admin_email) -->
+        <section id="tab-admin" class="tab-content" data-title="Administrador" data-pai="tab-mais">
+            <form id="form-admin" class="adm" novalidate>
+                <p class="lista-rotulo">Cobrança do Pro</p>
+                <div class="card">
+                    <label class="adm-chave"><span><b>Cobrança ligada</b><small>Desligada, todo mundo usa tudo de graça.</small></span>
+                        <input type="checkbox" id="adm-ativo" class="chk-presenca"><span class="switch" aria-hidden="true"></span></label>
+                    <div class="adm-grade">
+                        <div class="campo"><label for="adm-mensal">Mensal (R$)</label><input type="text" id="adm-mensal" min="0" inputmode="decimal"></div>
+                        <div class="campo"><label for="adm-anual">Anual (R$)</label><input type="text" id="adm-anual" min="0" inputmode="decimal"></div>
+                        <div class="campo"><label for="adm-teste">Teste grátis (dias)</label><input type="number" id="adm-teste" min="0" max="60" inputmode="numeric"></div>
+                        <div class="campo"><label for="adm-lim-jog">Jogadores no grátis</label><input type="number" id="adm-lim-jog" min="1" inputmode="numeric"></div>
+                        <div class="campo"><label for="adm-lim-hist">Campeonatos no grátis</label><input type="number" id="adm-lim-hist" min="0" inputmode="numeric"></div>
+                    </div>
+                    <div class="campo"><label for="adm-pix">Sua chave Pix (para receber o Pro)</label><input type="text" id="adm-pix" autocomplete="off"></div>
+                    <div class="campo"><label for="adm-pix-nome">Nome que aparece no Pix</label><input type="text" id="adm-pix-nome" maxlength="40"></div>
+                    <div class="campo"><label for="adm-zap">WhatsApp do suporte</label><input type="text" id="adm-zap" inputmode="numeric" placeholder="5511999999999"><span class="dica">Só números, com 55 e o DDD. É para onde vai o "Já paguei, enviar comprovante".</span></div>
+                    <div class="campo"><label for="adm-checkout">Link de pagamento (opcional)</label><input type="text" id="adm-checkout" inputmode="url" placeholder="https://"><span class="dica">Ex.: link do Mercado Pago. Sem ele, o Pro é pago no Pix e você libera aqui embaixo.</span></div>
+                </div>
+                <p class="lista-rotulo">Links</p>
+                <div class="card">
+                    <div class="campo"><label for="adm-url">Endereço público do app</label><input type="text" id="adm-url" inputmode="url"><span class="dica">Os links da lista de presença e do placar ao vivo usam este endereço.</span></div>
+                    <div class="campo"><label for="adm-link">Botão "Criar meu racha grátis"</label><input type="text" id="adm-link" inputmode="url" placeholder="Link da Play Store"><span class="dica">Aparece para quem abre a lista ou o placar ao vivo.</span></div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="adm-salvar">Salvar configurações</button>
+            </form>
+
+            <p class="lista-rotulo">Liberar o Pro</p>
             <div class="card">
-                <h2>Ranking de gols</h2>
-                <p class="subtext">Soma dos gols de todos os campeonatos finalizados.</p>
-                <div id="lista-ranking"></div>
+                <p class="dica-painel">Quando alguém pagar no Pix, cole o ID que veio na mensagem do comprovante.</p>
+                <div class="campo"><label for="adm-uid">ID do usuário</label><input type="text" id="adm-uid" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+                <div class="campo"><label for="adm-plano">Plano</label>
+                    <select id="adm-plano"><option value="mensal">Mensal (31 dias)</option><option value="anual">Anual (366 dias)</option><option value="vitalicio">Sem prazo</option></select></div>
+                <p class="dica" id="adm-plano-atual"></p>
+                <div class="dois-botoes">
+                    <button type="button" class="btn btn-secondary" id="adm-ver">Ver plano atual</button>
+                    <button type="button" class="btn btn-primary" id="adm-liberar">Liberar Pro</button>
+                </div>
+            </div>
+            <p class="rodape-versao">Seu ID: <span id="adm-meu-uid" class="num"></span></p>
+        </section>
+
+        <section id="tab-metricas" class="tab-content" data-title="Métricas" data-pai="tab-mais">
+            <div class="card">
+                <h2>Métricas do app</h2>
+                <p class="subtext">Contadores anônimos de uso. Hoje e últimos 7 dias. Tela visível só para o administrador.</p>
+                <div id="conteudo-metricas"></div>
             </div>
         </section>
 
-        <section id="tab-historico" class="tab-content">
-            <div class="card">
-                <h2>📜 Campeonatos Salvos</h2>
-                <p class="subtext">Histórico permanente das edições encerradas:</p>
-                <div id="container-historico"></div>
+        <!-- CAIXA DO RACHA (Pro): mensalistas, diárias, gastos e saldo -->
+        <section id="tab-financeiro" class="tab-content" data-title="Caixa">
+            <div id="conteudo-financeiro"></div>
+        </section>
+
+        <section id="tab-ranking" class="tab-content" data-title="Ranking" data-pai="tab-mais">
+            <p class="tela-sub" id="ranking-sub" style="padding:0 var(--e-1);">Gols somados de todos os campeonatos</p>
+            <div id="lista-ranking"></div>
+        </section>
+
+        <!-- MAIS: telas e ajustes que não cabem no menu de baixo -->
+        <section id="tab-mais" class="tab-content" data-title="Mais">
+            <div class="lista">
+                <button type="button" class="lista-item" data-ir="tab-historico"><svg class="i"><use href="#i-clock"/></svg><span class="li-txt"><span class="li-titulo">Histórico</span><span class="li-sub">Campeonatos encerrados</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></button>
+                <button type="button" class="lista-item" data-ir="tab-ranking"><svg class="i"><use href="#i-podium"/></svg><span class="li-txt"><span class="li-titulo">Ranking</span><span class="li-sub">Artilharia somada de todos os campeonatos</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></button>
             </div>
+            <p class="lista-rotulo">Racha</p>
+            <div class="lista">
+                <button type="button" class="lista-item" data-mais="personalizar"><svg class="i"><use href="#i-palette"/></svg><span class="li-txt"><span class="li-titulo">Cara do racha</span><span class="li-sub">Nome, escudo e cor</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></button>
+                <button type="button" class="lista-item" data-mais="rachas"><svg class="i"><use href="#i-users"/></svg><span class="li-txt"><span class="li-titulo">Meus rachas</span><span class="li-sub" id="mais-racha-ativo">Racha principal</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></button>
+                <button type="button" class="lista-item" data-mais="plano"><svg class="i"><use href="#i-crown"/></svg><span class="li-txt"><span class="li-titulo">Meu plano</span><span class="li-sub" id="mais-plano">Plano grátis</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></button>
+            </div>
+            <p class="lista-rotulo">Ajuda</p>
+            <div class="lista">
+                <button type="button" class="lista-item" data-mais="suporte"><svg class="i"><use href="#i-chat"/></svg><span class="li-txt"><span class="li-titulo">Falar com o suporte</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></button>
+                <button type="button" class="lista-item admin hidden" data-ir="tab-caixa" id="mais-caixa-suporte"><svg class="i"><use href="#i-doc"/></svg><span class="li-txt"><span class="li-titulo">Caixa do suporte</span><span class="li-sub">Só administrador</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></button>
+                <button type="button" class="lista-item admin hidden" data-ir="tab-admin" id="mais-admin"><svg class="i"><use href="#i-sliders"/></svg><span class="li-txt"><span class="li-titulo">Painel do administrador</span><span class="li-sub">Preços, Pix, links e liberar Pro</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></button>
+                <button type="button" class="lista-item admin hidden" data-ir="tab-metricas" id="mais-metricas"><svg class="i"><use href="#i-podium"/></svg><span class="li-txt"><span class="li-titulo">Métricas do app</span><span class="li-sub">Só administrador</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></button>
+                <a class="lista-item" href="termos-uso.html"><svg class="i"><use href="#i-doc"/></svg><span class="li-txt"><span class="li-titulo">Termos de uso</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></a>
+                <a class="lista-item" href="politica-privacidade.html"><svg class="i"><use href="#i-lock"/></svg><span class="li-txt"><span class="li-titulo">Política de privacidade</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></a>
+            </div>
+            <div class="lista">
+                <button type="button" class="lista-item perigo" data-mais="sair"><svg class="i"><use href="#i-logout"/></svg><span class="li-txt"><span class="li-titulo">Sair da conta</span><span class="li-sub" id="mais-email"></span></span></button>
+            </div>
+            <p class="rodape-versao">Cabeção Sorteios Pro · versão <span id="mais-versao"></span></p>
+        </section>
+
+        <section id="tab-historico" class="tab-content" data-title="Histórico" data-pai="tab-mais">
+            <p class="tela-sub" style="padding:0 var(--e-1);">Toque num campeonato para ver a tabela, os jogos e a artilharia.</p>
+            <div id="container-historico"></div>
         </section>
     </div>
 
     <!-- Modal de Edição -->
-    <div id="modal-edicao" class="modal hidden">
-        <div class="modal-content card">
-            <h2>✏️ Editar Jogador</h2>
-            <input type="hidden" id="edit-id">
-            <div class="form-group-col">
-                <input type="text" id="edit-nome" placeholder="Nome">
-                <div class="type-selector">
-                    <label><input type="radio" name="edit-tipo" value="linha" id="edit-linha"> Linha</label>
-                    <label><input type="radio" name="edit-tipo" value="goleiro" id="edit-goleiro"> Goleiro 🧤</label>
+    <!-- PAINÉIS DE BAIXO: elenco -->
+    <div id="sheet-novo-jogador" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-novo-jogador">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab">
+                <h2 id="t-novo-jogador">Novo jogador</h2>
+                <button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+            </div>
+            <div class="seg seg-alvo" id="seg-novo-modo" role="tablist">
+                <button type="button" class="on" data-modo="um" role="tab">Um jogador</button>
+                <button type="button" data-modo="lista" role="tab">Colar lista</button>
+            </div>
+            <div id="novo-modo-um">
+                <div class="campo">
+                    <label for="novo-nome">Nome</label>
+                    <input type="text" id="novo-nome" placeholder="Ex.: Carlos" autocomplete="off" maxlength="40" enterkeyhint="done">
                 </div>
-                
-                <!-- SELETOR DE ESTRELAS (EDIÇÃO) -->
-                <div class="form-group-col" style="margin-top: 10px;">
-                    <label class="subtext">Nível do Jogador:</label>
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 6px;">
-                            <button type="button" id="btn-edit-menos" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">−</button>
-                            <span style="font-size: 1.2rem; font-weight: bold; color: #D4AF37; display: flex; align-items: center; gap: 4px;">⭐ <input type="number" id="input-estrelas-edit" class="input-estrelas" step="0.1" min="0.1" max="5" value="3.0" inputmode="decimal" aria-label="Estrelas do jogador"></span>
-                            <button type="button" id="btn-edit-mais" class="btn btn-secondary" style="width: 40px; height: 40px; font-weight: bold;">+</button>
-                        </div>
-                        <small class="subtext">Digite qualquer valor de 0,1 a 5 (ex.: 1,7 ou 2)</small>
+                <div class="campo">
+                    <span class="rotulo">Posição</span>
+                    <div class="seg">
+                        <label><input type="radio" name="tipo-jogador" value="linha" checked><span>Linha</span></label>
+                        <label><input type="radio" name="tipo-jogador" value="goleiro"><span><svg class="i i-sm"><use href="#i-glove"/></svg>Goleiro</span></label>
+                    </div>
                 </div>
-
-                <button id="btn-salvar-edicao" class="btn btn-primary" style="margin-top: 10px;">Salvar Alterações</button>
-                <button id="btn-fechar-modal" class="btn btn-secondary">Cancelar</button>
+                <div class="campo">
+                    <span class="rotulo">Nível</span>
+                    <div class="stepper">
+                        <button type="button" id="btn-cad-menos" aria-label="Diminuir nível"><svg class="i"><use href="#i-minus"/></svg></button>
+                        <div class="valor"><svg class="i i-cheio"><use href="#i-star"/></svg><input type="text" id="input-estrelas-cad" value="3,0" inputmode="decimal" maxlength="3" autocomplete="off" aria-label="Nível do jogador"></div>
+                        <button type="button" id="btn-cad-mais" aria-label="Aumentar nível"><svg class="i"><use href="#i-plus"/></svg></button>
+                    </div>
+                    <span class="dica">De 0,1 a 5. É o que equilibra os times no sorteio.</span>
+                </div>
+                <div class="sheet-acoes"><button type="button" id="btn-add-jogador" class="btn btn-primary">Adicionar jogador</button></div>
+            </div>
+            <div id="novo-modo-lista" class="hidden">
+                <div class="campo">
+                    <label for="lista-lote">Lista do grupo</label>
+                    <textarea id="lista-lote" rows="7" placeholder="1. Carlos&#10;2. André&#10;3. João"></textarea>
+                    <span class="dica">Um nome por linha. Números, Pix e links são ignorados. Todos entram na linha com nível 3.</span>
+                </div>
+                <div class="sheet-acoes"><button type="button" id="btn-importar-lote" class="btn btn-primary">Adicionar todos</button></div>
             </div>
         </div>
     </div>
 
-    
+    <div id="modal-edicao" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-editar">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab">
+                <h2 id="t-editar">Editar jogador</h2>
+                <button type="button" class="icon-btn" id="btn-fechar-modal" aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+            </div>
+            <input type="hidden" id="edit-id">
+            <div class="campo">
+                <label for="edit-nome">Nome</label>
+                <input type="text" id="edit-nome" autocomplete="off" maxlength="40">
+            </div>
+            <div class="campo">
+                <span class="rotulo">Posição</span>
+                <div class="seg">
+                    <label><input type="radio" name="edit-tipo" value="linha" id="edit-linha"><span>Linha</span></label>
+                    <label><input type="radio" name="edit-tipo" value="goleiro" id="edit-goleiro"><span><svg class="i i-sm"><use href="#i-glove"/></svg>Goleiro</span></label>
+                </div>
+            </div>
+            <div class="campo">
+                <span class="rotulo">Nível</span>
+                <div class="stepper">
+                    <button type="button" id="btn-edit-menos" aria-label="Diminuir nível"><svg class="i"><use href="#i-minus"/></svg></button>
+                    <div class="valor"><svg class="i i-cheio"><use href="#i-star"/></svg><input type="text" id="input-estrelas-edit" value="3,0" inputmode="decimal" maxlength="3" autocomplete="off" aria-label="Nível do jogador"></div>
+                    <button type="button" id="btn-edit-mais" aria-label="Aumentar nível"><svg class="i"><use href="#i-plus"/></svg></button>
+                </div>
+            </div>
+            <div class="sheet-acoes">
+                <button type="button" id="btn-salvar-edicao" class="btn btn-primary">Salvar</button>
+                <button type="button" id="btn-excluir-jogador" class="btn btn-texto perigo">Excluir jogador</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sheet-filtro-elenco" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-filtro-elenco">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab">
+                <h2 id="t-filtro-elenco">Filtrar por nível</h2>
+                <button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+            </div>
+            <div id="filtro-elenco"></div>
+            <div class="sheet-acoes"><button type="button" class="btn btn-primary" data-fechar>Ver jogadores</button></div>
+        </div>
+    </div>
+
+    <div id="sheet-elenco-opcoes" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-elenco-opcoes">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab">
+                <h2 id="t-elenco-opcoes">Elenco</h2>
+                <button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+            </div>
+            <div class="lista sheet-menu">
+                <button type="button" class="lista-item" id="btn-elenco-colar"><svg class="i"><use href="#i-list"/></svg><span class="li-txt"><span class="li-titulo">Colar lista do grupo</span><span class="li-sub">Cadastra vários nomes de uma vez</span></span></button>
+                <button type="button" class="lista-item perigo" id="btn-apagar-todos"><svg class="i"><use href="#i-trash"/></svg><span class="li-txt"><span class="li-titulo">Apagar todos os jogadores</span><span class="li-sub">Não dá para desfazer</span></span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AÇÃO PRINCIPAL DA TELA (aparece só na aba certa: body[data-aba]) -->
+    <button type="button" class="fab" id="btn-novo-jogador" data-so-aba="tab-jogadores"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>Adicionar</button>
+
+    <div class="barra-acao" data-so-aba="tab-sorteio" id="barra-sorteio">
+        <button type="button" class="barra-config" id="btn-config-sorteio" aria-label="Ajustar times">
+            <span class="bc-rotulo" id="bc-presentes">0 presentes</span>
+            <span class="bc-valor"><span id="resumo-config-sorteio">3 times de 6</span><svg class="i i-sm"><use href="#i-sliders"/></svg></span>
+        </button>
+        <button type="button" id="btn-sortear" class="btn btn-primary"><svg class="i"><use href="#i-shuffle"/></svg>Sortear times</button>
+    </div>
+
+    <!-- PAINÉIS DE BAIXO: sorteio -->
+    <div id="sheet-config-sorteio" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-config-sorteio">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab"><h2 id="t-config-sorteio">Times</h2><button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button></div>
+            <div class="campo">
+                <span class="rotulo">Quantidade de times</span>
+                <div class="stepper" data-alvo="qtd-times" data-min="2" data-max="8">
+                    <button type="button" data-passo="-1" aria-label="Menos times"><svg class="i"><use href="#i-minus"/></svg></button>
+                    <div class="valor"><input type="number" id="qtd-times" value="3" min="2" max="8" inputmode="numeric" aria-label="Quantidade de times"></div>
+                    <button type="button" data-passo="1" aria-label="Mais times"><svg class="i"><use href="#i-plus"/></svg></button>
+                </div>
+            </div>
+            <div class="campo">
+                <span class="rotulo">Jogadores de linha por time</span>
+                <div class="stepper" data-alvo="qtd-por-time" data-min="1" data-max="12">
+                    <button type="button" data-passo="-1" aria-label="Menos jogadores"><svg class="i"><use href="#i-minus"/></svg></button>
+                    <div class="valor"><input type="number" id="qtd-por-time" value="6" min="1" max="12" inputmode="numeric" aria-label="Jogadores de linha por time"></div>
+                    <button type="button" data-passo="1" aria-label="Mais jogadores"><svg class="i"><use href="#i-plus"/></svg></button>
+                </div>
+                <span class="dica">Goleiros são sorteados à parte, um por time a partir do Time 1. O último time fica com quem sobrar.</span>
+            </div>
+            <div class="sheet-acoes"><button type="button" class="btn btn-primary" data-fechar>Pronto</button></div>
+        </div>
+    </div>
+
+    <div id="sheet-filtro-presenca" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-filtro-presenca">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab"><h2 id="t-filtro-presenca">Filtrar por nível</h2><button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button></div>
+            <div id="filtro-presenca"></div>
+            <div class="sheet-acoes"><button type="button" class="btn btn-primary" data-fechar>Ver jogadores</button></div>
+        </div>
+    </div>
+
+    <div id="sheet-presenca-opcoes" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-presenca-opcoes">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab"><h2 id="t-presenca-opcoes">Presença</h2><button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button></div>
+            <div class="lista sheet-menu">
+                <button type="button" class="lista-item" id="btn-marcar-todos"><svg class="i"><use href="#i-check"/></svg><span class="li-txt"><span class="li-titulo">Marcar todos como presentes</span></span></button>
+                <button type="button" class="lista-item" id="btn-desmarcar-todos"><svg class="i"><use href="#i-x"/></svg><span class="li-txt"><span class="li-titulo">Desmarcar todos</span><span class="li-sub">Para começar a lista do zero</span></span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sheet-lista-link" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-lista-link">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel sheet-alto">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab"><h2 id="t-lista-link">Lista de presença</h2><button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button></div>
+            <div id="card-presenca">
+                <div id="presenca-off">
+                    <div class="vazio">
+                        <svg class="i"><use href="#i-link"/></svg>
+                        <h3>Confirmação pelo celular</h3>
+                        <p>Você manda um link no grupo, cada um digita o nome e confirma. Quem confirmar já fica marcado aqui. Dá para cobrar com Pix e ter lista de suplentes.</p>
+                        <button type="button" id="btn-presenca-criar" class="btn btn-primary">Criar lista</button>
+                    </div>
+                </div>
+                <div id="presenca-on" class="hidden">
+                    <div id="presenca-resumo"></div>
+                    <div class="link-linha"><input type="text" id="presenca-link" readonly aria-label="Link da lista"></div>
+                    <div class="dois-botoes">
+                        <button type="button" id="btn-presenca-enviar" class="btn btn-primary"><svg class="i"><use href="#i-share"/></svg>Enviar no grupo</button>
+                        <button type="button" id="btn-presenca-copiar" class="btn btn-secondary"><svg class="i"><use href="#i-copy"/></svg>Copiar lista</button>
+                    </div>
+                    <div id="presenca-convidados"></div>
+                    <div class="dois-botoes" style="margin-top:var(--e-4);">
+                        <button type="button" id="btn-presenca-fechar" class="btn btn-secondary">Fechar lista</button>
+                        <button type="button" id="btn-presenca-encerrar" class="btn btn-danger">Encerrar link</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultado-sorteio" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-resultado">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel sheet-alto">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab">
+                <div><h2 id="t-resultado">Times sorteados</h2><p class="tela-sub" id="resultado-sub"></p></div>
+                <button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+            </div>
+            <div id="times-sorteados-container" class="times-grade"></div>
+            <div class="sheet-acoes">
+                <button type="button" id="btn-iniciar-campeonato" class="btn btn-primary"><svg class="i"><use href="#i-whistle"/></svg>Começar jogo</button>
+                <div class="tres-botoes">
+                    <button type="button" id="btn-imagem-times" class="btn btn-secondary"><svg class="i i-sm"><use href="#i-image"/></svg>Imagem</button>
+                    <button type="button" id="btn-copiar-lista" class="btn btn-secondary"><svg class="i i-sm"><use href="#i-copy"/></svg>Copiar</button>
+                    <button type="button" id="btn-sortear-de-novo" class="btn btn-secondary"><svg class="i i-sm"><use href="#i-reset"/></svg>De novo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAINÉIS DE BAIXO: jogo -->
+    <div id="sheet-ao-vivo" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-ao-vivo">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab"><h2 id="t-ao-vivo">Placar ao vivo</h2><button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button></div>
+            <div id="card-ao-vivo">
+                <p class="dica-painel">Quem está esperando vê a tabela, os resultados e o cronômetro no celular, em tempo real e sem login.</p>
+                <div id="ao-vivo-off">
+                    <div class="sheet-acoes"><button type="button" id="btn-ao-vivo-iniciar" class="btn btn-primary"><svg class="i"><use href="#i-live"/></svg>Ligar placar ao vivo</button></div>
+                </div>
+                <div id="ao-vivo-on" class="hidden">
+                    <div class="link-linha"><input type="text" id="ao-vivo-link" readonly aria-label="Link do placar ao vivo"></div>
+                    <div class="dois-botoes">
+                        <button type="button" id="btn-ao-vivo-enviar" class="btn btn-primary"><svg class="i"><use href="#i-share"/></svg>Enviar link</button>
+                        <button type="button" id="btn-ao-vivo-copiar" class="btn btn-secondary"><svg class="i"><use href="#i-copy"/></svg>Copiar</button>
+                    </div>
+                    <div class="sheet-acoes"><button type="button" id="btn-ao-vivo-parar" class="btn btn-texto perigo">Desligar o placar ao vivo</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sheet-tempo" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-tempo">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab"><h2 id="t-tempo">Tempo da partida</h2><button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button></div>
+            <div class="campo">
+                <label for="select-tempo-predefinido">Duração</label>
+                <select id="select-tempo-predefinido">
+                    <option value="5">5 minutos</option><option value="6">6 minutos</option><option value="7">7 minutos</option>
+                    <option value="8">8 minutos</option><option value="9">9 minutos</option><option value="10" selected>10 minutos</option>
+                    <option value="11">11 minutos</option><option value="12">12 minutos</option><option value="13">13 minutos</option>
+                    <option value="14">14 minutos</option><option value="15">15 minutos</option>
+                </select>
+            </div>
+            <div class="campo">
+                <label for="input-tempo-custom">Outro tempo (minutos)</label>
+                <input type="number" id="input-tempo-custom" min="1" max="60" inputmode="numeric" placeholder="Ex.: 20">
+            </div>
+            <div class="sheet-acoes"><button type="button" class="btn btn-primary" data-fechar>Pronto</button></div>
+        </div>
+    </div>
+
+    <div id="sheet-jogo-opcoes" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="t-jogo-opcoes">
+        <div class="sheet-fundo" data-fechar></div>
+        <div class="sheet-painel">
+            <div class="sheet-alca"></div>
+            <div class="sheet-cab"><h2 id="t-jogo-opcoes">Jogo</h2><button type="button" class="icon-btn" data-fechar aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button></div>
+            <div class="campo">
+                <label for="select-modo-disputa">Modo de disputa</label>
+                <select id="select-modo-disputa">
+                    <option value="todos-contra-todos">Tabela (todos contra todos)</option>
+                    <option value="racha-livre">Racha livre (quem ganha fica)</option>
+                </select>
+                <span class="dica">Trocar o modo apaga os resultados e a artilharia deste campeonato.</span>
+            </div>
+            <div class="lista sheet-menu" style="margin-top:var(--e-5);">
+                <button type="button" class="lista-item perigo" id="btn-finalizar-campeonato"><svg class="i"><use href="#i-flag"/></svg><span class="li-txt"><span class="li-titulo">Encerrar campeonato</span><span class="li-sub">Salva no histórico e libera um novo sorteio</span></span></button>
+            </div>
+        </div>
+    </div>
+
     <!-- MENU INFERIOR -->
     <nav class="nav-tabs">
         <div class="nav-tabs-inner">
-            <button class="tab-btn active" data-tab="tab-jogadores" data-title="Jogadores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Jogadores</button>
-            <button class="tab-btn" data-tab="tab-sorteio" data-title="Sorteio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>Sorteio</button>
-            <button class="tab-btn" data-tab="tab-campeonato" data-title="Campeonato"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 4h3v2a3 3 0 0 1-3 3"/><path d="M7 4H4v2a3 3 0 0 0 3 3"/></svg>Campeonato</button>
-            <button class="tab-btn" data-tab="tab-historico" data-title="Histórico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
-            <button class="tab-btn" data-tab="tab-ranking" data-title="Ranking"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 21h19"/><rect x="9" y="9" width="6" height="12" rx="1"/><rect x="2.8" y="14" width="5.4" height="7" rx="1"/><rect x="15.8" y="16" width="5.4" height="5" rx="1"/></svg>Ranking</button>
+            <button class="tab-btn active" data-tab="tab-jogadores"><svg class="i"><use href="#i-users"/></svg>Elenco</button>
+            <button class="tab-btn" data-tab="tab-sorteio"><svg class="i"><use href="#i-shuffle"/></svg>Sorteio</button>
+            <button class="tab-btn" data-tab="tab-campeonato"><svg class="i"><use href="#i-whistle"/></svg>Jogo</button>
+            <button class="tab-btn" data-tab="tab-financeiro"><svg class="i"><use href="#i-wallet"/></svg>Caixa</button>
+            <button class="tab-btn" data-tab="tab-mais"><svg class="i"><use href="#i-grid"/></svg>Mais</button>
         </div>
     </nav>
 
 <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, updatePassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-        import { getDatabase, ref, set, get, onValue, push, update, remove } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+        import { getDatabase, ref, set, get, onValue, push, update, remove, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyCt4kqF8LcHkR7bn3gvF-1ZcpjVW3FH8YA",
@@ -384,7 +674,8 @@
             onValue,
             push,
             update,
-            remove
+            remove,
+            increment
         };
 
         // avisa os outros scripts que o Firebase já pode ser usado
@@ -392,12 +683,20 @@
         window.dispatchEvent(new Event('firebase-ready'));
     </script>
     <!-- ordem importa: logica -> remoto -> auth -> app -> monetizacao -->
-    <script src="js/logica.js?v=20261020d"></script>
-    <script src="js/apito.js?v=20261020d"></script>
-    <script src="js/remoto.js?v=20261020d"></script>
-    <script src="js/auth.js?v=20261020d"></script>
-    <script src="js/app.js?v=20261020d"></script>
-    <script src="js/monetizacao.js?v=20261020d"></script>
-    <script src="js/icones.js?v=20261020d"></script>
+    <script src="js/logica.js?v=95f21c47d2"></script>
+    <script src="js/ui.js?v=95f21c47d2"></script>
+    <script src="js/apito.js?v=95f21c47d2"></script>
+    <script src="js/remoto.js?v=95f21c47d2"></script>
+    <script src="js/auth.js?v=95f21c47d2"></script>
+    <script src="js/app.js?v=95f21c47d2"></script>
+    <script src="js/monetizacao.js?v=95f21c47d2"></script>
+    <script src="js/metricas.js?v=95f21c47d2"></script>
+    <script src="js/imagem-times.js?v=95f21c47d2"></script>
+    <script>
+        // Funciona sem internet: guarda o app no aparelho (sw.js)
+        if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.log('Service worker:', e)));
+        }
+    </script>
 </body>
 </html>
