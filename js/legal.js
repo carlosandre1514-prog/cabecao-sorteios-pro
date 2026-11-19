@@ -2,6 +2,8 @@
 // Privacidade. Eles são cadastrados no painel de administração (configuracoes/legal, leitura pública).
 (function () {
     const BANCO = 'https://studio-7737408264-35a36-default-rtdb.firebaseio.com';
+    // padrão (o que for salvo no painel de administração passa por cima)
+    const PADRAO = { responsavel: 'Carlos André – Morada Nova/CE', email: 'contato.cabecao.sorteios@gmail.com', documento: '', endereco: '' };
     const campos = document.querySelectorAll('[data-legal]');
     // CNPJ e endereço são opcionais enquanto o app é vendido como pessoa física: em branco, a linha some
     const pendente = (el) => {
@@ -12,7 +14,7 @@
     fetch(BANCO + '/configuracoes/legal.json')
         .then((r) => (r.ok ? r.json() : null))
         .then((l) => {
-            l = l || {};
+            l = Object.assign({}, PADRAO, l || {});
             campos.forEach((el) => {
                 const v = String(l[el.dataset.legal] || '').trim();
                 if (!v) return pendente(el);
@@ -20,5 +22,9 @@
                 else el.textContent = v;
             });
         })
-        .catch(() => campos.forEach(pendente));
+        .catch(() => campos.forEach((el) => {
+            const v = PADRAO[el.dataset.legal];
+            if (!v) return pendente(el);
+            if (el.dataset.legal === 'email') el.innerHTML = '<a href="mailto:' + v + '">' + v + '</a>'; else el.textContent = v;
+        }));
 })();
