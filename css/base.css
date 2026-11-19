@@ -836,3 +836,8 @@ body {
 .aceite-card p a { color: var(--c-destaque); }
 .aceite-card .btn[disabled] { opacity: .45; filter: grayscale(.4); }
 .aceite-card .btn-texto { align-self: center; }
+/* interruptor "Enviar estatísticas de uso" (Mais) */
+#chk-estatisticas { position: absolute; opacity: 0; pointer-events: none; }
+label.lista-item[for="chk-estatisticas"] .switch { margin-left: auto; flex: none; position: relative; border-radius: 99px; }
+#chk-estatisticas:checked + .switch { background: linear-gradient(180deg, var(--c-destaque), var(--c-destaque-forte)); box-shadow: 0 0 12px rgba(var(--verde-rgb), 0.45); }
+#chk-estatisticas:checked + .switch::after { transform: translateX(18px); background: #fff; }

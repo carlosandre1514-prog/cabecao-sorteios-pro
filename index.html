@@ -8,8 +8,8 @@
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0f1214">
     <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="css/style.css?v=bda1c47a89">
-    <link rel="stylesheet" href="css/base.css?v=bda1c47a89">
+    <link rel="stylesheet" href="css/style.css?v=d4260fc048">
+    <link rel="stylesheet" href="css/base.css?v=d4260fc048">
 </head>
 <body data-aba="tab-jogadores">
     <!-- ÍCONES (um traço só, 24px). Uso: <svg class="i"><use href="#i-nome"/></svg> -->
@@ -356,6 +356,12 @@
                 <a class="lista-item" href="termos-uso.html"><svg class="i"><use href="#i-doc"/></svg><span class="li-txt"><span class="li-titulo">Termos de uso</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></a>
                 <a class="lista-item" href="politica-privacidade.html"><svg class="i"><use href="#i-lock"/></svg><span class="li-txt"><span class="li-titulo">Política de privacidade</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></a>
             </div>
+            <p class="lista-rotulo">Sua conta e seus dados</p>
+            <div class="lista">
+                <label class="lista-item" for="chk-estatisticas"><svg class="i"><use href="#i-podium"/></svg><span class="li-txt"><span class="li-titulo">Enviar estatísticas de uso</span><span class="li-sub">Anônimas, ajudam a melhorar o app</span></span><input type="checkbox" id="chk-estatisticas" class="chk-presenca" checked><span class="switch" aria-hidden="true"></span></label>
+                <button type="button" class="lista-item" data-mais="meus-dados"><svg class="i"><use href="#i-doc"/></svg><span class="li-txt"><span class="li-titulo">Baixar meus dados</span><span class="li-sub">Uma cópia de tudo que está na sua conta</span></span><svg class="i i-sm li-seta"><use href="#i-chevron"/></svg></button>
+                <button type="button" class="lista-item perigo" data-mais="excluir-conta"><svg class="i"><use href="#i-trash"/></svg><span class="li-txt"><span class="li-titulo">Excluir minha conta</span><span class="li-sub">Apaga a conta e os dados para sempre</span></span></button>
+            </div>
             <div class="lista">
                 <button type="button" class="lista-item perigo" data-mais="sair"><svg class="i"><use href="#i-logout"/></svg><span class="li-txt"><span class="li-titulo">Sair da conta</span><span class="li-sub" id="mais-email"></span></span></button>
             </div>
@@ -667,7 +673,7 @@
 
 <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, updatePassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, updatePassword, GoogleAuthProvider, signInWithPopup, deleteUser } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
         import { getDatabase, ref, set, get, onValue, push, update, remove, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
         const firebaseConfig = {
@@ -692,6 +698,7 @@
             signInWithEmailAndPassword,
             onAuthStateChanged,
             signOut,
+            deleteUser,
             sendPasswordResetEmail,
             updatePassword,
             GoogleAuthProvider,
@@ -712,17 +719,17 @@
     </script>
     <!-- ordem importa: logica -> remoto -> auth -> app -> monetizacao -->
     <link rel="modulepreload" href="js/vendor/three.module.min.js">
-    <script type="module" src="js/futebol3d.js?v=bda1c47a89"></script>
-    <script src="js/painel.js?v=bda1c47a89"></script>
-    <script src="js/logica.js?v=bda1c47a89"></script>
-    <script src="js/ui.js?v=bda1c47a89"></script>
-    <script src="js/apito.js?v=bda1c47a89"></script>
-    <script src="js/remoto.js?v=bda1c47a89"></script>
-    <script src="js/auth.js?v=bda1c47a89"></script>
-    <script src="js/app.js?v=bda1c47a89"></script>
-    <script src="js/monetizacao.js?v=bda1c47a89"></script>
-    <script src="js/metricas.js?v=bda1c47a89"></script>
-    <script src="js/imagem-times.js?v=bda1c47a89"></script>
+    <script type="module" src="js/futebol3d.js?v=d4260fc048"></script>
+    <script src="js/painel.js?v=d4260fc048"></script>
+    <script src="js/logica.js?v=d4260fc048"></script>
+    <script src="js/ui.js?v=d4260fc048"></script>
+    <script src="js/apito.js?v=d4260fc048"></script>
+    <script src="js/remoto.js?v=d4260fc048"></script>
+    <script src="js/auth.js?v=d4260fc048"></script>
+    <script src="js/app.js?v=d4260fc048"></script>
+    <script src="js/monetizacao.js?v=d4260fc048"></script>
+    <script src="js/metricas.js?v=d4260fc048"></script>
+    <script src="js/imagem-times.js?v=d4260fc048"></script>
     <script>
         // Funciona sem internet: guarda o app no aparelho (sw.js)
         if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {

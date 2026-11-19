@@ -28,7 +28,9 @@
 
     // evento: só letras minúsculas e "_" (as regras recusam o resto)
     // dados (opcional): detalhes que vão só para o painel de métricas (painel.js)
+    const semEstatisticas = () => { try { return localStorage.getItem('cabecao_sem_estatisticas') === '1'; } catch (e) { return false; } };
     function evento(nome, umaVez, dados) {
+        if (semEstatisticas()) return;
         nome = String(nome || '').toLowerCase().replace(/[^a-z_]/g, '').slice(0, 40);
         if (!nome) return;
         if (umaVez) { if (jaContado.has(nome)) return; jaContado.add(nome); }
@@ -41,6 +43,7 @@
         });
     }
     function ativo(uid) {
+        if (semEstatisticas()) return;
         if (!uid || jaContado.has('ativo:' + uid)) return;
         jaContado.add('ativo:' + uid);
         const d = dia();

@@ -22,6 +22,8 @@
 
     const fila = [];
     let uid = '', nome = '', desligado = !CHAVE, enviando = false, fora = false, erros = 0;
+    // a pessoa desligou as estatísticas (Mais → Sua conta e seus dados)
+    try { if (localStorage.getItem('cabecao_sem_estatisticas') === '1') desligado = true; } catch (e) { /* ok */ }
 
     const guardado = (k, v) => {
         try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { /* modo anônimo */ }
@@ -106,5 +108,6 @@
         }
     }
 
-    window.Painel = { ev, enviar, usuario, nome: definirNome, saiu, voltou, plataforma, _fila: fila };
+    function desligar(sim) { desligado = !!sim || !CHAVE; if (desligado) fila.length = 0; }
+    window.Painel = { ev, enviar, usuario, nome: definirNome, saiu, voltou, desligar, plataforma, _fila: fila };
 })();

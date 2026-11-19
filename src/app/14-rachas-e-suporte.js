@@ -95,7 +95,7 @@
             const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
             const msg = { de: (perfil && perfil.apelido) || 'Sem apelido', email: emailUsuario, racha: nomeRachaAtivo(), texto, em: Date.now(), ok: false, uid: currentUserUid };
             window.firebaseFns.set(window.firebaseFns.ref(window.firebaseDb, 'suporte/' + id), msg)
-                .then(() => { m.remove(); toast('Mensagem enviada ao suporte'); })
+                .then(() => { gravar('suporteEnviados/' + id, true, true); m.remove(); toast('Mensagem enviada ao suporte'); })
                 .catch((e) => toast('Não foi possível enviar (' + ((e && e.code) || 'erro') + ')', 'erro'));
         };
     }
