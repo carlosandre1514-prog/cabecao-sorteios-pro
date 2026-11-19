@@ -4,7 +4,7 @@
   "description": "Sorteio de times, lista de presença, placar ao vivo e caixa do racha (PWA, HTML + JS puro + Firebase).",
   "scripts": {
     "build": "node scripts/build.js",
-    "test": "node scripts/build.js --check && node tests/logica.test.js && node tests/apito.test.js && node tests/fumaca.test.js && node functions/teste-pro.js && node functions/teste-handlers.js",
+    "test": "node scripts/build.js --check && node tests/logica.test.js && node tests/apito.test.js && node tests/fumaca.test.js && node tests/painel.test.js && node functions/teste-pro.js && node functions/teste-handlers.js",
     "start": "python3 -m http.server 8080"
   }
 }

@@ -8,8 +8,8 @@
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0f1214">
     <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="css/style.css?v=5f2bdaa962">
-    <link rel="stylesheet" href="css/base.css?v=5f2bdaa962">
+    <link rel="stylesheet" href="css/style.css?v=1f16a85e21">
+    <link rel="stylesheet" href="css/base.css?v=1f16a85e21">
     <style>
         .app-container { padding-bottom: 32px; }
         body { background-image: radial-gradient(ellipse 90% 30% at 50% -10%, rgba(var(--verde-rgb), 0.14), transparent 70%); }
@@ -117,8 +117,9 @@
         <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro</p>
     </div>
 
-    <script src="js/logica.js?v=5f2bdaa962"></script>
-    <script src="js/vendor/qrcode.js?v=5f2bdaa962"></script>
+    <script src="js/logica.js?v=1f16a85e21"></script>
+    <script src="js/vendor/qrcode.js?v=1f16a85e21"></script>
+    <script src="js/painel.js?v=1f16a85e21"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getDatabase, ref, onValue, get, set, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
@@ -148,7 +149,8 @@
 
         // ---------- métricas anônimas + link do convite ----------
         const hoje = Logica.diaISO();
-        const contar = ev => set(ref(db, 'metricas/' + hoje + '/' + ev), increment(1)).catch(() => {});
+        // contador do app + painel de métricas (painel.js); a visita o painel já recebe como "abrir"
+        const contar = (ev, d) => { if (window.Painel && !/_visita$/.test(ev)) Painel.ev(ev, d); return set(ref(db, 'metricas/' + hoje + '/' + ev), increment(1)).catch(() => {}); };
         get(ref(db, 'configuracoes/divulgacao/link')).then(s => {
             const u = String(s.exists() ? s.val() : '');
             if (/^https?:\/\//i.test(u)) $('cta-link').href = u;
@@ -176,7 +178,7 @@
             const dados = Object.assign({ status, em }, doConvidado, extra || {});
             try {
                 await set(ref(db, 'presenca/' + codigo + '/respostas/' + id), dados);
-                contar('presenca_resposta');
+                contar('presenca_resposta', { status });
             } catch (e) {
                 alert('Não foi possível salvar. A lista pode ter sido fechada pelo organizador. (' + ((e && e.code) || 'erro') + ')');
             }

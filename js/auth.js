@@ -93,10 +93,13 @@
         try {
             if (!(await aguardarFirebase(8000))) throw { code: 'app/sem-firebase' };
             const f = window.firebaseFns;
-            if (modoLogin) await f.signInWithEmailAndPassword(window.firebaseAuth, email, senha);
-            else {
+            if (modoLogin) {
+                await f.signInWithEmailAndPassword(window.firebaseAuth, email, senha);
+                if (window.Painel) Painel.ev('login', { metodo: 'email' });
+            } else {
                 await f.createUserWithEmailAndPassword(window.firebaseAuth, email, senha);
                 if (window.Metricas) Metricas.evento('cadastro');
+                if (window.Painel) Painel.ev('cadastro', { metodo: 'email' });
             }
             // sucesso: o app.js percebe o login (onAuthStateChanged) e abre o app sozinho
         } catch (e) {
@@ -114,7 +117,12 @@
         try {
             if (!(await aguardarFirebase(8000))) throw { code: 'app/sem-firebase' };
             const f = window.firebaseFns;
-            await f.signInWithPopup(window.firebaseAuth, new f.GoogleAuthProvider());
+            const r = await f.signInWithPopup(window.firebaseAuth, new f.GoogleAuthProvider());
+            // conta nova = criada agora (primeiro acesso igual à criação)
+            const md = r && r.user && r.user.metadata;
+            const nova = !!(md && md.creationTime && md.creationTime === md.lastSignInTime);
+            if (nova && window.Metricas) Metricas.evento('cadastro');
+            if (window.Painel) Painel.ev(nova ? 'cadastro' : 'login', { metodo: 'google' });
         } catch (e) {
             const c = e && e.code;
             if (c !== 'auth/cancelled-popup-request' && c !== 'auth/popup-closed-by-user') {

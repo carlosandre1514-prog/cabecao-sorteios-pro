@@ -7,8 +7,8 @@
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0f1214">
     <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="css/style.css?v=5f2bdaa962">
-    <link rel="stylesheet" href="css/base.css?v=5f2bdaa962">
+    <link rel="stylesheet" href="css/style.css?v=1f16a85e21">
+    <link rel="stylesheet" href="css/base.css?v=1f16a85e21">
     <style>
         .app-container { padding-bottom: 32px; }
         main { display: flex; flex-direction: column; gap: 12px; }
@@ -78,8 +78,9 @@
         <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro · esta página só mostra os resultados</p>
     </div>
 
-    <script src="js/logica.js?v=5f2bdaa962"></script>
-    <script src="js/apito.js?v=5f2bdaa962"></script>
+    <script src="js/logica.js?v=1f16a85e21"></script>
+    <script src="js/apito.js?v=1f16a85e21"></script>
+    <script src="js/painel.js?v=1f16a85e21"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getDatabase, ref, onValue, get, set, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
@@ -105,7 +106,8 @@
 
         // ---------- CONVITE + MÉTRICAS (contadores anônimos) ----------
         const hoje = (() => { const d = new Date(), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); })();
-        const contar = ev => set(ref(db, 'metricas/' + hoje + '/' + ev), increment(1)).catch(() => {});
+        // contador do app + painel de métricas (painel.js); a visita o painel já recebe como "abrir"
+        const contar = (ev, d) => { if (window.Painel && !/_visita$/.test(ev)) Painel.ev(ev, d); return set(ref(db, 'metricas/' + hoje + '/' + ev), increment(1)).catch(() => {}); };
         contar('ao_vivo_visita');
         // link do convite: configuracoes/divulgacao/link (ex.: Play Store). Sem ele, abre o app web.
         get(ref(db, 'configuracoes/divulgacao/link')).then(s => {

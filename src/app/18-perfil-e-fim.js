@@ -10,6 +10,7 @@
             svg.classList.toggle('hidden', tem);
         }
         if (btn) btn.textContent = (perfil && perfil.apelido) || 'Definir apelido';
+        if (window.Painel) Painel.nome((perfil && perfil.apelido) || '');
     }
     function salvarPerfil() { gravar('perfil', perfil, true); renderizarPerfil(); }
 

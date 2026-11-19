@@ -117,7 +117,7 @@
             }
 
             contadorSorteios++;
-            if (window.Metricas) Metricas.evento('sorteio');
+            if (window.Metricas) Metricas.evento('sorteio', false, { times: qtdTimes, por_time: porTime, jogadores: presentes.length });
             const resultado = Logica.sortearTimes(presentes, qtdTimes, porTime);
             sorteioAtual = resultado.times;
             exibirTimesSorteados();

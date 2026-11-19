@@ -90,6 +90,13 @@
                 await f.set(ref, dados);
                 $('adm-plano-atual').textContent = 'Liberado: Pro ' + (dados.ate ? 'até ' + new Date(dados.ate).toLocaleDateString('pt-BR') : 'sem prazo') + '.';
                 toast('Pro liberado. Aparece na hora para a pessoa.');
+                // painel de métricas: assinatura confirmada (o valor é o preço do plano salvo aqui no painel)
+                if (window.Painel) {
+                    const valor = plano === 'mensal' ? num('adm-mensal', 9.9) : num('adm-anual', 59.9);
+                    const renovou = !!(atual && atual.ativo && (!atual.ate || Number(atual.ate) > Date.now()));
+                    Painel.ev('assinatura', { plano, valor, status: renovou ? 'renovada' : 'ativa', origem: 'manual',
+                        expira_em: dados.ate ? new Date(dados.ate).toISOString() : undefined }, { usuario: uid });
+                }
             } catch (er) {
                 mostrarAlerta('O Firebase não deixou liberar. Publique as regras novas (database.rules.json).', 'Liberar o Pro');
             }

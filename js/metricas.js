@@ -27,10 +27,13 @@
     });
 
     // evento: só letras minúsculas e "_" (as regras recusam o resto)
-    function evento(nome, umaVez) {
+    // dados (opcional): detalhes que vão só para o painel de métricas (painel.js)
+    function evento(nome, umaVez, dados) {
         nome = String(nome || '').toLowerCase().replace(/[^a-z_]/g, '').slice(0, 40);
         if (!nome) return;
         if (umaVez) { if (jaContado.has(nome)) return; jaContado.add(nome); }
+        // abertura e cadastro o painel já recebe como "abrir" e "cadastro" (com o método)
+        if (window.Painel && nome !== 'abertura' && nome !== 'cadastro') window.Painel.ev(nome, dados);
         const d = dia();
         enviar((f, db) => {
             const p = f.set(f.ref(db, 'metricas/' + d + '/' + nome), f.increment(1));

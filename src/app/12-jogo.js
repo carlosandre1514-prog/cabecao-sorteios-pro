@@ -616,7 +616,13 @@
 
             historico.unshift(edicaoHistorico);
             salvarHistoricoFirebase();
-            if (window.Metricas) Metricas.evento('campeonato_finalizado');
+            if (window.Metricas) {
+                const jogos = edicaoHistorico.partidas || [];
+                Metricas.evento('campeonato_finalizado', false, {
+                    modo: modoJogoAtual, times: (timesSorteados || []).length, partidas: jogos.length,
+                    gols: jogos.reduce((s, p) => s + (Number(p.golsA) || 0) + (Number(p.golsB) || 0), 0)
+                });
+            }
 
             // o campeonato terminou: sai do "em andamento" no Firebase
             limparCampeonatoAtivo();
