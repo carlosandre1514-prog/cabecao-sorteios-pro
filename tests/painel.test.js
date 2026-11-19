@@ -10,7 +10,7 @@ function ok(cond, msg) { total++; if (cond) console.log('✅ ' + msg); else { fa
 
 function ambiente({ chave = 'pnl_teste', respostas = [], ua = 'Mozilla/5.0 (Linux; Android 14)', guardado = {} } = {}) {
     const fonte = fs.readFileSync(path.join(__dirname, '..', 'js', 'painel.js'), 'utf8')
-        .replace("const CHAVE = '';", `const CHAVE = '${chave}';`);
+        .replace(/const CHAVE = '[^']*';/, `const CHAVE = '${chave}';`);
     const pedidos = [], ouvintes = {}, timers = [];
     const ls = { ...guardado };
     const doc = { hidden: false, addEventListener: (t, f) => { (ouvintes['doc:' + t] = ouvintes['doc:' + t] || []).push(f); } };

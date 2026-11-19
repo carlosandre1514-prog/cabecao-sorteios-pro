@@ -16,7 +16,7 @@
 (function () {
     const URL_PAINEL = 'https://pxtxcbqqbjtmsmwbcise.supabase.co/rest/v1/rpc/painel_enviar';
     const APIKEY = 'sb_publishable_URNeHmQn-EuIyqXbkbMSag_gWTtX2rf';
-    const CHAVE = '';   // pnl_... do projeto Cabeção Sorteios Pro no painel (vazio = desligado)
+    const CHAVE = 'pnl_e5f5e618a74e75a152dfdaf1fd2a0bd2c0106a48f852b4ea';   // projeto Cabeção Sorteios Pro no painel ('' = desligado)
     const ICONE = 'https://carlosandre1514-prog.github.io/cabecao-sorteios-pro/img/icon-512.png';
     const PROIBIDO = /mail|senha|password|cpf|cartao|card|token|pix/i;
 
