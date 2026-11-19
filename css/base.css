@@ -646,11 +646,10 @@ body.com-sheet .barra-acao { display: none !important; }
     --sombra-card: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 10px 26px rgba(0, 0, 0, 0.28);
 }
 
-/* fundo: luz de refletor no alto e faixas de gramado bem leves */
+/* fundo: luz de refletor no alto */
 body {
     background:
         radial-gradient(120% 55% at 50% -12%, rgba(var(--verde-rgb), 0.16), transparent 62%),
-        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.014) 0 64px, transparent 64px 128px),
         var(--c-fundo);
     background-attachment: fixed;
 }
@@ -687,7 +686,6 @@ body {
 .btn-primary, .btn-success, .fab, .step-mais {
     background-color: var(--c-destaque-forte);
     background-image:
-        repeating-linear-gradient(100deg, rgba(255, 255, 255, 0.07) 0 16px, transparent 16px 32px),   /* gramado cortado */
         linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0.10));
     color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -742,7 +740,6 @@ body {
     position: relative; overflow: hidden; border-radius: 16px; padding-top: 14px;
     background:
         linear-gradient(180deg, color-mix(in srgb, var(--cor) 20%, transparent), transparent 46%),
-        repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.022) 0 8px, transparent 8px 16px),
         var(--c-sup-2);
     border: 1px solid color-mix(in srgb, var(--cor) 38%, transparent);
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
