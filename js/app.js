@@ -226,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (currentUserUid !== user.uid) limparEstadoLocal();
                 currentUserUid = user.uid;
                 if (window.Metricas) { Metricas.ativo(user.uid); Metricas.evento('abertura', true); }
+                if (window.Painel) Painel.usuario(user.uid);   // painel de métricas: troca o id anônimo pelo da conta
                 if (authScreen) authScreen.classList.add('hidden');
                 if (drawerEmail) drawerEmail.textContent = user.email || 'Usuário Google';
                 emailUsuario = user.email || '';
@@ -235,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 carregarDadosDoFirebase();
             } else {
                 currentUserUid = null;
+                if (window.Painel) { Painel.usuario(''); Painel.nome(''); }
                 limparEstadoLocal();
                 mostrarCarregando(false);
                 const resSorteio = document.getElementById('resultado-sorteio');
@@ -1754,7 +1756,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             contadorSorteios++;
-            if (window.Metricas) Metricas.evento('sorteio');
+            if (window.Metricas) Metricas.evento('sorteio', false, { times: qtdTimes, por_time: porTime, jogadores: presentes.length });
             const resultado = Logica.sortearTimes(presentes, qtdTimes, porTime);
             sorteioAtual = resultado.times;
             exibirTimesSorteados();
@@ -2669,7 +2671,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             historico.unshift(edicaoHistorico);
             salvarHistoricoFirebase();
-            if (window.Metricas) Metricas.evento('campeonato_finalizado');
+            if (window.Metricas) {
+                const jogos = edicaoHistorico.partidas || [];
+                Metricas.evento('campeonato_finalizado', false, {
+                    modo: modoJogoAtual, times: (timesSorteados || []).length, partidas: jogos.length,
+                    gols: jogos.reduce((s, p) => s + (Number(p.golsA) || 0) + (Number(p.golsB) || 0), 0)
+                });
+            }
 
             // o campeonato terminou: sai do "em andamento" no Firebase
             limparCampeonatoAtivo();
@@ -3058,6 +3066,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 await f.set(ref, dados);
                 $('adm-plano-atual').textContent = 'Liberado: Pro ' + (dados.ate ? 'até ' + new Date(dados.ate).toLocaleDateString('pt-BR') : 'sem prazo') + '.';
                 toast('Pro liberado. Aparece na hora para a pessoa.');
+                // painel de métricas: assinatura confirmada (o valor é o preço do plano salvo aqui no painel)
+                if (window.Painel) {
+                    const valor = plano === 'mensal' ? num('adm-mensal', 9.9) : num('adm-anual', 59.9);
+                    const renovou = !!(atual && atual.ativo && (!atual.ate || Number(atual.ate) > Date.now()));
+                    Painel.ev('assinatura', { plano, valor, status: renovou ? 'renovada' : 'ativa', origem: 'manual',
+                        expira_em: dados.ate ? new Date(dados.ate).toISOString() : undefined }, { usuario: uid });
+                }
             } catch (er) {
                 mostrarAlerta('O Firebase não deixou liberar. Publique as regras novas (database.rules.json).', 'Liberar o Pro');
             }
@@ -3468,6 +3483,7 @@ document.addEventListener('DOMContentLoaded', () => {
             svg.classList.toggle('hidden', tem);
         }
         if (btn) btn.textContent = (perfil && perfil.apelido) || 'Definir apelido';
+        if (window.Painel) Painel.nome((perfil && perfil.apelido) || '');
     }
     function salvarPerfil() { gravar('perfil', perfil, true); renderizarPerfil(); }
 

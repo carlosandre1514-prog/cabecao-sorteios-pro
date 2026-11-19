@@ -10,6 +10,7 @@
                 if (currentUserUid !== user.uid) limparEstadoLocal();
                 currentUserUid = user.uid;
                 if (window.Metricas) { Metricas.ativo(user.uid); Metricas.evento('abertura', true); }
+                if (window.Painel) Painel.usuario(user.uid);   // painel de métricas: troca o id anônimo pelo da conta
                 if (authScreen) authScreen.classList.add('hidden');
                 if (drawerEmail) drawerEmail.textContent = user.email || 'Usuário Google';
                 emailUsuario = user.email || '';
@@ -19,6 +20,7 @@
                 carregarDadosDoFirebase();
             } else {
                 currentUserUid = null;
+                if (window.Painel) { Painel.usuario(''); Painel.nome(''); }
                 limparEstadoLocal();
                 mostrarCarregando(false);
                 const resSorteio = document.getElementById('resultado-sorteio');
