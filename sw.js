@@ -8,7 +8,7 @@
 //
 // AO LANÇAR VERSÃO NOVA: troque VERSAO abaixo pelo mesmo ?v= usado no index.html.
 // =====================================================================
-const VERSAO = 'be2eb97135';
+const VERSAO = '15abdd4508';
 const CACHE = 'cabecao-' + VERSAO;
 const FIREBASE = 'https://www.gstatic.com/firebasejs/11.0.0/';
 
