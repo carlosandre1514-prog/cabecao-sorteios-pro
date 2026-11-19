@@ -1358,7 +1358,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Apito de juiz de fim de partida (6 s). O som em si está em js/apito.js
+    // Apito de juiz de fim de partida (dois silvos). O som em si está em js/apito.js
     function tocarApitoJuiz() {
         try {
             prepararAudio();
@@ -1793,6 +1793,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sorteioAtual.forEach((t, i) => {
             const card = document.createElement('div');
             card.className = 'time-card';
+            card.style.setProperty('--cor', CORES_TIMES[i % CORES_TIMES.length]);
             const linhas = t.jogadores.map(j => `<li>
                     <span class="tc-pos">${j.isGoleiro ? ic('glove', 'i-sm') : ''}</span>
                     <span class="tc-nome">${escapeHtml(j.nome)}</span>

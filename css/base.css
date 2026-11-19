@@ -632,3 +632,173 @@ body.com-sheet .barra-acao { display: none !important; }
 .f3d-sorteio .f3d-texto span { font-size: var(--t-md); color: var(--c-texto-2); }
 .f3d-pular { position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px; height: 36px; padding: 0 14px; border-radius: 99px;
     border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(0, 0, 0, 0.35); color: var(--c-texto); font-weight: 600; font-size: var(--t-sm); cursor: pointer; }
+
+/* =========================================================
+   TEMA ESTÁDIO — cards, botões e cores com cara de futebol
+   A cor de destaque continua sendo a do racha (--neon / --verde),
+   então a personalização de cor do organizador vale aqui também.
+   ========================================================= */
+:root {
+    --ouro-claro: #f3d27a;
+    --gramado-1: rgba(var(--verde-rgb), 0.10);
+    --vidro: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+    --borda-vidro: rgba(255, 255, 255, 0.075);
+    --sombra-card: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 10px 26px rgba(0, 0, 0, 0.28);
+}
+
+/* fundo: luz de refletor no alto e faixas de gramado bem leves */
+body {
+    background:
+        radial-gradient(120% 55% at 50% -12%, rgba(var(--verde-rgb), 0.16), transparent 62%),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.014) 0 64px, transparent 64px 128px),
+        var(--c-fundo);
+    background-attachment: fixed;
+}
+.app-header { background: linear-gradient(180deg, rgba(15, 18, 20, 0.96), rgba(15, 18, 20, 0.82)); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.header-titulos h1 { background: linear-gradient(180deg, #fff, #c9d1d6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.app-header .app-logo { border-radius: 14px; box-shadow: 0 0 0 2px rgba(var(--verde-rgb), 0.35), 0 6px 16px rgba(0, 0, 0, 0.35); }
+
+/* ---------- Cards: vidro com brilho no topo ---------- */
+.card, .lista, .acesso, .card-hist {
+    background: var(--vidro), var(--c-sup-1);
+    border: 1px solid var(--borda-vidro);
+    border-radius: 18px;
+    box-shadow: var(--sombra-card);
+}
+.card h2 { display: flex; align-items: center; gap: 8px; }
+/* título de card com o "risco de cal" do campo */
+.card > h2::before, .partida-cab h2::before {
+    content: ''; width: 4px; height: 16px; border-radius: 4px; flex: none;
+    background: linear-gradient(180deg, var(--c-destaque), var(--c-destaque-forte));
+    box-shadow: 0 0 10px rgba(var(--verde-rgb), 0.55);
+}
+.lista-rotulo { display: flex; align-items: center; gap: 8px; color: var(--c-texto-2); }
+.lista-rotulo::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--c-destaque); box-shadow: 0 0 8px rgba(var(--verde-rgb), 0.8); }
+
+/* cartões de atalho (lista de presença, placar ao vivo) */
+.acesso { position: relative; overflow: hidden; }
+.acesso::after { content: ''; position: absolute; right: -30px; top: -30px; width: 110px; height: 110px; border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.05); pointer-events: none; }   /* círculo central do campo */
+.acesso-ic { background: linear-gradient(145deg, rgba(var(--verde-rgb), 0.28), rgba(var(--verde-rgb), 0.08)); color: var(--c-destaque); border: 1px solid rgba(var(--verde-rgb), 0.3); }
+.acesso.ativo { border-color: rgba(var(--verde-rgb), 0.5); box-shadow: var(--sombra-card), 0 0 0 1px rgba(var(--verde-rgb), 0.15), 0 0 28px rgba(var(--verde-rgb), 0.12); }
+
+/* ---------- Botões ---------- */
+.btn { border-radius: 14px; font-weight: 700; transition: transform .12s ease, box-shadow .2s ease, filter .2s ease; }
+.btn-primary, .btn-success, .fab, .step-mais {
+    background-color: var(--c-destaque-forte);
+    background-image:
+        repeating-linear-gradient(100deg, rgba(255, 255, 255, 0.07) 0 16px, transparent 16px 32px),   /* gramado cortado */
+        linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0.10));
+    color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 20px rgba(var(--verde-rgb), 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+.btn-primary:active, .btn-success:active, .fab:active { box-shadow: 0 3px 10px rgba(var(--verde-rgb), 0.3), inset 0 2px 6px rgba(0, 0, 0, 0.25); filter: brightness(0.96); }
+.btn-secondary { background: var(--vidro), var(--c-sup-2); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+.btn-secondary:active { background: var(--c-sup-3); }
+.btn-danger { border-style: dashed; }
+.icon-btn { background: var(--vidro), var(--c-sup-1); border-color: rgba(255, 255, 255, 0.09); border-radius: 12px; }
+.btn-teste, .btn-pix { background: linear-gradient(180deg, var(--ouro-claro), var(--c-ouro)); color: #231b05; box-shadow: 0 8px 20px rgba(227, 179, 65, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.45); border: 0; }
+
+/* botão flutuante com brilho pulsando de leve */
+.fab { border-radius: 99px; height: 54px; padding: 0 22px 0 18px; }
+.fab::after { content: ''; position: absolute; inset: -4px; border-radius: inherit; border: 2px solid rgba(var(--verde-rgb), 0.45); animation: pulsoFab 2.4s ease-out infinite; pointer-events: none; }
+@keyframes pulsoFab { 0% { opacity: .9; transform: scale(1); } 70%, 100% { opacity: 0; transform: scale(1.18); } }
+
+/* ---------- Chips e seletor ---------- */
+.chip { background: var(--vidro), var(--c-sup-1); border-color: rgba(255, 255, 255, 0.08); transition: background .2s, color .2s, border-color .2s; }
+.chip.on { background: linear-gradient(180deg, rgba(var(--verde-rgb), 0.32), rgba(var(--verde-rgb), 0.18)); border-color: rgba(var(--verde-rgb), 0.6); color: #fff; box-shadow: 0 0 16px rgba(var(--verde-rgb), 0.2); }
+.seg { background: rgba(0, 0, 0, 0.28); border-color: rgba(255, 255, 255, 0.07); }
+.seg input:checked + span, .seg button.on { background: linear-gradient(180deg, rgba(var(--verde-rgb), 0.35), rgba(var(--verde-rgb), 0.2)); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 8px rgba(0, 0, 0, 0.3); }
+
+/* ---------- Lista de jogadores ---------- */
+.lista-item { position: relative; transition: background .15s; }
+.lista-item:active { background: rgba(var(--verde-rgb), 0.07); }
+.lista-item:active::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: var(--c-destaque); }
+.av { box-shadow: 0 0 0 2px var(--c-sup-1), 0 0 0 3px rgba(255, 255, 255, 0.12), 0 4px 10px rgba(0, 0, 0, 0.3); }
+.nivel { padding: 3px 9px 3px 7px; border-radius: 99px; background: rgba(227, 179, 65, 0.1); border: 1px solid rgba(227, 179, 65, 0.22); color: var(--ouro-claro); }
+.switch { background: rgba(255, 255, 255, 0.1); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4); }
+.switch::after { background: radial-gradient(circle at 35% 30%, #fff, #dfe4e7); }
+.chk-presenca:checked + .lbl-presenca .switch { background: linear-gradient(180deg, var(--c-destaque), var(--c-destaque-forte)); box-shadow: 0 0 12px rgba(var(--verde-rgb), 0.45); }
+
+/* ---------- Menu de baixo ---------- */
+.nav-tabs { background: rgba(12, 15, 17, 0.9); -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3); border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.tab-btn { position: relative; transition: color .2s; }
+.tab-btn .i { position: relative; z-index: 1; transition: transform .25s cubic-bezier(.3, 1.6, .5, 1); }
+.tab-btn.active::before {   /* pílula acesa atrás do ícone */
+    height: 30px; width: 54px; left: 50%; right: auto; top: 5px; transform: translateX(-50%); border-radius: 99px;
+    background: linear-gradient(180deg, rgba(var(--verde-rgb), 0.3), rgba(var(--verde-rgb), 0.12));
+    box-shadow: 0 0 18px rgba(var(--verde-rgb), 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.tab-btn.active .i { transform: translateY(-1px) scale(1.06); color: #fff !important; }
+
+/* ---------- Barra de ação do sorteio ---------- */
+.barra-acao { background: rgba(12, 15, 17, 0.9); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-top-color: rgba(255, 255, 255, 0.06); }
+.barra-config { background: var(--vidro), var(--c-sup-1); border-color: rgba(255, 255, 255, 0.09); border-radius: 14px; }
+
+/* ---------- Times sorteados: cartão com a cor da camisa ---------- */
+.time-card {
+    --cor: var(--c-destaque);
+    position: relative; overflow: hidden; border-radius: 16px; padding-top: 14px;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--cor) 20%, transparent), transparent 46%),
+        repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.022) 0 8px, transparent 8px 16px),
+        var(--c-sup-2);
+    border: 1px solid color-mix(in srgb, var(--cor) 38%, transparent);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+}
+.time-card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--cor); box-shadow: 0 0 14px var(--cor); }
+.tc-cab { border-bottom-color: rgba(255, 255, 255, 0.08); }
+.tc-cab b { letter-spacing: -0.2px; }
+.tc-cor { width: 12px; height: 12px; border-radius: 4px; box-shadow: 0 0 10px var(--cor); }
+
+/* ---------- Cronômetro: placar eletrônico de estádio ---------- */
+.relogio {
+    position: relative; overflow: hidden;
+    background:
+        radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1.4px) 0 0 / 7px 7px,   /* painel de LED */
+        radial-gradient(90% 80% at 50% 30%, rgba(var(--verde-rgb), 0.12), transparent 70%),
+        linear-gradient(180deg, #11161a, #0b0e10);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 18px 30px rgba(0, 0, 0, 0.35), 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+.relogio .timer-display { font-size: 4.4rem; letter-spacing: 1px; color: #f4f6f7; text-shadow: 0 0 18px rgba(255, 255, 255, 0.18); }
+.relogio.rodando .timer-display { color: var(--c-destaque); text-shadow: 0 0 22px rgba(var(--verde-rgb), 0.65), 0 0 2px rgba(var(--verde-rgb), 0.9); }
+.relogio.rodando { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 18px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(var(--verde-rgb), 0.35), 0 12px 34px rgba(var(--verde-rgb), 0.16); }
+.relogio.fim .timer-display { color: var(--c-perigo); text-shadow: 0 0 22px rgba(239, 107, 107, 0.7); animation: piscaFim 1s steps(2) infinite; }
+@keyframes piscaFim { 50% { opacity: .55; } }
+
+/* placar da partida: mesmo painel, números brilhando */
+.placar-box {
+    background: radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1.4px) 0 0 / 7px 7px, linear-gradient(180deg, #11161a, #0b0e10);
+    border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; box-shadow: inset 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+.stepper-placar input { color: #fff; text-shadow: 0 0 16px rgba(255, 255, 255, 0.25); }
+.placar-x { color: var(--c-destaque); font-weight: 800; }
+.step-mais { border-radius: 50%; }
+.time-placar select { background: var(--vidro), var(--c-sup-3); border-color: rgba(255, 255, 255, 0.1); border-radius: 12px; }
+.jogo-placar { background: #0b0e10; border: 1px solid rgba(255, 255, 255, 0.08); color: #fff; }
+.tabela-classificacao tbody tr:first-child { background: linear-gradient(90deg, rgba(227, 179, 65, 0.12), transparent 70%); }
+.art-linha:first-child .art-gols { color: var(--ouro-claro); text-shadow: 0 0 12px rgba(227, 179, 65, 0.4); }
+
+/* ---------- Caixa: saldo como ingresso de jogo ---------- */
+.caixa-saldo { position: relative; border-radius: 16px; padding: 16px 14px 14px;
+    background: linear-gradient(135deg, rgba(var(--verde-rgb), 0.22), rgba(var(--verde-rgb), 0.06) 60%), var(--c-sup-2);
+    border: 1px dashed rgba(var(--verde-rgb), 0.45); }
+.caixa-saldo::before, .caixa-saldo::after { content: ''; position: absolute; top: 50%; width: 18px; height: 18px; margin-top: -9px; border-radius: 50%; background: var(--c-sup-1); border: 1px dashed rgba(var(--verde-rgb), 0.45); }
+.caixa-saldo::before { left: -10px; } .caixa-saldo::after { right: -10px; }
+.caixa-saldo strong { text-shadow: 0 0 22px rgba(var(--verde-rgb), 0.45); }
+.caixa-tiles > div { background: var(--vidro), var(--c-sup-2); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 12px; }
+
+/* ---------- Painéis de baixo, avisos, histórico ---------- */
+.sheet-painel { background: radial-gradient(100% 40% at 50% 0%, rgba(var(--verde-rgb), 0.1), transparent 70%), var(--c-sup-1); border-color: rgba(255, 255, 255, 0.08); }
+.sheet-alca { background: rgba(var(--verde-rgb), 0.55); width: 42px; }
+.toast { border-radius: 14px; border-left: 3px solid var(--c-destaque); background: rgba(30, 35, 38, 0.96); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.hist-ic, .campeao-ic { background: linear-gradient(145deg, rgba(227, 179, 65, 0.3), rgba(227, 179, 65, 0.08)); border: 1px solid rgba(227, 179, 65, 0.35); box-shadow: 0 0 18px rgba(227, 179, 65, 0.15); }
+.campeao-card { background: linear-gradient(120deg, rgba(227, 179, 65, 0.14), transparent 60%), var(--c-sup-1); border-color: rgba(227, 179, 65, 0.3); }
+.barra-rank span { background: linear-gradient(90deg, var(--c-destaque-forte), var(--c-destaque)); box-shadow: 0 0 10px rgba(var(--verde-rgb), 0.5); }
+.dialogo { background: radial-gradient(100% 50% at 50% 0%, rgba(var(--verde-rgb), 0.1), transparent 70%), var(--c-sup-2); border-radius: 22px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .fab::after, .relogio.fim .timer-display { animation: none; }
+}

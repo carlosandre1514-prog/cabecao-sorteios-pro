@@ -132,7 +132,7 @@
         });
     }
 
-    // Apito de juiz de fim de partida (6 s). O som em si está em js/apito.js
+    // Apito de juiz de fim de partida (dois silvos). O som em si está em js/apito.js
     function tocarApitoJuiz() {
         try {
             prepararAudio();

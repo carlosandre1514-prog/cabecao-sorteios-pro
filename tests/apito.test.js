@@ -1,4 +1,4 @@
-// Teste do apito de fim de partida: confere que dura 6 s e que nada toca depois disso.
+// Teste do apito de fim de partida: dois silvos (1,6 s) e nada toca depois disso.
 // Rode com:  node tests/apito.test.js
 const assert = require('assert');
 const Apito = require('../js/apito.js');
@@ -19,20 +19,22 @@ function ctxFalso() {
 let ok = 0;
 const t = (nome, fn) => { fn(); ok++; console.log('✅ ' + nome); };
 
-t('apito de fim de partida dura exatamente 6 segundos', () => {
-    assert.strictEqual(Apito.DURACAO, 6);
+t('apito de fim de partida dura só os dois silvos (1,6 s)', () => {
+    assert.strictEqual(Apito.DURACAO, 1.6);
     const ctx = ctxFalso();
-    assert.strictEqual(Apito.tocar(ctx), 6);
+    assert.strictEqual(Apito.tocar(ctx), 1.6);
     const inicio = Math.min(...ctx.agenda.starts);
     const fimSom = Math.max(...ctx.agenda.rampas.map(r => r[1]));   // fim do volume (silêncio)
-    assert.ok(Math.abs((fimSom - inicio) - 6) < 0.1, 'o som deve fechar em 6 s, deu ' + (fimSom - inicio));
-    assert.ok(Math.max(...ctx.agenda.stops) - inicio < 6.2, 'nenhum oscilador pode ficar ligado depois do fim');
+    assert.ok(Math.abs((fimSom - inicio) - 1.6) < 0.1, 'o som deve fechar em 1,6 s, deu ' + (fimSom - inicio));
+    assert.ok(Math.max(...ctx.agenda.stops) - inicio < 1.8, 'nenhum oscilador pode ficar ligado depois do fim');
 });
 
-t('padrão: dois sopros curtos e um longo', () => {
-    const [a, b, c] = Apito.SOPROS;
-    assert.ok(a[1] - a[0] < 1 && b[1] - b[0] < 1 && c[1] - c[0] > 3);
-    assert.strictEqual(c[1], 6);
+t('padrão: exatamente dois silvos iguais, com pausa entre eles', () => {
+    assert.strictEqual(Apito.SOPROS.length, 2);
+    const [a, b] = Apito.SOPROS;
+    assert.ok(Math.abs((a[1] - a[0]) - (b[1] - b[0])) < 0.1, 'os dois silvos têm o mesmo tamanho');
+    assert.ok(b[0] - a[1] >= 0.15 && b[0] - a[1] <= 0.4, 'pausa curta entre os silvos');
+    assert.strictEqual(b[1], Apito.DURACAO);
 });
 
 t('teste de som é curto e sem contexto não quebra', () => {
