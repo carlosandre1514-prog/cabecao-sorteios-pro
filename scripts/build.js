@@ -34,7 +34,7 @@ const remoto = ler('js/remoto.js').replace(/const VERSAO_ATUAL_APP = "[^"]*";/, 
 if (remoto !== ler('js/remoto.js')) { if (conferir) problemas.push('VERSAO_ATUAL_APP diferente de versao.json'); else escrever('js/remoto.js', remoto); }
 
 // 3) versão dos arquivos: hash do que o celular baixa (sem os próprios carimbos)
-const HTML = ['index.html', 'ao-vivo.html', 'presenca.html', 'conheca.html'];
+const HTML = ['index.html', 'ao-vivo.html', 'presenca.html', 'conheca.html', 'termos-uso.html', 'politica-privacidade.html'];
 const RE_V = /\?v=[0-9a-z]+/g;
 const RE_SW = /const VERSAO = '[^']*';/;
 const listar = dir => fs.readdirSync(path.join(RAIZ, dir)).filter(f => /\.(js|css)$/.test(f)).sort().map(f => dir + '/' + f);

@@ -3044,6 +3044,8 @@ document.addEventListener('DOMContentLoaded', () => {
             $('adm-url').value = dv.url_publica || basePublica();
             if ($('adm-proteger')) $('adm-proteger').classList.toggle('hidden', !c.admin_email);
             $('adm-link').value = dv.link || '';
+            const lg = c.legal || {};
+            [['adm-legal-nome', 'responsavel'], ['adm-legal-doc', 'documento'], ['adm-legal-end', 'endereco'], ['adm-legal-email', 'email']].forEach(([id, k]) => { if ($(id)) $(id).value = lg[k] || ''; });
         } catch (e) { toast('Não foi possível ler as configurações.', 'erro'); }
     }
     (function ligarPainelAdmin() {
@@ -3070,18 +3072,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 checkout_api: $('adm-checkout-api') ? url('adm-checkout-api') : undefined
             };
             const div = { url_publica: url('adm-url'), link: url('adm-link') };
+            const txt = id => ($(id) ? String($(id).value || '').trim().slice(0, 200) : undefined);
+            const legal = { responsavel: txt('adm-legal-nome'), documento: txt('adm-legal-doc'), endereco: txt('adm-legal-end'), email: txt('adm-legal-email') };
             const btn = $('adm-salvar'); btn.disabled = true;
             try {
                 // campo a campo: não apaga o que não está na tela (patrocinador, checkout_api...)
                 await Promise.all([
                     ...Object.entries(mon).filter(([, v]) => v !== undefined).map(([k, v]) => f.set(f.ref(db, 'configuracoes/monetizacao/' + k), v)),
-                    ...Object.entries(div).map(([k, v]) => f.set(f.ref(db, 'configuracoes/divulgacao/' + k), v || null))
+                    ...Object.entries(div).map(([k, v]) => f.set(f.ref(db, 'configuracoes/divulgacao/' + k), v || null)),
+                    ...Object.entries(legal).filter(([, v]) => v !== undefined).map(([k, v]) => f.set(f.ref(db, 'configuracoes/legal/' + k), v || null))
                 ]);
                 if (div.url_publica) urlPublicaConfig = div.url_publica;
                 toast('Configurações salvas. Valem na próxima vez que o app abrir.');
             } catch (er) {
                 const cod = String((er && (er.code || er.message)) || 'erro');
-                mostrarAlerta(/permission/i.test(cod) ? 'O Firebase não deixou salvar. Publique as regras novas (database.rules.json) e confira se o seu e-mail em configuracoes/admin_email está em letras minúsculas.' : 'Não foi possível salvar. Confira a internet. (' + cod + ')', 'Configurações');
+                mostrarAlerta(/permission/i.test(cod) ? 'O Firebase não deixou salvar. Publique as regras novas (database.rules.json) e confira se o seu e-mail de administrador está em letras minúsculas.' : 'Não foi possível salvar. Confira a internet. (' + cod + ')', 'Configurações');
             } finally { btn.disabled = false; }
         });
         // tira o e-mail do administrador de configuracoes (público) e guarda em admin/email (só ele lê)
