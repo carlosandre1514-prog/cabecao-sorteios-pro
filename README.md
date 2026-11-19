@@ -22,6 +22,8 @@ js/
   presenca.html       📲 página pública da lista de presença (sem login)
   js/futebol3d.js     animações 3D de futebol (Three.js em js/vendor/): abertura, estádio do login,
                       gol ao criar a conta, sorteio e campeão. Sem WebGL ou com "reduzir movimento", o app segue sem elas
+  android/            APK (Android) que abre o site em tela cheia; o GitHub monta e publica em Releases
+                      (.github/workflows/apk.yml). Passo a passo: docs/APK.md
   checkout/worker.js  checkout com Pix e cartão (Asaas) no Cloudflare: cria a cobrança e libera o Pro
                       sozinho quando o pagamento entra. Passo a passo: docs/CHECKOUT-ASAAS.md
   conheca.html        página de apresentação para divulgar ("link na bio"), com cenas 3D em Three.js

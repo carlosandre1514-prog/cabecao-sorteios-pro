@@ -94,7 +94,7 @@
                     <div class="cx-progresso"><span><b>${r.pagaram}</b> de ${r.mensalistas.length} pagaram</span><span>${R(r.previsto - r.aReceber)} de ${R(r.previsto)}</span></div>
                     <div class="barra-cx"><div style="width:${pct}%"></div></div>
                     ${r.mensalistas.map(linhaMensalista).join('')}
-                    ${r.devedores.length ? `<button type="button" class="btn btn-primary" data-cx="cobrar-grupo" style="margin-top:12px;">${ic('share', 'i-sm')}Cobrar quem deve no grupo (${r.devedores.length})</button>` : `<p class="cx-tudo-pago">${ic('check', 'i-sm')} Todo mundo pagou este mês</p>`}
+                    ${r.devedores.length ? `<button type="button" class="btn btn-primary" data-cx="cobrar-grupo" style="margin-top:12px;">${ic('share', 'i-sm')}Lembrar o grupo (${r.devedores.length} pendente${r.devedores.length === 1 ? '' : 's'})</button>` : `<p class="cx-tudo-pago">${ic('check', 'i-sm')} Todo mundo pagou este mês</p>`}
                 ` : '<p class="subtext">Escolha quem paga por mês. O app mostra quem pagou, quem deve e monta a cobrança.</p>'}
                 <button type="button" class="btn btn-secondary" data-cx="mensalistas" style="margin-top:8px;">Escolher mensalistas</button>
             </div>

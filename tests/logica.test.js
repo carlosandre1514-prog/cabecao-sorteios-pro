@@ -363,6 +363,8 @@ t('plano Pro: assinatura, teste grátis de 7 dias e economia do anual', () => {
     assert.ok(!L.statusPlano({ ativo: true, ate: agora - 1 }, null, agora, 7).pro);  // assinatura vencida
     assert.ok(L.statusPlano({ ativo: true }, null, agora, 7).pro);                    // vitalício
     assert.strictEqual(L.economiaAnual(9.9, 59.9), 50);
+    assert.strictEqual(L.economiaPlano(9.9, 24.9, 3), 16);   // trimestral: 3 x 9,90 = 29,70
+    assert.strictEqual(L.economiaPlano(0, 24.9, 3), 0);
     assert.strictEqual(L.reais(59.9), 'R$ 59,90');
 });
 
@@ -389,7 +391,8 @@ t('caixa: saldo, mês, mensalistas pagos/devendo e cobrança', () => {
     assert.strictEqual(r.lancamentos[0].id, 'a');      // mais recente primeiro
     const g = L.textoCobrancaGrupo(r, '2026-11', 'Pelada dos Crias', { chave: '+5511999998888', nome: 'Carlos' });
     assert.ok(g.startsWith('💰 *MENSALIDADE DE NOVEMBRO DE 2026* — Pelada dos Crias'));
-    assert.ok(g.includes('⏳ *Ainda não pagaram (1):*\n1. Bia') && g.includes('💠 Pix: +5511999998888 (Carlos)'));
+    assert.ok(g.includes('Ainda faltam 1 pagamento') && g.includes('💠 Pix: +5511999998888 (Carlos)'));
+    assert.ok(!g.includes('Bia'), 'a mensagem do grupo não expõe o nome de quem deve');
     assert.ok(L.textoCobrancaIndividual('Ana Souza', r, '2026-11', 'Pelada', null).startsWith('Fala Ana! 👋 A mensalidade de novembro de 2026 do Pelada (R$ 50,00)'));
     const todos = L.resumoCaixa(Object.assign({}, caixa, { mensalistas: { 1: true } }), js, '2026-11');
     assert.ok(L.textoCobrancaGrupo(todos, '2026-11', '', null).includes('Todo mundo pagou'));

@@ -123,7 +123,9 @@ Cole em Realtime Database → Regras → Publicar. Esta versão substitui a ante
 
 ## Suporte (Falar com o suporte + Caixa do suporte) e rachas
 
-1. No Realtime Database, crie `configuracoes/admin_email` com o **e-mail da sua conta** (em minúsculas). Só esse e-mail enxerga a "Caixa do suporte" no menu.
+1. No Realtime Database, crie `admin/email` com o **e-mail da sua conta** (em minúsculas). (Antes era
+   `configuracoes/admin_email`, que fica público: se você já usa esse, abra o painel de administração e
+   toque em **Esconder meu e-mail**.) As regras completas estão em `database.rules.json`. Só esse e-mail enxerga a "Caixa do suporte" no menu.
 2. Acrescente o nó `suporte` nas regras (mantenha os nós que já existem):
 
 ```json

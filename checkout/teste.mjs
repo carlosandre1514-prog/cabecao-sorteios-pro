@@ -75,6 +75,9 @@ await t('CPF: confere os dígitos', () => {
 await t('regras: preço, vencimento e renovação somando', () => {
     assert.strictEqual(precoPlano({ preco_anual: 59.9 }, 'anual'), 59.9);
     assert.strictEqual(precoPlano({}, 'mensal'), 9.9);
+    assert.strictEqual(precoPlano({}, 'trimestral'), 24.9);
+    assert.strictEqual(precoPlano({ preco_trimestral: 27 }, 'trimestral'), 27);
+    assert.strictEqual(novoVencimento(0, Date.UTC(2026, 0, 1), 'trimestral'), Date.UTC(2026, 0, 1) + 92 * DIA);
     const agora = Date.UTC(2026, 10, 20);
     assert.strictEqual(novoVencimento(0, agora, 'anual'), agora + 366 * DIA);
     assert.strictEqual(novoVencimento(agora + 10 * DIA, agora, 'mensal'), agora + 41 * DIA);

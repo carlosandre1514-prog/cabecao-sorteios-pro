@@ -65,11 +65,22 @@
     }
     async function verificarAdmin() {
         souAdmin = false;
+        const meu = String(emailUsuario).trim().toLowerCase();
+        const f = window.firebaseFns, db = window.firebaseDb;
+        // admin/email só o próprio administrador consegue ler (as regras recusam para os outros)
         try {
-            const s = await window.firebaseFns.get(window.firebaseFns.ref(window.firebaseDb, 'configuracoes/admin_email'));
+            const s = await f.get(f.ref(db, 'admin/email'));
             const adm = String(s.exists() ? s.val() : '').trim().toLowerCase();
-            souAdmin = !!adm && adm === String(emailUsuario).trim().toLowerCase();
-        } catch (e) { /* sem permissão ou sem admin configurado: segue sem a caixa */ }
+            souAdmin = !!adm && adm === meu;
+        } catch (e) { /* sem permissão: não é o administrador */ }
+        // jeito antigo (e-mail em configuracoes, que é público): continua valendo até migrar no painel
+        if (!souAdmin) {
+            try {
+                const s = await f.get(f.ref(db, 'configuracoes/admin_email'));
+                const adm = String(s.exists() ? s.val() : '').trim().toLowerCase();
+                souAdmin = !!adm && adm === meu;
+            } catch (e) { /* sem admin configurado */ }
+        }
         atualizarBotaoAdmin();
     }
     function abrirSuporte() {
@@ -84,7 +95,7 @@
             const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
             const msg = { de: (perfil && perfil.apelido) || 'Sem apelido', email: emailUsuario, racha: nomeRachaAtivo(), texto, em: Date.now(), ok: false, uid: currentUserUid };
             window.firebaseFns.set(window.firebaseFns.ref(window.firebaseDb, 'suporte/' + id), msg)
-                .then(() => { m.remove(); toast('Mensagem enviada ao suporte'); })
+                .then(() => { gravar('suporteEnviados/' + id, true, true); m.remove(); toast('Mensagem enviada ao suporte'); })
                 .catch((e) => toast('Não foi possível enviar (' + ((e && e.code) || 'erro') + ')', 'erro'));
         };
     }

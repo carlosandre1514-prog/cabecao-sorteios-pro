@@ -42,6 +42,11 @@ function toast(mensagem, tipo = 'ok') {
     setTimeout(() => { el.classList.add('saindo'); setTimeout(() => el.remove(), 320); }, 2800);
 }
 
+// versão dos Termos de uso e da Política de Privacidade: mudou o texto de forma importante?
+// troque aqui e todo mundo aceita de novo no próximo acesso
+const VERSAO_TERMOS = '2026-11-19';
+window.VERSAO_TERMOS = VERSAO_TERMOS;
+
 function esconderSplash() {
     const sp = document.getElementById('splash');
     if (!sp || sp.classList.contains('saindo')) return;

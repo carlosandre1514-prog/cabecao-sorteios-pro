@@ -1,4 +1,4 @@
-    // ---------- PAINEL DO ADMINISTRADOR (só o e-mail de configuracoes/admin_email) ----------
+    // ---------- PAINEL DO ADMINISTRADOR (só o e-mail de admin/email; antes configuracoes/admin_email) ----------
     // Ajusta configuracoes/monetizacao e configuracoes/divulgacao e libera o Pro (planos/<uid>) pelo app,
     // sem precisar do site do Firebase. As regras só deixam o administrador gravar esses caminhos.
     const DIA_MS = 24 * 60 * 60 * 1000;
@@ -15,6 +15,7 @@
             const virgula = v => Number(v).toFixed(2).replace('.', ',');
             $('adm-mensal').value = virgula(m.preco_mensal != null ? m.preco_mensal : 9.9);
             $('adm-anual').value = virgula(m.preco_anual != null ? m.preco_anual : 59.9);
+            if ($('adm-trimestral')) $('adm-trimestral').value = virgula(m.preco_trimestral != null ? m.preco_trimestral : 24.9);
             $('adm-teste').value = m.dias_teste != null ? m.dias_teste : 7;
             $('adm-lim-jog').value = m.limite_jogadores_gratis != null ? m.limite_jogadores_gratis : 25;
             $('adm-lim-hist').value = m.limite_historico_gratis != null ? m.limite_historico_gratis : 3;
@@ -24,7 +25,10 @@
             $('adm-checkout').value = m.link_checkout || '';
             if ($('adm-checkout-api')) $('adm-checkout-api').value = m.checkout_api || '';
             $('adm-url').value = dv.url_publica || basePublica();
+            if ($('adm-proteger')) $('adm-proteger').classList.toggle('hidden', !c.admin_email);
             $('adm-link').value = dv.link || '';
+            const lg = c.legal || {};
+            [['adm-legal-nome', 'responsavel'], ['adm-legal-doc', 'documento'], ['adm-legal-end', 'endereco'], ['adm-legal-email', 'email']].forEach(([id, k]) => { if ($(id)) $(id).value = lg[k] || ''; });
         } catch (e) { toast('Não foi possível ler as configurações.', 'erro'); }
     }
     (function ligarPainelAdmin() {
@@ -40,6 +44,7 @@
             const mon = {
                 ativo: $('adm-ativo').checked,
                 preco_mensal: num('adm-mensal', 9.9), preco_anual: num('adm-anual', 59.9),
+                preco_trimestral: $('adm-trimestral') ? num('adm-trimestral', 24.9) : undefined,
                 dias_teste: Math.round(num('adm-teste', 7)),
                 limite_jogadores_gratis: Math.max(1, Math.round(num('adm-lim-jog', 25))),
                 limite_historico_gratis: Math.round(num('adm-lim-hist', 3)),
@@ -50,19 +55,35 @@
                 checkout_api: $('adm-checkout-api') ? url('adm-checkout-api') : undefined
             };
             const div = { url_publica: url('adm-url'), link: url('adm-link') };
+            const txt = id => ($(id) ? String($(id).value || '').trim().slice(0, 200) : undefined);
+            const legal = { responsavel: txt('adm-legal-nome'), documento: txt('adm-legal-doc'), endereco: txt('adm-legal-end'), email: txt('adm-legal-email') };
             const btn = $('adm-salvar'); btn.disabled = true;
             try {
                 // campo a campo: não apaga o que não está na tela (patrocinador, checkout_api...)
                 await Promise.all([
                     ...Object.entries(mon).filter(([, v]) => v !== undefined).map(([k, v]) => f.set(f.ref(db, 'configuracoes/monetizacao/' + k), v)),
-                    ...Object.entries(div).map(([k, v]) => f.set(f.ref(db, 'configuracoes/divulgacao/' + k), v || null))
+                    ...Object.entries(div).map(([k, v]) => f.set(f.ref(db, 'configuracoes/divulgacao/' + k), v || null)),
+                    ...Object.entries(legal).filter(([, v]) => v !== undefined).map(([k, v]) => f.set(f.ref(db, 'configuracoes/legal/' + k), v || null))
                 ]);
                 if (div.url_publica) urlPublicaConfig = div.url_publica;
                 toast('Configurações salvas. Valem na próxima vez que o app abrir.');
             } catch (er) {
                 const cod = String((er && (er.code || er.message)) || 'erro');
-                mostrarAlerta(/permission/i.test(cod) ? 'O Firebase não deixou salvar. Publique as regras novas (database.rules.json) e confira se o seu e-mail em configuracoes/admin_email está em letras minúsculas.' : 'Não foi possível salvar. Confira a internet. (' + cod + ')', 'Configurações');
+                mostrarAlerta(/permission/i.test(cod) ? 'O Firebase não deixou salvar. Publique as regras novas (database.rules.json) e confira se o seu e-mail de administrador está em letras minúsculas.' : 'Não foi possível salvar. Confira a internet. (' + cod + ')', 'Configurações');
             } finally { btn.disabled = false; }
+        });
+        // tira o e-mail do administrador de configuracoes (público) e guarda em admin/email (só ele lê)
+        $('adm-proteger-btn')?.addEventListener('click', async () => {
+            const f = window.firebaseFns, db = window.firebaseDb, email = String(emailUsuario || '').trim().toLowerCase();
+            if (!email) return;
+            try {
+                await f.set(f.ref(db, 'admin/email'), email);
+                await f.set(f.ref(db, 'configuracoes/admin_email'), null);
+                $('adm-proteger').classList.add('hidden');
+                toast('Pronto: seu e-mail não fica mais público.');
+            } catch (er) {
+                mostrarAlerta('O Firebase não deixou. Publique primeiro as regras novas (database.rules.json) e tente de novo.', 'Esconder e-mail');
+            }
         });
         const uidValido = () => { const u = String($('adm-uid').value || '').trim(); return /^[A-Za-z0-9_-]{6,128}$/.test(u) ? u : ''; };
         $('adm-ver')?.addEventListener('click', async () => {
@@ -85,7 +106,7 @@
             // renovação soma ao que ainda falta, igual ao pagamento automático
             const base = Math.max(Date.now(), atual && atual.ativo && atual.ate ? Number(atual.ate) : 0);
             const dados = { ativo: true, plano, origem: 'manual' };
-            if (plano !== 'vitalicio') dados.ate = base + (plano === 'anual' ? 366 : 31) * DIA_MS;
+            if (plano !== 'vitalicio') dados.ate = base + ({ anual: 366, trimestral: 92 }[plano] || 31) * DIA_MS;
             const ok = await mostrarConfirmacao(`O usuário ${uid.slice(0, 8)}… fica Pro ${dados.ate ? 'até ' + new Date(dados.ate).toLocaleDateString('pt-BR') : 'sem prazo'}.`, 'Liberar o Pro?', { ok: 'Liberar' });
             if (!ok) return;
             try {
@@ -94,7 +115,7 @@
                 toast('Pro liberado. Aparece na hora para a pessoa.');
                 // painel de métricas: assinatura confirmada (o valor é o preço do plano salvo aqui no painel)
                 if (window.Painel) {
-                    const valor = plano === 'mensal' ? num('adm-mensal', 9.9) : num('adm-anual', 59.9);
+                    const valor = plano === 'mensal' ? num('adm-mensal', 9.9) : plano === 'trimestral' ? num('adm-trimestral', 24.9) : num('adm-anual', 59.9);
                     const renovou = !!(atual && atual.ativo && (!atual.ate || Number(atual.ate) > Date.now()));
                     Painel.ev('assinatura', { plano, valor, status: renovou ? 'renovada' : 'ativa', origem: 'manual',
                         expira_em: dados.ate ? new Date(dados.ate).toISOString() : undefined }, { usuario: uid });

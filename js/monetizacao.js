@@ -15,11 +15,11 @@
 //     limite_historico_gratis: 3
 //     patrocinador: { ativo: true, texto: "...", link: "https://...", imagem: "https://..." }
 //
-//     preco_mensal: 9.9 / preco_anual: 59.9   -> preços dos dois planos (o anual aparece em destaque)
+//     preco_mensal: 9.9 / preco_trimestral: 24.9 / preco_anual: 59.9   -> preços dos planos (o anual em destaque)
 //     dias_teste: 7                            -> teste grátis (0 desliga); 1 por conta, em testes/{uid}
 //     checkout_api: "https://.../checkout"  -> checkout automático Asaas (Pix e cartão, checkout/worker.js no Cloudflare)
 //                                                 ou o antigo do Mercado Pago (functions/); sem ele usa os links:
-//     link_checkout_mensal / link_checkout_anual (ou link_checkout)
+//     link_checkout_mensal / link_checkout_trimestral / link_checkout_anual (ou link_checkout)
 //
 //  planos/{uid}  (somente VOCÊ ou a função do Mercado Pago cria/edita)
 //     ativo: true
@@ -30,12 +30,14 @@
         ativo: true,
         preco_texto: '',
         preco_mensal: 9.9,
+        preco_trimestral: 24.9,
         preco_anual: 59.9,
         dias_teste: 7,
         checkout_api: '',
         link_checkout: '',
         link_checkout_mensal: '',
         link_checkout_anual: '',
+        link_checkout_trimestral: '',
         chave_pix: '',
         nome_pix: '',
         whatsapp_suporte: '',
@@ -236,8 +238,9 @@
     }
 
     function htmlPlanos() {
-        const mensal = Number(config.preco_mensal) || 0, anual = Number(config.preco_anual) || 0;
-        const eco = Logica.economiaAnual(mensal, anual);
+        const mensal = Number(config.preco_mensal) || 0, anual = Number(config.preco_anual) || 0, tri = Number(config.preco_trimestral) || 0;
+        const eco = Logica.economiaAnual(mensal, anual), ecoTri = Logica.economiaPlano(mensal, tri, 3);
+        const qtd = [anual, tri, mensal].filter(v => v > 0).length;
         const cartao = (qual, titulo, preco, sub, selo) => `
             <button type="button" class="plano-opcao ${planoEscolhido === qual ? 'on' : ''}" data-plano="${qual}">
                 ${selo ? `<span class="plano-selo">${selo}</span>` : ''}
@@ -245,8 +248,9 @@
                 <strong class="plano-preco">${preco}</strong>
                 <small>${sub}</small>
             </button>`;
-        return `<div class="planos">
+        return `<div class="planos ${qtd === 3 ? 'planos-3' : ''}">
             ${anual ? cartao('anual', 'Anual', Logica.reais(anual), `${Logica.reais(anual / 12)}/mês · 1 pagamento`, eco ? `ECONOMIZE ${eco}%` : 'MAIS ESCOLHIDO') : ''}
+            ${tri ? cartao('trimestral', 'Trimestral', Logica.reais(tri), `${Logica.reais(tri / 3)}/mês · a cada 3 meses`, ecoTri ? `${ecoTri}% OFF` : '') : ''}
             ${mensal ? cartao('mensal', 'Mensal', Logica.reais(mensal), 'por mês', '') : ''}
         </div>`;
     }
@@ -258,8 +262,8 @@
         const acoes = m.querySelector('#pro-acoes');
         m.querySelector('#pro-motivo').textContent = motivo || 'Libere todos os recursos e organize o racha sem dor de cabeça.';
         const st = status();
-        const temCompra = !!(urlSegura(config.checkout_api) || urlSegura(config.link_checkout) || urlSegura(config.link_checkout_mensal) || urlSegura(config.link_checkout_anual));
-        if (!(Number(config.preco_anual) > 0)) planoEscolhido = 'mensal';
+        const temCompra = !!(urlSegura(config.checkout_api) || urlSegura(config.link_checkout) || urlSegura(config.link_checkout_mensal) || urlSegura(config.link_checkout_trimestral) || urlSegura(config.link_checkout_anual));
+        if (!(Number(config['preco_' + planoEscolhido]) > 0)) planoEscolhido = ['anual', 'trimestral', 'mensal'].find(p => Number(config['preco_' + p]) > 0) || 'mensal';
         let h = '';
 
         if (config.ativo && st.origem === 'plano') {
@@ -276,7 +280,7 @@
             if (temCompra) {
                 h += htmlPlanos();
                 h += `<button class="btn ${podeTestar() ? 'btn-secondary' : 'btn-primary'}" data-acao-pro="assinar">Assinar plano ${planoEscolhido}</button>
-                    <p class="pro-sem-cartao">${urlSegura(config.checkout_api) ? 'Pix ou cartão de crédito, em página segura. O Pro libera sozinho quando o pagamento entra.' : 'Pix ou cartão. Depois do pagamento o Pro é liberado.'}</p>`;
+                    <p class="pro-sem-cartao">${urlSegura(config.checkout_api) ? 'Pix ou cartão de crédito, em página segura. O Pro libera sozinho quando o pagamento entra. Pagamento único por período, sem renovação automática. Desistiu em até 7 dias? Devolvemos tudo.' : 'Pix ou cartão. Depois do pagamento o Pro é liberado. Sem renovação automática; desistiu em até 7 dias, devolvemos tudo.'}</p>`;
             }
             if (config.chave_pix && !urlSegura(config.checkout_api)) {
                 h += `<details class="pro-pix-det"><summary>Prefere Pix direto?</summary><div class="pro-pix">

@@ -43,6 +43,11 @@ function toast(mensagem, tipo = 'ok') {
     setTimeout(() => { el.classList.add('saindo'); setTimeout(() => el.remove(), 320); }, 2800);
 }
 
+// versão dos Termos de uso e da Política de Privacidade: mudou o texto de forma importante?
+// troque aqui e todo mundo aceita de novo no próximo acesso
+const VERSAO_TERMOS = '2026-11-19';
+window.VERSAO_TERMOS = VERSAO_TERMOS;
+
 function esconderSplash() {
     const sp = document.getElementById('splash');
     if (!sp || sp.classList.contains('saindo')) return;
@@ -1023,6 +1028,7 @@ document.addEventListener('DOMContentLoaded', () => {
             caixaMes = Logica.mesISO();
             presencaAssinatura = '';
             dadosCarregados = true;
+            conferirAceite(dados.aceite);
             aplicarVisual();
             escutarPresenca();
             renderizarRachas();
@@ -1177,7 +1183,7 @@ document.addEventListener('DOMContentLoaded', () => {
         while (el && el.dataset && el.dataset.pai && n++ < 5) el = document.getElementById(el.dataset.pai);
         return el ? el.id : id;
     }
-    // telas só do administrador (e-mail de configuracoes/admin_email)
+    // telas só do administrador (e-mail em admin/email, que só ele lê; antes configuracoes/admin_email)
     const TELAS_ADMIN = ['tab-admin', 'tab-caixa', 'tab-metricas'];
     function irParaAba(id, semHistorico, titulo) {
         if (TELAS_ADMIN.includes(id) && !souAdmin) id = 'tab-mais';
@@ -2795,6 +2801,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (a === 'rachas') toggleDrawer();
             if (a === 'plano' && window.Monetizacao) window.Monetizacao.abrirModal();
             if (a === 'suporte') abrirSuporte();
+            if (a === 'meus-dados') baixarMeusDados();
+            if (a === 'excluir-conta') excluirConta();
             if (a === 'sair') mostrarConfirmacao('Você vai precisar entrar de novo para ver seus rachas.', 'Sair da conta?', { ok: 'Sair', perigo: true }).then(ok => { if (ok) fazerLogout(); });
         });
     })();
@@ -2866,11 +2874,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     async function verificarAdmin() {
         souAdmin = false;
+        const meu = String(emailUsuario).trim().toLowerCase();
+        const f = window.firebaseFns, db = window.firebaseDb;
+        // admin/email só o próprio administrador consegue ler (as regras recusam para os outros)
         try {
-            const s = await window.firebaseFns.get(window.firebaseFns.ref(window.firebaseDb, 'configuracoes/admin_email'));
+            const s = await f.get(f.ref(db, 'admin/email'));
             const adm = String(s.exists() ? s.val() : '').trim().toLowerCase();
-            souAdmin = !!adm && adm === String(emailUsuario).trim().toLowerCase();
-        } catch (e) { /* sem permissão ou sem admin configurado: segue sem a caixa */ }
+            souAdmin = !!adm && adm === meu;
+        } catch (e) { /* sem permissão: não é o administrador */ }
+        // jeito antigo (e-mail em configuracoes, que é público): continua valendo até migrar no painel
+        if (!souAdmin) {
+            try {
+                const s = await f.get(f.ref(db, 'configuracoes/admin_email'));
+                const adm = String(s.exists() ? s.val() : '').trim().toLowerCase();
+                souAdmin = !!adm && adm === meu;
+            } catch (e) { /* sem admin configurado */ }
+        }
         atualizarBotaoAdmin();
     }
     function abrirSuporte() {
@@ -2885,7 +2904,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
             const msg = { de: (perfil && perfil.apelido) || 'Sem apelido', email: emailUsuario, racha: nomeRachaAtivo(), texto, em: Date.now(), ok: false, uid: currentUserUid };
             window.firebaseFns.set(window.firebaseFns.ref(window.firebaseDb, 'suporte/' + id), msg)
-                .then(() => { m.remove(); toast('Mensagem enviada ao suporte'); })
+                .then(() => { gravar('suporteEnviados/' + id, true, true); m.remove(); toast('Mensagem enviada ao suporte'); })
                 .catch((e) => toast('Não foi possível enviar (' + ((e && e.code) || 'erro') + ')', 'erro'));
         };
     }
@@ -2996,7 +3015,7 @@ document.addEventListener('DOMContentLoaded', () => {
         carregarMetricas();
     }
 
-    // ---------- PAINEL DO ADMINISTRADOR (só o e-mail de configuracoes/admin_email) ----------
+    // ---------- PAINEL DO ADMINISTRADOR (só o e-mail de admin/email; antes configuracoes/admin_email) ----------
     // Ajusta configuracoes/monetizacao e configuracoes/divulgacao e libera o Pro (planos/<uid>) pelo app,
     // sem precisar do site do Firebase. As regras só deixam o administrador gravar esses caminhos.
     const DIA_MS = 24 * 60 * 60 * 1000;
@@ -3013,6 +3032,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const virgula = v => Number(v).toFixed(2).replace('.', ',');
             $('adm-mensal').value = virgula(m.preco_mensal != null ? m.preco_mensal : 9.9);
             $('adm-anual').value = virgula(m.preco_anual != null ? m.preco_anual : 59.9);
+            if ($('adm-trimestral')) $('adm-trimestral').value = virgula(m.preco_trimestral != null ? m.preco_trimestral : 24.9);
             $('adm-teste').value = m.dias_teste != null ? m.dias_teste : 7;
             $('adm-lim-jog').value = m.limite_jogadores_gratis != null ? m.limite_jogadores_gratis : 25;
             $('adm-lim-hist').value = m.limite_historico_gratis != null ? m.limite_historico_gratis : 3;
@@ -3022,7 +3042,10 @@ document.addEventListener('DOMContentLoaded', () => {
             $('adm-checkout').value = m.link_checkout || '';
             if ($('adm-checkout-api')) $('adm-checkout-api').value = m.checkout_api || '';
             $('adm-url').value = dv.url_publica || basePublica();
+            if ($('adm-proteger')) $('adm-proteger').classList.toggle('hidden', !c.admin_email);
             $('adm-link').value = dv.link || '';
+            const lg = c.legal || {};
+            [['adm-legal-nome', 'responsavel'], ['adm-legal-doc', 'documento'], ['adm-legal-end', 'endereco'], ['adm-legal-email', 'email']].forEach(([id, k]) => { if ($(id)) $(id).value = lg[k] || ''; });
         } catch (e) { toast('Não foi possível ler as configurações.', 'erro'); }
     }
     (function ligarPainelAdmin() {
@@ -3038,6 +3061,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const mon = {
                 ativo: $('adm-ativo').checked,
                 preco_mensal: num('adm-mensal', 9.9), preco_anual: num('adm-anual', 59.9),
+                preco_trimestral: $('adm-trimestral') ? num('adm-trimestral', 24.9) : undefined,
                 dias_teste: Math.round(num('adm-teste', 7)),
                 limite_jogadores_gratis: Math.max(1, Math.round(num('adm-lim-jog', 25))),
                 limite_historico_gratis: Math.round(num('adm-lim-hist', 3)),
@@ -3048,19 +3072,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 checkout_api: $('adm-checkout-api') ? url('adm-checkout-api') : undefined
             };
             const div = { url_publica: url('adm-url'), link: url('adm-link') };
+            const txt = id => ($(id) ? String($(id).value || '').trim().slice(0, 200) : undefined);
+            const legal = { responsavel: txt('adm-legal-nome'), documento: txt('adm-legal-doc'), endereco: txt('adm-legal-end'), email: txt('adm-legal-email') };
             const btn = $('adm-salvar'); btn.disabled = true;
             try {
                 // campo a campo: não apaga o que não está na tela (patrocinador, checkout_api...)
                 await Promise.all([
                     ...Object.entries(mon).filter(([, v]) => v !== undefined).map(([k, v]) => f.set(f.ref(db, 'configuracoes/monetizacao/' + k), v)),
-                    ...Object.entries(div).map(([k, v]) => f.set(f.ref(db, 'configuracoes/divulgacao/' + k), v || null))
+                    ...Object.entries(div).map(([k, v]) => f.set(f.ref(db, 'configuracoes/divulgacao/' + k), v || null)),
+                    ...Object.entries(legal).filter(([, v]) => v !== undefined).map(([k, v]) => f.set(f.ref(db, 'configuracoes/legal/' + k), v || null))
                 ]);
                 if (div.url_publica) urlPublicaConfig = div.url_publica;
                 toast('Configurações salvas. Valem na próxima vez que o app abrir.');
             } catch (er) {
                 const cod = String((er && (er.code || er.message)) || 'erro');
-                mostrarAlerta(/permission/i.test(cod) ? 'O Firebase não deixou salvar. Publique as regras novas (database.rules.json) e confira se o seu e-mail em configuracoes/admin_email está em letras minúsculas.' : 'Não foi possível salvar. Confira a internet. (' + cod + ')', 'Configurações');
+                mostrarAlerta(/permission/i.test(cod) ? 'O Firebase não deixou salvar. Publique as regras novas (database.rules.json) e confira se o seu e-mail de administrador está em letras minúsculas.' : 'Não foi possível salvar. Confira a internet. (' + cod + ')', 'Configurações');
             } finally { btn.disabled = false; }
+        });
+        // tira o e-mail do administrador de configuracoes (público) e guarda em admin/email (só ele lê)
+        $('adm-proteger-btn')?.addEventListener('click', async () => {
+            const f = window.firebaseFns, db = window.firebaseDb, email = String(emailUsuario || '').trim().toLowerCase();
+            if (!email) return;
+            try {
+                await f.set(f.ref(db, 'admin/email'), email);
+                await f.set(f.ref(db, 'configuracoes/admin_email'), null);
+                $('adm-proteger').classList.add('hidden');
+                toast('Pronto: seu e-mail não fica mais público.');
+            } catch (er) {
+                mostrarAlerta('O Firebase não deixou. Publique primeiro as regras novas (database.rules.json) e tente de novo.', 'Esconder e-mail');
+            }
         });
         const uidValido = () => { const u = String($('adm-uid').value || '').trim(); return /^[A-Za-z0-9_-]{6,128}$/.test(u) ? u : ''; };
         $('adm-ver')?.addEventListener('click', async () => {
@@ -3083,7 +3123,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // renovação soma ao que ainda falta, igual ao pagamento automático
             const base = Math.max(Date.now(), atual && atual.ativo && atual.ate ? Number(atual.ate) : 0);
             const dados = { ativo: true, plano, origem: 'manual' };
-            if (plano !== 'vitalicio') dados.ate = base + (plano === 'anual' ? 366 : 31) * DIA_MS;
+            if (plano !== 'vitalicio') dados.ate = base + ({ anual: 366, trimestral: 92 }[plano] || 31) * DIA_MS;
             const ok = await mostrarConfirmacao(`O usuário ${uid.slice(0, 8)}… fica Pro ${dados.ate ? 'até ' + new Date(dados.ate).toLocaleDateString('pt-BR') : 'sem prazo'}.`, 'Liberar o Pro?', { ok: 'Liberar' });
             if (!ok) return;
             try {
@@ -3092,7 +3132,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 toast('Pro liberado. Aparece na hora para a pessoa.');
                 // painel de métricas: assinatura confirmada (o valor é o preço do plano salvo aqui no painel)
                 if (window.Painel) {
-                    const valor = plano === 'mensal' ? num('adm-mensal', 9.9) : num('adm-anual', 59.9);
+                    const valor = plano === 'mensal' ? num('adm-mensal', 9.9) : plano === 'trimestral' ? num('adm-trimestral', 24.9) : num('adm-anual', 59.9);
                     const renovou = !!(atual && atual.ativo && (!atual.ate || Number(atual.ate) > Date.now()));
                     Painel.ev('assinatura', { plano, valor, status: renovou ? 'renovada' : 'ativa', origem: 'manual',
                         expira_em: dados.ate ? new Date(dados.ate).toISOString() : undefined }, { usuario: uid });
@@ -3199,7 +3239,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="cx-progresso"><span><b>${r.pagaram}</b> de ${r.mensalistas.length} pagaram</span><span>${R(r.previsto - r.aReceber)} de ${R(r.previsto)}</span></div>
                     <div class="barra-cx"><div style="width:${pct}%"></div></div>
                     ${r.mensalistas.map(linhaMensalista).join('')}
-                    ${r.devedores.length ? `<button type="button" class="btn btn-primary" data-cx="cobrar-grupo" style="margin-top:12px;">${ic('share', 'i-sm')}Cobrar quem deve no grupo (${r.devedores.length})</button>` : `<p class="cx-tudo-pago">${ic('check', 'i-sm')} Todo mundo pagou este mês</p>`}
+                    ${r.devedores.length ? `<button type="button" class="btn btn-primary" data-cx="cobrar-grupo" style="margin-top:12px;">${ic('share', 'i-sm')}Lembrar o grupo (${r.devedores.length} pendente${r.devedores.length === 1 ? '' : 's'})</button>` : `<p class="cx-tudo-pago">${ic('check', 'i-sm')} Todo mundo pagou este mês</p>`}
                 ` : '<p class="subtext">Escolha quem paga por mês. O app mostra quem pagou, quem deve e monta a cobrança.</p>'}
                 <button type="button" class="btn btn-secondary" data-cx="mensalistas" style="margin-top:8px;">Escolher mensalistas</button>
             </div>
@@ -3495,6 +3535,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 <strong class="art-gols">${g}</strong></div>`).join('') + '</div>';
     }
 
+    // ---------- ACEITE DOS TERMOS (LGPD: consentimento registrado, com versão e data) ----------
+    // Cadastro pelo formulário: a caixinha já foi marcada, então só grava. Conta antiga, conta criada
+    // pelo Google ou termos atualizados: mostra a tela e só libera o app depois do aceite.
+    // Aviso (não bloqueia: brasileiro viajando continua usando): o fuso do celular é de fora do Brasil?
+    // Não coleta nada: só compara o fuso horário do aparelho com os fusos brasileiros.
+    function foraDoBrasil() {
+        try {
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+            if (!tz) return false;
+            return !/^(America\/(Sao_Paulo|Rio_Branco|Manaus|Porto_Velho|Boa_Vista|Cuiaba|Campo_Grande|Belem|Santarem|Fortaleza|Recife|Maceio|Bahia|Araguaina|Noronha|Eirunepe)|Brazil\/.*)$/.test(tz);
+        } catch (e) { return false; }
+    }
+    window.foraDoBrasil = foraDoBrasil;
+    function conferirAceite(aceite) {
+        if (aceite && aceite.versao === VERSAO_TERMOS) return;
+        let doCadastro = '';
+        try { doCadastro = sessionStorage.getItem('cabecao_aceite_cadastro') || ''; sessionStorage.removeItem('cabecao_aceite_cadastro'); } catch (e) { /* ok */ }
+        const registrar = () => gravar('aceite', { versao: VERSAO_TERMOS, em: Date.now(), maior18: true, moraNoBrasil: true, como: doCadastro ? 'cadastro' : 'tela' }, true);
+        if (doCadastro) { registrar(); return; }
+        if (document.getElementById('tela-aceite')) return;
+        const t = document.createElement('div');
+        t.id = 'tela-aceite';
+        t.className = 'tela-aceite';
+        t.setAttribute('role', 'dialog'); t.setAttribute('aria-modal', 'true'); t.setAttribute('aria-labelledby', 't-aceite');
+        t.innerHTML = `<div class="aceite-card">
+            <h2 id="t-aceite">${aceite ? 'Atualizamos os termos' : 'Antes de começar'}</h2>
+            <p>Para usar o Cabeção Sorteios Pro, leia e aceite os <a href="termos-uso.html" target="_blank" rel="noopener">Termos de uso</a> e a <a href="politica-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>. Eles explicam quais dados guardamos, para quê, e como apagar sua conta quando quiser.</p>
+            <label class="auth-aceite"><input type="checkbox" id="aceite-ok"><span>Tenho <b>18 anos ou mais</b>, <b>moro no Brasil</b> e li e aceito os Termos de uso e a Política de Privacidade.</span></label>
+            ${foraDoBrasil() ? '<p class="aviso-fora">Pelo relógio do seu celular, parece que você está fora do Brasil. O app é feito só para quem mora no Brasil.</p>' : ''}
+            <button type="button" class="btn btn-primary" id="aceite-btn" disabled>Aceitar e continuar</button>
+            <button type="button" class="btn-texto" id="aceite-sair">Não aceito, sair da conta</button>
+        </div>`;
+        document.body.appendChild(t);
+        const chk = t.querySelector('#aceite-ok'), btn = t.querySelector('#aceite-btn');
+        chk.addEventListener('change', () => { btn.disabled = !chk.checked; });
+        btn.addEventListener('click', () => { registrar(); t.remove(); });
+        t.querySelector('#aceite-sair').addEventListener('click', () => {
+            t.remove();
+            if (window.firebaseFns && window.firebaseAuth) window.firebaseFns.signOut(window.firebaseAuth).catch(() => {});
+        });
+    }
+
     // ---------- PERFIL NO MENU (foto + apelido) ----------
     function renderizarPerfil() {
         const img = document.getElementById('perfil-foto');
@@ -3591,6 +3673,99 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p class="subtext" style="margin:6px 0 0;">Seus dados estão salvos. Toque para liberar com o Plano Pro.</p>
             </div>` : '');
     }
+
+    // ---------- SUA CONTA E SEUS DADOS (LGPD art. 18: acesso, portabilidade e eliminação) ----------
+    async function lerContaInteira() {
+        const f = window.firebaseFns, db = window.firebaseDb;
+        const [d, p] = await Promise.all([
+            f.get(f.ref(db, 'usuarios/' + currentUserUid)).then(s => (s.exists() ? s.val() : {})),
+            f.get(f.ref(db, 'planos/' + currentUserUid)).then(s => (s.exists() ? s.val() : null)).catch(() => null)
+        ]);
+        return { dados: d || {}, plano: p };
+    }
+    async function baixarMeusDados() {
+        if (!currentUserUid || !window.firebaseFns) return;
+        try {
+            const { dados, plano } = await lerContaInteira();
+            const json = JSON.stringify({ app: 'Cabeção Sorteios Pro', exportadoEm: new Date().toISOString(), conta: { id: currentUserUid, email: emailUsuario || '' }, plano, dados }, null, 2);
+            const nome = 'cabecao-meus-dados-' + new Date().toISOString().slice(0, 10) + '.json';
+            const arq = typeof File === 'function' ? new File([json], nome, { type: 'application/json' }) : null;
+            if (arq && navigator.canShare && navigator.canShare({ files: [arq] })) {
+                await navigator.share({ files: [arq], title: 'Meus dados do Cabeção Sorteios Pro' }).catch(() => {});
+            } else {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+                a.download = nome; document.body.appendChild(a); a.click();
+                setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+            }
+            toast('Cópia dos seus dados pronta');
+        } catch (e) { toast('Não consegui juntar seus dados. Confira a internet.', 'erro'); }
+    }
+    // códigos de lista de presença e placar ao vivo de todos os rachas da conta
+    function codigosPublicos(dados) {
+        const lista = [dados].concat(Object.values((dados && dados.rachas) || {}));
+        const pres = new Set(), vivo = new Set();
+        lista.forEach(r => {
+            if (r && r.presenca && r.presenca.codigo) pres.add(String(r.presenca.codigo));
+            if (r && r.aoVivo && r.aoVivo.codigo) vivo.add(String(r.aoVivo.codigo));
+        });
+        return { pres: [...pres], vivo: [...vivo] };
+    }
+    async function excluirConta() {
+        if (!currentUserUid || !window.firebaseFns) return;
+        const m = abrirModalHtml(`<h2>Excluir minha conta</h2>
+            <p class="subtext" style="margin-bottom:12px;">Isto apaga para sempre: seus jogadores, rachas, histórico, caixa, listas de presença e placares ao vivo, e a própria conta. Não dá para desfazer.</p>
+            <p class="subtext" style="margin-bottom:12px;">Ficam guardados só os registros de pagamento do Pro, pelo prazo que a lei exige (obrigação fiscal), sem seus jogadores nem seus rachas. Se quiser uma cópia antes, use "Baixar meus dados".</p>
+            <label class="subtext" for="tx-excluir">Para confirmar, escreva <b>EXCLUIR</b>:</label>
+            <input type="text" id="tx-excluir" autocomplete="off" autocapitalize="characters">
+            <div class="modal-actions"><button type="button" class="btn btn-perigo" id="ok-excluir" disabled>Excluir para sempre</button><button type="button" class="btn btn-secondary" id="cancela-excluir">Cancelar</button></div>`);
+        const campo = m.querySelector('#tx-excluir'), ok = m.querySelector('#ok-excluir');
+        campo.addEventListener('input', () => { ok.disabled = campo.value.trim().toUpperCase() !== 'EXCLUIR'; });
+        m.querySelector('#cancela-excluir').onclick = () => m.remove();
+        ok.onclick = async () => {
+            ok.disabled = true; ok.setAttribute('aria-busy', 'true');
+            const f = window.firebaseFns, db = window.firebaseDb, uid = currentUserUid;
+            try {
+                const { dados } = await lerContaInteira();
+                const { pres, vivo } = codigosPublicos(dados);
+                const apagar = caminho => f.set(f.ref(db, caminho), null).catch(() => {});
+                await Promise.all([
+                    ...pres.map(c => apagar('presenca/' + c)),
+                    ...vivo.map(c => apagar('ao_vivo/' + c)),
+                    ...Object.keys((dados && dados.suporteEnviados) || {}).map(id => apagar('suporte/' + id))
+                ]);
+                await f.set(f.ref(db, 'usuarios/' + uid), null);
+                try { localStorage.removeItem(chaveCache(uid)); } catch (e) { /* ok */ }
+                if (window.Painel) { Painel.ev('conta_excluida'); Painel.enviar(); }
+                try {
+                    await f.deleteUser(window.firebaseAuth.currentUser);
+                    m.remove();
+                    await mostrarAlerta('Sua conta e seus dados foram apagados.', 'Conta excluída');
+                } catch (e) {
+                    // por segurança o Firebase pede um login recente para apagar a conta
+                    m.remove();
+                    await mostrarAlerta('Seus dados já foram apagados. Para terminar de excluir a conta, entre de novo e toque em "Excluir minha conta" mais uma vez (o Firebase pede um login recente por segurança).', 'Falta um passo');
+                    fazerLogout();
+                }
+            } catch (e) {
+                ok.disabled = false; ok.removeAttribute('aria-busy');
+                toast('Não consegui excluir agora. Confira a internet e tente de novo.', 'erro');
+            }
+        };
+    }
+    // estatísticas de uso (painel de métricas e contadores): a pessoa pode desligar
+    (function ligarEstatisticas() {
+        const chk = document.getElementById('chk-estatisticas');
+        if (!chk) return;
+        let desligado = false;
+        try { desligado = localStorage.getItem('cabecao_sem_estatisticas') === '1'; } catch (e) { /* ok */ }
+        chk.checked = !desligado;
+        chk.addEventListener('change', () => {
+            try { if (chk.checked) localStorage.removeItem('cabecao_sem_estatisticas'); else localStorage.setItem('cabecao_sem_estatisticas', '1'); } catch (e) { /* ok */ }
+            if (window.Painel && Painel.desligar) Painel.desligar(!chk.checked);
+            toast(chk.checked ? 'Estatísticas ligadas' : 'Estatísticas desligadas: nada de uso é enviado');
+        });
+    })();
 
     // Quando o plano do usuário carregar/mudar, redesenha o que depende dele
     window.aoMudarPlano = function() { renderizarHistorico(); if (abaAtual === 'tab-financeiro') renderizarCaixa(); };

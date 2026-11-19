@@ -78,6 +78,7 @@
         if (acao) acao.textContent = modoLogin ? 'Entrar' : 'Criar minha conta';
         const esq = $('btn-esqueci-senha'); if (esq) esq.classList.toggle('hidden', !modoLogin);
         const termos = $('auth-termos'); if (termos) termos.classList.toggle('hidden', modoLogin);
+        const fora = $('auth-fora-brasil'); if (fora) fora.classList.toggle('hidden', modoLogin || !(window.foraDoBrasil && window.foraDoBrasil()));
         const senha = $('auth-password');
         if (senha) { senha.autocomplete = modoLogin ? 'current-password' : 'new-password'; senha.placeholder = modoLogin ? 'Sua senha' : 'Crie uma senha (mínimo 6)'; }
         [['aba-entrar', modoLogin], ['aba-criar', !modoLogin]].forEach(([id, on]) => {
@@ -115,6 +116,7 @@
         if (!email || !senha) { aviso('Preencha o e-mail e a senha.'); return; }
         if (!emailValido(email)) { aviso('Confira o e-mail: está faltando alguma coisa.'); marcarErro('auth-email'); return; }
         if (!modoLogin && senha.length < 6) { aviso('A senha precisa ter pelo menos 6 caracteres.'); marcarErro('auth-password'); return; }
+        if (!modoLogin && $('auth-aceite') && !$('auth-aceite').checked) { aviso('Para criar a conta, confirme que tem 18 anos ou mais, que mora no Brasil e que aceita os Termos e a Política de Privacidade.'); return; }
 
         const botao = $('btn-auth-action');
         ocupar(true, botao);
@@ -125,6 +127,8 @@
                 await f.signInWithEmailAndPassword(window.firebaseAuth, email, senha);
                 if (window.Painel) Painel.ev('login', { metodo: 'email' });
             } else {
+                // o aceite marcado aqui é gravado na conta assim que os dados carregarem (conferirAceite)
+                try { sessionStorage.setItem('cabecao_aceite_cadastro', String(Date.now())); } catch (e) { /* ok */ }
                 await f.createUserWithEmailAndPassword(window.firebaseAuth, email, senha);
                 if (window.Metricas) Metricas.evento('cadastro');
                 if (window.Painel) Painel.ev('cadastro', { metodo: 'email' });
@@ -223,6 +227,16 @@
         ['auth-email', 'auth-password'].forEach(id => $(id)?.addEventListener('input', () => { const c = $(id).closest && $(id).closest('.campo-auth'); if (c) c.classList.remove('erro'); }));
         $('auth-email')?.addEventListener('blur', () => { const v = $('auth-email').value.trim(); if (v && !emailValido(v)) marcarErro('auth-email', false); });
         ligarEstadio();
+        // No APK (WebView) o Google não deixa entrar com a conta Google: esconde o botão e explica
+        if (/CabecaoApp\//.test(navigator.userAgent || '')) {
+            const g = $('btn-google-auth'), div = document.querySelector('.auth-divisor');
+            if (g) g.classList.add('hidden');
+            if (div) div.classList.add('hidden');
+            const nota = document.createElement('p');
+            nota.className = 'auth-termos';
+            nota.textContent = 'No app, entre com e-mail e senha. Criou a conta pelo Google? Digite o mesmo e-mail e toque em "Esqueci minha senha" para criar uma senha.';
+            const form = $('auth-form'); if (form) form.appendChild(nota);
+        }
         $('btn-google-auth').addEventListener('click', loginGoogle);
         $('btn-esqueci-senha').addEventListener('click', esqueciSenha);
         $('btn-ver-senha').addEventListener('click', () => {

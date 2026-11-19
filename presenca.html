@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="referrer" content="no-referrer">
     <title>Lista do racha · Cabeção Sorteios Pro</title>
     <meta name="description" content="Confirme se você vai no racha.">
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0f1214">
     <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="css/style.css?v=67a7a0310c">
-    <link rel="stylesheet" href="css/base.css?v=67a7a0310c">
+    <link rel="stylesheet" href="css/style.css?v=be2eb97135">
+    <link rel="stylesheet" href="css/base.css?v=be2eb97135">
     <style>
         .app-container { padding-bottom: 32px; }
         body { background-image: radial-gradient(ellipse 90% 30% at 50% -10%, rgba(var(--verde-rgb), 0.14), transparent 70%); }
@@ -83,6 +85,8 @@
         .pix-ajuda strong { color: var(--txt); }
         .dica-nome { min-height: 1.2em; margin: 0; font-size: .85rem; color: var(--mudo); }
         .dica-nome.achou { color: var(--neon); font-weight: 700; }
+        .aviso-publico { margin: 2px 0 0; font-size: .78rem; color: var(--mudo); line-height: 1.4; }
+        .aviso-publico a { color: var(--mudo); }
         #meu-nome { font-size: 1.1rem; padding: 14px; }
         .hidden { display: none !important; }
         .cta-app { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; border-color: rgba(127, 224, 74, 0.35); }
@@ -114,12 +118,12 @@
             </div>
             <a id="cta-link" class="btn btn-primary" href="conheca.html">Criar meu racha grátis</a>
         </div>
-        <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro</p>
+        <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro · <a href="termos-uso.html">Termos</a> · <a href="politica-privacidade.html">Privacidade</a></p>
     </div>
 
-    <script src="js/logica.js?v=67a7a0310c"></script>
-    <script src="js/vendor/qrcode.js?v=67a7a0310c"></script>
-    <script src="js/painel.js?v=67a7a0310c"></script>
+    <script src="js/logica.js?v=be2eb97135"></script>
+    <script src="js/vendor/qrcode.js?v=be2eb97135"></script>
+    <script src="js/painel.js?v=be2eb97135"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getDatabase, ref, onValue, get, set, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
@@ -343,6 +347,7 @@
                         <datalist id="nomes-elenco">${todos.map(p => `<option value="${esc(p.nome)}">`).join('')}</datalist>
                         <p id="dica-nome" class="dica-nome"></p>
                         <label id="linha-goleiro" class="hidden"><input type="checkbox" id="meu-goleiro"> Sou goleiro</label>
+                        <p class="aviso-publico">O nome que você digitar aparece nesta lista para quem tem o link. Use só nome ou apelido, sem telefone ou documento. <a href="politica-privacidade.html">Privacidade</a></p>
                         <div class="botoes-resposta">
                             <button class="btn btn-success" data-digitado="vou">✅ Vou</button>
                             <button class="btn btn-danger" data-digitado="nao">❌ Não vou</button>
@@ -357,7 +362,7 @@
             const tagPag = p => p.pago === undefined || !temPag ? (p.convidado ? '<span class="tag">convidado</span>' : '')
                 : p.pago ? '<span class="tag pago">pago</span>'
                 : p.aConfirmar ? '<span class="tag aguardando">🕐 pagou (a confirmar)</span>'
-                : `<span class="tag ${p.atrasado ? 'atrasado' : ''}">${p.atrasado ? '⚠️ não pagou' : '⏳ a pagar'}</span>`;
+                : '<span class="tag">⏳ a pagar</span>';   // neutro: a lista é pública, não expõe quem está atrasado
             const linha = (p, i) => `<div class="linha-pessoa ${p.id === eu ? 'sou-eu' : ''}"><span class="pos">${i + 1}</span>${avatar(p.nome)}<span class="nm">${p.goleiro ? '🧤 ' : ''}${esc(p.nome)}</span>${tagPag(p)}</div>`;
             const vazia = i => `<div class="linha-pessoa vazia"><span class="pos">${i + 1}</span><span class="av"></span><span class="nm">vaga aberta</span></div>`;
             const doLinha = r.confirmados.filter(c => !c.goleiro), doGol = r.confirmados.filter(c => c.goleiro);

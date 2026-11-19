@@ -17,7 +17,7 @@ function criarHandlers({ db, fetch, verificarToken, tokenMP, segredoWebhook, ago
         let usuario;
         try { usuario = await verificarToken(idToken); } catch (e) { return res.status(401).json({ erro: 'faça login de novo' }); }
         const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-        const plano = body.plano === 'mensal' ? 'mensal' : body.plano === 'anual' ? 'anual' : null;
+        const plano = ['mensal', 'trimestral', 'anual'].includes(body.plano) ? body.plano : null;
         if (!plano) return res.status(400).json({ erro: 'plano inválido' });
         const config = await lerConfig();
         const valor = P.precoPlano(config, plano);

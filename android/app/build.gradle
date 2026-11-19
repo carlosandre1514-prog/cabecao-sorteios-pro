@@ -1,0 +1,47 @@
+// APK do Cabeção Sorteios Pro: um app Android que abre o site (GitHub Pages) num WebView.
+// Assim o app atualiza sozinho junto com o site, sem precisar gerar APK novo a cada mudança.
+// Quem monta: .github/workflows/apk.yml (versão = versao.json, número = execução do workflow).
+plugins { id 'com.android.application' }
+
+def versaoNome = project.findProperty('versionName') ?: '1.0.0'
+def versaoCodigo = (project.findProperty('versionCode') ?: '1') as Integer
+
+android {
+    namespace 'com.cabecao.sorteios'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.cabecao.sorteios'
+        minSdk 24
+        targetSdk 34
+        versionCode versaoCodigo
+        versionName versaoNome
+    }
+
+    signingConfigs {
+        release {
+            // a chave vem dos segredos do GitHub (ANDROID_KEYSTORE_B64 / ANDROID_KEYSTORE_SENHA);
+            // sem eles o workflow cria uma chave provisória (o APK instala, mas não atualiza por cima)
+            storeFile file('assinatura.jks')
+            storePassword System.getenv('KS_SENHA') ?: 'provisoria'
+            keyAlias System.getenv('KS_ALIAS') ?: 'cabecao'
+            keyPassword System.getenv('KS_SENHA') ?: 'provisoria'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    buildFeatures { buildConfig true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core:1.13.1'   // FileProvider (compartilhar imagens no WhatsApp)
+}

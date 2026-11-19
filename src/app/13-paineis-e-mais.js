@@ -66,6 +66,8 @@
             if (a === 'rachas') toggleDrawer();
             if (a === 'plano' && window.Monetizacao) window.Monetizacao.abrirModal();
             if (a === 'suporte') abrirSuporte();
+            if (a === 'meus-dados') baixarMeusDados();
+            if (a === 'excluir-conta') excluirConta();
             if (a === 'sair') mostrarConfirmacao('Você vai precisar entrar de novo para ver seus rachas.', 'Sair da conta?', { ok: 'Sair', perigo: true }).then(ok => { if (ok) fazerLogout(); });
         });
     })();

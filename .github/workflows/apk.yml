@@ -1,0 +1,82 @@
+name: APK do app
+
+# Monta o APK (pasta android/) e, no ramo main, publica em Releases para baixar no celular.
+# O app abre o site do GitHub Pages: mudanças no site chegam sem APK novo. Este APK só precisa ser
+# gerado de novo quando mudar algo do próprio Android (pasta android/) ou a versão (versao.json).
+on:
+  push:
+    paths: ['android/**', '.github/workflows/apk.yml', 'versao.json']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Versão
+        run: echo "VERSAO=$(node -p "require('./versao.json').app")" >> "$GITHUB_ENV"
+
+      # Chave de assinatura: a mesma sempre (segredos do repositório), senão o Android não deixa
+      # instalar uma versão nova por cima da antiga. Sem os segredos, usa uma chave provisória.
+      - name: Chave de assinatura
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_SENHA_SEGREDO: ${{ secrets.ANDROID_KEYSTORE_SENHA }}
+        run: |
+          if [ -n "$KS_B64" ] && [ -n "$KS_SENHA_SEGREDO" ]; then
+            echo "$KS_B64" | base64 -d > android/app/assinatura.jks
+            echo "KS_SENHA=$KS_SENHA_SEGREDO" >> "$GITHUB_ENV"
+            echo "ASSINATURA=oficial" >> "$GITHUB_ENV"
+          else
+            keytool -genkeypair -keystore android/app/assinatura.jks -alias cabecao -keyalg RSA -keysize 2048 \
+              -validity 10000 -storepass provisoria -keypass provisoria -dname "CN=Cabecao Sorteios Pro (provisoria)"
+            echo "KS_SENHA=provisoria" >> "$GITHUB_ENV"
+            echo "ASSINATURA=provisoria" >> "$GITHUB_ENV"
+            echo "::warning::Sem os segredos ANDROID_KEYSTORE_B64 e ANDROID_KEYSTORE_SENHA: APK com chave provisória (não atualiza por cima)."
+          fi
+
+      - name: Montar o APK
+        run: gradle -p android assembleRelease -PversionCode=${{ github.run_number }} -PversionName="$VERSAO" --no-daemon
+
+      - name: Nome do arquivo
+        run: |
+          mkdir -p saida
+          cp android/app/build/outputs/apk/release/app-release.apk "saida/cabecao-sorteios-pro-$VERSAO.apk"
+          ls -la saida
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cabecao-sorteios-pro-apk
+          path: saida/*.apk
+
+      - name: Publicar em Releases
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ env.VERSAO }}-${{ github.run_number }}
+          name: Cabeção Sorteios Pro ${{ env.VERSAO }} (APK ${{ github.run_number }})
+          make_latest: true
+          files: saida/*.apk
+          body: |
+            **Como instalar no Android:** toque no arquivo `.apk` abaixo para baixar, abra e toque em **Instalar**.
+            Se o celular pedir, permita "instalar apps desta fonte" para o navegador.
+
+            O app abre o Cabeção Sorteios Pro e atualiza sozinho junto com o site.
+            Assinatura: ${{ env.ASSINATURA }}.
