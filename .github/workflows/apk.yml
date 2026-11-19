@@ -52,8 +52,11 @@ jobs:
             echo "::warning::Sem os segredos ANDROID_KEYSTORE_B64 e ANDROID_KEYSTORE_SENHA: APK com chave provisória (não atualiza por cima)."
           fi
 
+      # se um servidor de bibliotecas falhar na hora (acontece), tenta de novo forçando baixar tudo
       - name: Montar o APK
-        run: gradle -p android assembleRelease -PversionCode=${{ github.run_number }} -PversionName="$VERSAO" --no-daemon
+        run: |
+          montar() { gradle -p android assembleRelease -PversionCode=${{ github.run_number }} -PversionName="$VERSAO" --no-daemon "$@"; }
+          montar || { echo "::warning::Primeira tentativa falhou; tentando de novo em 20 s"; sleep 20; montar --refresh-dependencies; }
 
       - name: Nome do arquivo
         run: |

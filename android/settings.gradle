@@ -1,9 +1,18 @@
 pluginManagement {
-    repositories { google(); mavenCentral(); gradlePluginPortal() }
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://maven-central.storage-download.googleapis.com/maven2/' }   // espelho do Maven Central (reserva)
+        gradlePluginPortal()
+    }
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories { google(); mavenCentral() }
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://maven-central.storage-download.googleapis.com/maven2/' }   // espelho do Maven Central (reserva)
+    }
 }
 rootProject.name = 'cabecao-sorteios-pro'
 include ':app'
