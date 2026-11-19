@@ -1793,7 +1793,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sorteioAtual.forEach((t, i) => {
             const card = document.createElement('div');
             card.className = 'time-card';
-            card.style.setProperty('--cor', CORES_TIMES[i % CORES_TIMES.length]);
+            if (card.style && card.style.setProperty) card.style.setProperty('--cor', CORES_TIMES[i % CORES_TIMES.length]);   // cor da camisa no cartão
             const linhas = t.jogadores.map(j => `<li>
                     <span class="tc-pos">${j.isGoleiro ? ic('glove', 'i-sm') : ''}</span>
                     <span class="tc-nome">${escapeHtml(j.nome)}</span>
