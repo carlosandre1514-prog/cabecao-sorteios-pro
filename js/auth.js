@@ -39,7 +39,7 @@
             case 'auth/wrong-password':
             case 'auth/user-not-found': return 'E-mail ou senha incorretos.';
             case 'auth/invalid-email': return 'O e-mail digitado não é válido.';
-            case 'auth/email-already-in-use': return 'Este e-mail já tem conta. Toque em "Já tenho conta" para entrar.';
+            case 'auth/email-already-in-use': return 'Este e-mail já tem conta. Toque em "Entrar" ali em cima para acessar.';
             case 'auth/weak-password': return 'A senha precisa ter pelo menos 6 caracteres.';
             case 'auth/too-many-requests': return 'Muitas tentativas. Aguarde um minuto e tente de novo.';
             case 'auth/network-request-failed':
@@ -69,15 +69,41 @@
         if (botao) botao.setAttribute('aria-busy', estado ? 'true' : 'false');
     }
 
-    function alternarModo() {
-        modoLogin = !modoLogin;
+    // abas "Entrar" / "Criar conta"
+    function definirModo(login) {
+        modoLogin = !!login;
         aviso('');
-        $('auth-subtitle').textContent = modoLogin ? 'Entre para continuar' : 'Crie sua conta gratuita';
-        $('btn-auth-action').textContent = modoLogin ? 'Entrar' : 'Cadastrar';
-        $('btn-auth-switch').textContent = modoLogin ? 'Não tem conta? Cadastre-se' : 'Já tenho conta';
-        $('btn-esqueci-senha').classList.toggle('hidden', !modoLogin);
-        $('auth-password').autocomplete = modoLogin ? 'current-password' : 'new-password';
+        const sub = $('auth-subtitle'), acao = $('btn-auth-action');
+        if (sub) sub.textContent = modoLogin ? 'Bem-vindo de volta. Bora pro racha?' : 'Crie sua conta grátis em menos de um minuto.';
+        if (acao) acao.textContent = modoLogin ? 'Entrar' : 'Criar minha conta';
+        const esq = $('btn-esqueci-senha'); if (esq) esq.classList.toggle('hidden', !modoLogin);
+        const termos = $('auth-termos'); if (termos) termos.classList.toggle('hidden', modoLogin);
+        const senha = $('auth-password');
+        if (senha) { senha.autocomplete = modoLogin ? 'current-password' : 'new-password'; senha.placeholder = modoLogin ? 'Sua senha' : 'Crie uma senha (mínimo 6)'; }
+        [['aba-entrar', modoLogin], ['aba-criar', !modoLogin]].forEach(([id, on]) => {
+            const b = $(id); if (!b) return;
+            b.classList.toggle('ativa', on); b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        const card = document.querySelector('.auth-card'); if (card) card.classList.toggle('modo-criar', !modoLogin);
+        forcaSenha();
     }
+    function alternarModo() { definirModo(!modoLogin); }
+
+    // força da senha (só ao criar a conta)
+    function forcaSenha() {
+        const el = $('forca-senha'), campo = $('auth-password');
+        if (!el || !campo) return;
+        const s = campo.value || '';
+        if (modoLogin || !s) { el.classList.add('hidden'); return; }
+        let n = s.length >= 6 ? 1 : 0;
+        if (n && s.length >= 8 && /\d/.test(s) && /[a-zA-Z]/.test(s)) n = 2;
+        // forte: comprida, ou com símbolo e letras maiúsculas e minúsculas
+        if (n === 2 && (s.length >= 12 || (/[^a-zA-Z0-9]/.test(s) && /[A-Z]/.test(s) && /[a-z]/.test(s)))) n = 3;
+        el.classList.remove('hidden');
+        el.dataset.nivel = String(n);
+        el.querySelector('span').textContent = ['Muito curta (mínimo 6)', 'Fraca, mas serve', 'Boa', 'Forte'][n];
+    }
+    const emailValido = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
 
     async function enviarFormulario(ev) {
         ev.preventDefault();
@@ -87,6 +113,8 @@
         const email = $('auth-email').value.trim();
         const senha = $('auth-password').value.trim();
         if (!email || !senha) { aviso('Preencha o e-mail e a senha.'); return; }
+        if (!emailValido(email)) { aviso('Confira o e-mail: está faltando alguma coisa.'); marcarErro('auth-email'); return; }
+        if (!modoLogin && senha.length < 6) { aviso('A senha precisa ter pelo menos 6 caracteres.'); marcarErro('auth-password'); return; }
 
         const botao = $('btn-auth-action');
         ocupar(true, botao);
@@ -100,6 +128,7 @@
                 await f.createUserWithEmailAndPassword(window.firebaseAuth, email, senha);
                 if (window.Metricas) Metricas.evento('cadastro');
                 if (window.Painel) Painel.ev('cadastro', { metodo: 'email' });
+                comemorar();
             }
             // sucesso: o app.js percebe o login (onAuthStateChanged) e abre o app sozinho
         } catch (e) {
@@ -123,6 +152,7 @@
             const nova = !!(md && md.creationTime && md.creationTime === md.lastSignInTime);
             if (nova && window.Metricas) Metricas.evento('cadastro');
             if (window.Painel) Painel.ev(nova ? 'cadastro' : 'login', { metodo: 'google' });
+            if (nova) comemorar();
         } catch (e) {
             const c = e && e.code;
             if (c !== 'auth/cancelled-popup-request' && c !== 'auth/popup-closed-by-user') {
@@ -151,18 +181,55 @@
         }
     }
 
+    // conta nova: animação de gol (js/futebol3d.js), por cima do app que já está abrindo
+    function comemorar() {
+        if (window.Futebol3D) window.Futebol3D.gol('Bem-vindo ao time!').catch(() => {});
+    }
+    function marcarErro(id, focar = true) {
+        const campo = $(id); if (!campo) return;
+        const caixa = campo.closest('.campo-auth') || campo;
+        caixa.classList.remove('erro'); void caixa.offsetWidth; caixa.classList.add('erro');
+        if (focar) campo.focus();
+    }
+
+    // estádio 3D atrás do login: liga quando a tela aparece, desliga quando some (bateria)
+    function ligarEstadio() {
+        const tela = $('auth-screen'), fundo = $('auth-fundo');
+        if (!tela || !fundo) return;
+        let cena = null, ligando = false;
+        const conferir = async () => {
+            const visivel = !tela.classList.contains('hidden');
+            if (visivel && !cena && !ligando && window.Futebol3D) {
+                ligando = true;
+                try { cena = await window.Futebol3D.estadio(fundo); } catch (e) { cena = null; }
+                ligando = false;
+                if (cena) tela.classList.add('com-3d');
+                if (tela.classList.contains('hidden') && cena) { cena.parar(); cena = null; tela.classList.remove('com-3d'); }
+            } else if (!visivel && cena) { cena.parar(); cena = null; tela.classList.remove('com-3d'); }
+        };
+        if (typeof MutationObserver === 'function') new MutationObserver(conferir).observe(tela, { attributes: true, attributeFilter: ['class'] });
+        window.addEventListener('futebol3d-pronto', conferir);
+        conferir();
+    }
+
     function iniciar() {
         const form = $('auth-form');
         if (!form) return;
         form.addEventListener('submit', enviarFormulario);
         $('btn-auth-switch').addEventListener('click', alternarModo);
+        $('aba-entrar')?.addEventListener('click', () => definirModo(true));
+        $('aba-criar')?.addEventListener('click', () => definirModo(false));
+        $('auth-password')?.addEventListener('input', forcaSenha);
+        ['auth-email', 'auth-password'].forEach(id => $(id)?.addEventListener('input', () => { const c = $(id).closest && $(id).closest('.campo-auth'); if (c) c.classList.remove('erro'); }));
+        $('auth-email')?.addEventListener('blur', () => { const v = $('auth-email').value.trim(); if (v && !emailValido(v)) marcarErro('auth-email', false); });
+        ligarEstadio();
         $('btn-google-auth').addEventListener('click', loginGoogle);
         $('btn-esqueci-senha').addEventListener('click', esqueciSenha);
         $('btn-ver-senha').addEventListener('click', () => {
             const campo = $('auth-password');
             const mostrar = campo.type === 'password';
             campo.type = mostrar ? 'text' : 'password';
-            $('btn-ver-senha').textContent = mostrar ? 'Ocultar' : 'Mostrar';
+            $('btn-ver-senha').innerHTML = `<svg class="i"><use href="#i-${mostrar ? 'eye-off' : 'eye'}"/></svg>`;
         $('btn-ver-senha').setAttribute('aria-label', mostrar ? 'Ocultar senha' : 'Mostrar senha');
         });
     }

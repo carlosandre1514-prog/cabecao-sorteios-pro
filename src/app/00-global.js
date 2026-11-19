@@ -45,8 +45,15 @@ function toast(mensagem, tipo = 'ok') {
 function esconderSplash() {
     const sp = document.getElementById('splash');
     if (!sp || sp.classList.contains('saindo')) return;
+    // a bola 3D da abertura termina o quique antes de sair (no máximo 1,6 s a mais)
+    const bola = window.__abertura3d;
+    if (bola && !sp.__esperou) {
+        sp.__esperou = true;
+        Promise.race([bola, new Promise(r => setTimeout(r, 1600))]).then(esconderSplash, esconderSplash);
+        return;
+    }
     sp.classList.add('saindo');
-    setTimeout(() => sp.remove(), 350);
+    setTimeout(() => { const el = document.getElementById('splash-3d'); if (el && el.__parar3d) el.__parar3d(); sp.remove(); }, 350);
 }
 function mostrarCarregando(on, texto) {
     const el = document.getElementById('carregando-dados');

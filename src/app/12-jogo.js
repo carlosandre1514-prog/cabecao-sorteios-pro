@@ -623,6 +623,13 @@
                     gols: jogos.reduce((s, p) => s + (Number(p.golsA) || 0) + (Number(p.golsB) || 0), 0)
                 });
             }
+            if (window.Futebol3D) {
+                try {
+                    const r = Logica.resumoCampeonato(edicaoHistorico);
+                    const c = r && r.classificacao && r.classificacao[0];
+                    if (r && r.campeao) window.Futebol3D.campeao(r.campeao, c ? `${c.p} pontos · ${c.v} vitória${c.v === 1 ? '' : 's'}` : '').catch(() => {});
+                } catch (e) { /* sem comemoração */ }
+            }
 
             // o campeonato terminou: sai do "em andamento" no Firebase
             limparCampeonatoAtivo();
