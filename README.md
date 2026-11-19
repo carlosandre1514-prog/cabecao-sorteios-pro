@@ -20,6 +20,8 @@ js/
   js/apito.js         🔔 apito de juiz de fim de partida (6 s), usado no app e no link
   ao-vivo.html        📡 página pública do placar ao vivo (só leitura, sem login)
   presenca.html       📲 página pública da lista de presença (sem login)
+  conheca.html        página de apresentação para divulgar ("link na bio"), com cenas 3D em Three.js
+                      (js/conheca-3d.js; sem WebGL ou sem internet para o Three.js, mostra o ícone)
   auth.js             🔐 formulário de login/cadastro/Google/esqueci a senha
   app.js              🖥️ navegação entre telas, salvar/carregar Firebase, telas, cronômetro
   monetizacao.js      ⭐ plano Pro, limites, patrocinador, Pix
