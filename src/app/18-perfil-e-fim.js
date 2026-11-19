@@ -1,11 +1,21 @@
     // ---------- ACEITE DOS TERMOS (LGPD: consentimento registrado, com versão e data) ----------
     // Cadastro pelo formulário: a caixinha já foi marcada, então só grava. Conta antiga, conta criada
     // pelo Google ou termos atualizados: mostra a tela e só libera o app depois do aceite.
+    // Aviso (não bloqueia: brasileiro viajando continua usando): o fuso do celular é de fora do Brasil?
+    // Não coleta nada: só compara o fuso horário do aparelho com os fusos brasileiros.
+    function foraDoBrasil() {
+        try {
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+            if (!tz) return false;
+            return !/^(America\/(Sao_Paulo|Rio_Branco|Manaus|Porto_Velho|Boa_Vista|Cuiaba|Campo_Grande|Belem|Santarem|Fortaleza|Recife|Maceio|Bahia|Araguaina|Noronha|Eirunepe)|Brazil\/.*)$/.test(tz);
+        } catch (e) { return false; }
+    }
+    window.foraDoBrasil = foraDoBrasil;
     function conferirAceite(aceite) {
         if (aceite && aceite.versao === VERSAO_TERMOS) return;
         let doCadastro = '';
         try { doCadastro = sessionStorage.getItem('cabecao_aceite_cadastro') || ''; sessionStorage.removeItem('cabecao_aceite_cadastro'); } catch (e) { /* ok */ }
-        const registrar = () => gravar('aceite', { versao: VERSAO_TERMOS, em: Date.now(), maior18: true, como: doCadastro ? 'cadastro' : 'tela' }, true);
+        const registrar = () => gravar('aceite', { versao: VERSAO_TERMOS, em: Date.now(), maior18: true, moraNoBrasil: true, como: doCadastro ? 'cadastro' : 'tela' }, true);
         if (doCadastro) { registrar(); return; }
         if (document.getElementById('tela-aceite')) return;
         const t = document.createElement('div');
@@ -15,7 +25,8 @@
         t.innerHTML = `<div class="aceite-card">
             <h2 id="t-aceite">${aceite ? 'Atualizamos os termos' : 'Antes de começar'}</h2>
             <p>Para usar o Cabeção Sorteios Pro, leia e aceite os <a href="termos-uso.html" target="_blank" rel="noopener">Termos de uso</a> e a <a href="politica-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>. Eles explicam quais dados guardamos, para quê, e como apagar sua conta quando quiser.</p>
-            <label class="auth-aceite"><input type="checkbox" id="aceite-ok"><span>Tenho <b>18 anos ou mais</b> e li e aceito os Termos de uso e a Política de Privacidade.</span></label>
+            <label class="auth-aceite"><input type="checkbox" id="aceite-ok"><span>Tenho <b>18 anos ou mais</b>, <b>moro no Brasil</b> e li e aceito os Termos de uso e a Política de Privacidade.</span></label>
+            ${foraDoBrasil() ? '<p class="aviso-fora">Pelo relógio do seu celular, parece que você está fora do Brasil. O app é feito só para quem mora no Brasil.</p>' : ''}
             <button type="button" class="btn btn-primary" id="aceite-btn" disabled>Aceitar e continuar</button>
             <button type="button" class="btn-texto" id="aceite-sair">Não aceito, sair da conta</button>
         </div>`;

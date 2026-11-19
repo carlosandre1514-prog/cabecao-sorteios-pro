@@ -78,6 +78,7 @@
         if (acao) acao.textContent = modoLogin ? 'Entrar' : 'Criar minha conta';
         const esq = $('btn-esqueci-senha'); if (esq) esq.classList.toggle('hidden', !modoLogin);
         const termos = $('auth-termos'); if (termos) termos.classList.toggle('hidden', modoLogin);
+        const fora = $('auth-fora-brasil'); if (fora) fora.classList.toggle('hidden', modoLogin || !(window.foraDoBrasil && window.foraDoBrasil()));
         const senha = $('auth-password');
         if (senha) { senha.autocomplete = modoLogin ? 'current-password' : 'new-password'; senha.placeholder = modoLogin ? 'Sua senha' : 'Crie uma senha (mínimo 6)'; }
         [['aba-entrar', modoLogin], ['aba-criar', !modoLogin]].forEach(([id, on]) => {
@@ -115,7 +116,7 @@
         if (!email || !senha) { aviso('Preencha o e-mail e a senha.'); return; }
         if (!emailValido(email)) { aviso('Confira o e-mail: está faltando alguma coisa.'); marcarErro('auth-email'); return; }
         if (!modoLogin && senha.length < 6) { aviso('A senha precisa ter pelo menos 6 caracteres.'); marcarErro('auth-password'); return; }
-        if (!modoLogin && $('auth-aceite') && !$('auth-aceite').checked) { aviso('Para criar a conta, confirme que tem 18 anos ou mais e que aceita os Termos e a Política de Privacidade.'); return; }
+        if (!modoLogin && $('auth-aceite') && !$('auth-aceite').checked) { aviso('Para criar a conta, confirme que tem 18 anos ou mais, que mora no Brasil e que aceita os Termos e a Política de Privacidade.'); return; }
 
         const botao = $('btn-auth-action');
         ocupar(true, botao);

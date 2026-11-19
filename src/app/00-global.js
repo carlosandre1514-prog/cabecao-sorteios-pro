@@ -44,7 +44,7 @@ function toast(mensagem, tipo = 'ok') {
 
 // versão dos Termos de uso e da Política de Privacidade: mudou o texto de forma importante?
 // troque aqui e todo mundo aceita de novo no próximo acesso
-const VERSAO_TERMOS = '2026-11-20';
+const VERSAO_TERMOS = '2026-11-19';
 window.VERSAO_TERMOS = VERSAO_TERMOS;
 
 function esconderSplash() {
