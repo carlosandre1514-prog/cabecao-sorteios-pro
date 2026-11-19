@@ -65,11 +65,22 @@
     }
     async function verificarAdmin() {
         souAdmin = false;
+        const meu = String(emailUsuario).trim().toLowerCase();
+        const f = window.firebaseFns, db = window.firebaseDb;
+        // admin/email só o próprio administrador consegue ler (as regras recusam para os outros)
         try {
-            const s = await window.firebaseFns.get(window.firebaseFns.ref(window.firebaseDb, 'configuracoes/admin_email'));
+            const s = await f.get(f.ref(db, 'admin/email'));
             const adm = String(s.exists() ? s.val() : '').trim().toLowerCase();
-            souAdmin = !!adm && adm === String(emailUsuario).trim().toLowerCase();
-        } catch (e) { /* sem permissão ou sem admin configurado: segue sem a caixa */ }
+            souAdmin = !!adm && adm === meu;
+        } catch (e) { /* sem permissão: não é o administrador */ }
+        // jeito antigo (e-mail em configuracoes, que é público): continua valendo até migrar no painel
+        if (!souAdmin) {
+            try {
+                const s = await f.get(f.ref(db, 'configuracoes/admin_email'));
+                const adm = String(s.exists() ? s.val() : '').trim().toLowerCase();
+                souAdmin = !!adm && adm === meu;
+            } catch (e) { /* sem admin configurado */ }
+        }
         atualizarBotaoAdmin();
     }
     function abrirSuporte() {

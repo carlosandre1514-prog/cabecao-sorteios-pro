@@ -8,8 +8,8 @@
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0f1214">
     <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="css/style.css?v=795a9f9175">
-    <link rel="stylesheet" href="css/base.css?v=795a9f9175">
+    <link rel="stylesheet" href="css/style.css?v=db28e4c729">
+    <link rel="stylesheet" href="css/base.css?v=db28e4c729">
 </head>
 <body data-aba="tab-jogadores">
     <!-- ÍCONES (um traço só, 24px). Uso: <svg class="i"><use href="#i-nome"/></svg> -->
@@ -268,7 +268,7 @@
             <div id="lista-caixa"></div>
         </section>
 
-        <!-- PAINEL DO ADMINISTRADOR (só o e-mail de configuracoes/admin_email) -->
+        <!-- PAINEL DO ADMINISTRADOR (só o e-mail de admin/email) -->
         <section id="tab-admin" class="tab-content" data-title="Administrador" data-pai="tab-mais">
             <form id="form-admin" class="adm" novalidate>
                 <p class="lista-rotulo">Cobrança do Pro</p>
@@ -308,6 +308,11 @@
                     <button type="button" class="btn btn-secondary" id="adm-ver">Ver plano atual</button>
                     <button type="button" class="btn btn-primary" id="adm-liberar">Liberar Pro</button>
                 </div>
+            </div>
+            <div class="card hidden" id="adm-proteger">
+                <h2>Seu e-mail está público</h2>
+                <p class="subtext">O e-mail de administrador está em configuracoes, que qualquer pessoa consegue ler. Toque abaixo para guardar num lugar que só você lê. (Publique antes as regras novas do database.rules.json.)</p>
+                <button type="button" class="btn btn-primary" id="adm-proteger-btn" style="margin-top:12px;">Esconder meu e-mail</button>
             </div>
             <p class="rodape-versao">Seu ID: <span id="adm-meu-uid" class="num"></span></p>
         </section>
@@ -707,17 +712,17 @@
     </script>
     <!-- ordem importa: logica -> remoto -> auth -> app -> monetizacao -->
     <link rel="modulepreload" href="js/vendor/three.module.min.js">
-    <script type="module" src="js/futebol3d.js?v=795a9f9175"></script>
-    <script src="js/painel.js?v=795a9f9175"></script>
-    <script src="js/logica.js?v=795a9f9175"></script>
-    <script src="js/ui.js?v=795a9f9175"></script>
-    <script src="js/apito.js?v=795a9f9175"></script>
-    <script src="js/remoto.js?v=795a9f9175"></script>
-    <script src="js/auth.js?v=795a9f9175"></script>
-    <script src="js/app.js?v=795a9f9175"></script>
-    <script src="js/monetizacao.js?v=795a9f9175"></script>
-    <script src="js/metricas.js?v=795a9f9175"></script>
-    <script src="js/imagem-times.js?v=795a9f9175"></script>
+    <script type="module" src="js/futebol3d.js?v=db28e4c729"></script>
+    <script src="js/painel.js?v=db28e4c729"></script>
+    <script src="js/logica.js?v=db28e4c729"></script>
+    <script src="js/ui.js?v=db28e4c729"></script>
+    <script src="js/apito.js?v=db28e4c729"></script>
+    <script src="js/remoto.js?v=db28e4c729"></script>
+    <script src="js/auth.js?v=db28e4c729"></script>
+    <script src="js/app.js?v=db28e4c729"></script>
+    <script src="js/monetizacao.js?v=db28e4c729"></script>
+    <script src="js/metricas.js?v=db28e4c729"></script>
+    <script src="js/imagem-times.js?v=db28e4c729"></script>
     <script>
         // Funciona sem internet: guarda o app no aparelho (sw.js)
         if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {

@@ -1,4 +1,4 @@
-    // ---------- PAINEL DO ADMINISTRADOR (só o e-mail de configuracoes/admin_email) ----------
+    // ---------- PAINEL DO ADMINISTRADOR (só o e-mail de admin/email; antes configuracoes/admin_email) ----------
     // Ajusta configuracoes/monetizacao e configuracoes/divulgacao e libera o Pro (planos/<uid>) pelo app,
     // sem precisar do site do Firebase. As regras só deixam o administrador gravar esses caminhos.
     const DIA_MS = 24 * 60 * 60 * 1000;
@@ -25,6 +25,7 @@
             $('adm-checkout').value = m.link_checkout || '';
             if ($('adm-checkout-api')) $('adm-checkout-api').value = m.checkout_api || '';
             $('adm-url').value = dv.url_publica || basePublica();
+            if ($('adm-proteger')) $('adm-proteger').classList.toggle('hidden', !c.admin_email);
             $('adm-link').value = dv.link || '';
         } catch (e) { toast('Não foi possível ler as configurações.', 'erro'); }
     }
@@ -65,6 +66,19 @@
                 const cod = String((er && (er.code || er.message)) || 'erro');
                 mostrarAlerta(/permission/i.test(cod) ? 'O Firebase não deixou salvar. Publique as regras novas (database.rules.json) e confira se o seu e-mail em configuracoes/admin_email está em letras minúsculas.' : 'Não foi possível salvar. Confira a internet. (' + cod + ')', 'Configurações');
             } finally { btn.disabled = false; }
+        });
+        // tira o e-mail do administrador de configuracoes (público) e guarda em admin/email (só ele lê)
+        $('adm-proteger-btn')?.addEventListener('click', async () => {
+            const f = window.firebaseFns, db = window.firebaseDb, email = String(emailUsuario || '').trim().toLowerCase();
+            if (!email) return;
+            try {
+                await f.set(f.ref(db, 'admin/email'), email);
+                await f.set(f.ref(db, 'configuracoes/admin_email'), null);
+                $('adm-proteger').classList.add('hidden');
+                toast('Pronto: seu e-mail não fica mais público.');
+            } catch (er) {
+                mostrarAlerta('O Firebase não deixou. Publique primeiro as regras novas (database.rules.json) e tente de novo.', 'Esconder e-mail');
+            }
         });
         const uidValido = () => { const u = String($('adm-uid').value || '').trim(); return /^[A-Za-z0-9_-]{6,128}$/.test(u) ? u : ''; };
         $('adm-ver')?.addEventListener('click', async () => {
