@@ -22,6 +22,7 @@
             $('adm-pix-nome').value = m.nome_pix || '';
             $('adm-zap').value = m.whatsapp_suporte || '';
             $('adm-checkout').value = m.link_checkout || '';
+            if ($('adm-checkout-api')) $('adm-checkout-api').value = m.checkout_api || '';
             $('adm-url').value = dv.url_publica || basePublica();
             $('adm-link').value = dv.link || '';
         } catch (e) { toast('Não foi possível ler as configurações.', 'erro'); }
@@ -45,14 +46,15 @@
                 chave_pix: String($('adm-pix').value || '').trim(),
                 nome_pix: String($('adm-pix-nome').value || '').trim(),
                 whatsapp_suporte: (d => d.length === 10 || d.length === 11 ? '55' + d : d)(String($('adm-zap').value || '').replace(/\D/g, '')),   // completa o 55 do Brasil
-                link_checkout: url('adm-checkout')
+                link_checkout: url('adm-checkout'),
+                checkout_api: $('adm-checkout-api') ? url('adm-checkout-api') : undefined
             };
             const div = { url_publica: url('adm-url'), link: url('adm-link') };
             const btn = $('adm-salvar'); btn.disabled = true;
             try {
                 // campo a campo: não apaga o que não está na tela (patrocinador, checkout_api...)
                 await Promise.all([
-                    ...Object.entries(mon).map(([k, v]) => f.set(f.ref(db, 'configuracoes/monetizacao/' + k), v)),
+                    ...Object.entries(mon).filter(([, v]) => v !== undefined).map(([k, v]) => f.set(f.ref(db, 'configuracoes/monetizacao/' + k), v)),
                     ...Object.entries(div).map(([k, v]) => f.set(f.ref(db, 'configuracoes/divulgacao/' + k), v || null))
                 ]);
                 if (div.url_publica) urlPublicaConfig = div.url_publica;
