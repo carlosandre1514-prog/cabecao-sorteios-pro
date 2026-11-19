@@ -115,6 +115,7 @@
         if (!email || !senha) { aviso('Preencha o e-mail e a senha.'); return; }
         if (!emailValido(email)) { aviso('Confira o e-mail: está faltando alguma coisa.'); marcarErro('auth-email'); return; }
         if (!modoLogin && senha.length < 6) { aviso('A senha precisa ter pelo menos 6 caracteres.'); marcarErro('auth-password'); return; }
+        if (!modoLogin && $('auth-aceite') && !$('auth-aceite').checked) { aviso('Para criar a conta, confirme que tem 18 anos ou mais e que aceita os Termos e a Política de Privacidade.'); return; }
 
         const botao = $('btn-auth-action');
         ocupar(true, botao);
@@ -125,6 +126,8 @@
                 await f.signInWithEmailAndPassword(window.firebaseAuth, email, senha);
                 if (window.Painel) Painel.ev('login', { metodo: 'email' });
             } else {
+                // o aceite marcado aqui é gravado na conta assim que os dados carregarem (conferirAceite)
+                try { sessionStorage.setItem('cabecao_aceite_cadastro', String(Date.now())); } catch (e) { /* ok */ }
                 await f.createUserWithEmailAndPassword(window.firebaseAuth, email, senha);
                 if (window.Metricas) Metricas.evento('cadastro');
                 if (window.Painel) Painel.ev('cadastro', { metodo: 'email' });

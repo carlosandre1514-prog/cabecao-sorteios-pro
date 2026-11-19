@@ -547,6 +547,7 @@
             caixaMes = Logica.mesISO();
             presencaAssinatura = '';
             dadosCarregados = true;
+            conferirAceite(dados.aceite);
             aplicarVisual();
             escutarPresenca();
             renderizarRachas();

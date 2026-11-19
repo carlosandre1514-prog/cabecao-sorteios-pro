@@ -821,3 +821,18 @@ body {
 .planos-3 .plano-preco { font-size: 1.05rem; }
 .planos-3 .plano-selo { font-size: 0.6rem; padding: 2px 7px; white-space: nowrap; }
 .planos-3 .plano-opcao small { font-size: 0.64rem; }
+
+/* ---------- Aceite dos termos ---------- */
+.auth-aceite { display: flex; gap: 10px; align-items: flex-start; font-size: var(--t-sm); color: var(--c-texto-2); line-height: 1.45; cursor: pointer; text-align: left; }
+.auth-aceite input { flex: none; width: 20px; height: 20px; margin-top: 1px; accent-color: var(--c-destaque-forte); }
+.auth-aceite a { color: var(--c-destaque); }
+.auth-aceite b { color: var(--c-texto); }
+.tela-aceite { position: fixed; inset: 0; z-index: 25000; display: flex; align-items: center; justify-content: center; padding: var(--e-5);
+    background: radial-gradient(90% 60% at 50% 30%, rgba(var(--verde-rgb), 0.14), transparent 70%), rgba(8, 11, 13, 0.97); }
+.aceite-card { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: var(--e-4); padding: var(--e-6) var(--e-5);
+    border-radius: 22px; background: var(--c-sup-1); border: 1px solid var(--c-linha-forte); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); }
+.aceite-card h2 { font-size: var(--t-xl); font-weight: 750; letter-spacing: -0.4px; }
+.aceite-card p { color: var(--c-texto-2); font-size: var(--t-md); line-height: 1.5; }
+.aceite-card p a { color: var(--c-destaque); }
+.aceite-card .btn[disabled] { opacity: .45; filter: grayscale(.4); }
+.aceite-card .btn-texto { align-self: center; }

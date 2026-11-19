@@ -43,6 +43,11 @@ function toast(mensagem, tipo = 'ok') {
     setTimeout(() => { el.classList.add('saindo'); setTimeout(() => el.remove(), 320); }, 2800);
 }
 
+// versão dos Termos de uso e da Política de Privacidade: mudou o texto de forma importante?
+// troque aqui e todo mundo aceita de novo no próximo acesso
+const VERSAO_TERMOS = '2026-11-20';
+window.VERSAO_TERMOS = VERSAO_TERMOS;
+
 function esconderSplash() {
     const sp = document.getElementById('splash');
     if (!sp || sp.classList.contains('saindo')) return;
@@ -1023,6 +1028,7 @@ document.addEventListener('DOMContentLoaded', () => {
             caixaMes = Logica.mesISO();
             presencaAssinatura = '';
             dadosCarregados = true;
+            conferirAceite(dados.aceite);
             aplicarVisual();
             escutarPresenca();
             renderizarRachas();
@@ -3520,6 +3526,37 @@ document.addEventListener('DOMContentLoaded', () => {
             `<div class="art-linha ranking-linha"><span class="art-pos">${i + 1}</span>${avatarHtml(n)}
                 <span class="art-nome">${escapeHtml(n)}<span class="barra-rank"><span style="width:${Math.round(g / max * 100)}%"></span></span></span>
                 <strong class="art-gols">${g}</strong></div>`).join('') + '</div>';
+    }
+
+    // ---------- ACEITE DOS TERMOS (LGPD: consentimento registrado, com versão e data) ----------
+    // Cadastro pelo formulário: a caixinha já foi marcada, então só grava. Conta antiga, conta criada
+    // pelo Google ou termos atualizados: mostra a tela e só libera o app depois do aceite.
+    function conferirAceite(aceite) {
+        if (aceite && aceite.versao === VERSAO_TERMOS) return;
+        let doCadastro = '';
+        try { doCadastro = sessionStorage.getItem('cabecao_aceite_cadastro') || ''; sessionStorage.removeItem('cabecao_aceite_cadastro'); } catch (e) { /* ok */ }
+        const registrar = () => gravar('aceite', { versao: VERSAO_TERMOS, em: Date.now(), maior18: true, como: doCadastro ? 'cadastro' : 'tela' }, true);
+        if (doCadastro) { registrar(); return; }
+        if (document.getElementById('tela-aceite')) return;
+        const t = document.createElement('div');
+        t.id = 'tela-aceite';
+        t.className = 'tela-aceite';
+        t.setAttribute('role', 'dialog'); t.setAttribute('aria-modal', 'true'); t.setAttribute('aria-labelledby', 't-aceite');
+        t.innerHTML = `<div class="aceite-card">
+            <h2 id="t-aceite">${aceite ? 'Atualizamos os termos' : 'Antes de começar'}</h2>
+            <p>Para usar o Cabeção Sorteios Pro, leia e aceite os <a href="termos-uso.html" target="_blank" rel="noopener">Termos de uso</a> e a <a href="politica-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>. Eles explicam quais dados guardamos, para quê, e como apagar sua conta quando quiser.</p>
+            <label class="auth-aceite"><input type="checkbox" id="aceite-ok"><span>Tenho <b>18 anos ou mais</b> e li e aceito os Termos de uso e a Política de Privacidade.</span></label>
+            <button type="button" class="btn btn-primary" id="aceite-btn" disabled>Aceitar e continuar</button>
+            <button type="button" class="btn-texto" id="aceite-sair">Não aceito, sair da conta</button>
+        </div>`;
+        document.body.appendChild(t);
+        const chk = t.querySelector('#aceite-ok'), btn = t.querySelector('#aceite-btn');
+        chk.addEventListener('change', () => { btn.disabled = !chk.checked; });
+        btn.addEventListener('click', () => { registrar(); t.remove(); });
+        t.querySelector('#aceite-sair').addEventListener('click', () => {
+            t.remove();
+            if (window.firebaseFns && window.firebaseAuth) window.firebaseFns.signOut(window.firebaseAuth).catch(() => {});
+        });
     }
 
     // ---------- PERFIL NO MENU (foto + apelido) ----------
