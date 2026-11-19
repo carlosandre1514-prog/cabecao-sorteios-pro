@@ -1,5 +1,5 @@
 // =====================================================================
-// apito.js — APITO DE JUIZ DE FIM DE PARTIDA (dura 6 segundos)
+// apito.js — APITO DE JUIZ DE FIM DE PARTIDA (dois silvos, 1,6 segundo)
 // Usado pelo app (index.html) e pela página do link (ao-vivo.html).
 // Se o som do apito estiver errado (tempo, volume, timbre), o erro está AQUI.
 // =====================================================================
@@ -7,11 +7,12 @@
     if (typeof module === 'object' && module.exports) module.exports = fabrica();
     else raiz.Apito = fabrica();
 })(typeof self !== 'undefined' ? self : this, function () {
-    const DURACAO = 6; // segundos, do primeiro sopro até o silêncio
+    const DURACAO = 1.6; // segundos, do primeiro sopro até o silêncio
 
-    // Fim de jogo: dois sopros curtos e um LONGO que fecha exatamente em 6 s.
+    // Fim de jogo como no campo: o juiz apita DUAS vezes ("piii... piii") e acabou.
+    // Cada silvo tem uns 0,65 s, com uma pausa curta de respiração entre eles.
     // [início, fim] em segundos
-    const SOPROS = [[0, 0.5], [0.75, 1.25], [1.5, DURACAO]];
+    const SOPROS = [[0, 0.65], [0.9, DURACAO]];
 
     // Ruído branco = o "ar" do sopro (dá o chiado de apito de verdade)
     function criarRuido(ctx, segundos) {
@@ -58,7 +59,8 @@
             // o apito "sobe" um pouco quando o ar entra e cai no fim do sopro longo
             o.frequency.setValueAtTime(hz * 0.94, a);
             o.frequency.linearRampToValueAtTime(hz, a + 0.06);
-            if (dur > 2) o.frequency.linearRampToValueAtTime(hz * 0.97, b);
+            o.frequency.setValueAtTime(hz, b - Math.min(0.12, dur * 0.3));
+            o.frequency.linearRampToValueAtTime(hz * 0.96, b);   // a nota cai um pouco quando o ar acaba
             lfoNota.connect(o.frequency);
             const g = ctx.createGain();
             g.gain.setValueAtTime(nivel, a);
@@ -86,7 +88,7 @@
         src.start(a, 0); src.stop(parar);
     }
 
-    // Toca o apito de fim de partida (6 s). Devolve a duração.
+    // Toca o apito de fim de partida (dois silvos). Devolve a duração.
     function tocar(ctx) {
         if (!ctx) return 0;
         const t0 = ctx.currentTime + 0.05;

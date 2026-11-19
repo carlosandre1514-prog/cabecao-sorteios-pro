@@ -10,10 +10,10 @@
 (function () {
     const COR = {
         fundo: '#0b0e0c', card: '#151a17', linha: 'rgba(255,255,255,0.08)',
-        txt: '#e9eeea', mudo: '#98a39a', verde: '#2da762', neon: '#93d54b', ouro: '#ddb43c'
+        txt: '#e9eeea', mudo: '#98a39a', verde: '#14b551', neon: '#7fe04a', ouro: '#ddb43c'
     };
     // uma cor de faixa por time (repete se tiver mais de 8)
-    const FAIXAS = ['#2da762', '#ddb43c', '#4f8fe0', '#de5a68', '#a66be0', '#e08a3c', '#3cc4c4', '#e0e0e0'];
+    const FAIXAS = ['#14b551', '#ddb43c', '#4f8fe0', '#de5a68', '#a66be0', '#e08a3c', '#3cc4c4', '#e0e0e0'];
     const FONTE = '-apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
     const fmt = n => (Number(n) || 0).toFixed(1).replace('.', ',');

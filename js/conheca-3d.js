@@ -62,7 +62,7 @@ function novoRenderer(THREE, el) {
 // ---------------------------------------------------------------
 const JOGADORES = ['Ana', 'Bia', 'Caio', 'Duda', 'Edu', 'Fábio', 'Gui', 'Hugo', 'Ivan', 'João', 'Kaio', 'Léo'];
 const ESTRELAS = [4.5, 3, 3.5, 4, 2.5, 3, 4, 3.5, 3, 4.5, 2.5, 3.5];
-const CORES = ['#2da762', '#e3b341', '#5b9be6'];
+const CORES = ['#14b551', '#f6b90c', '#5b9be6'];
 const GIRO_LETRA = Math.PI / 2;
 
 function texturaFicha(THREE, letra, fundo, tinta) {

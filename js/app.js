@@ -1358,7 +1358,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Apito de juiz de fim de partida (6 s). O som em si está em js/apito.js
+    // Apito de juiz de fim de partida (dois silvos). O som em si está em js/apito.js
     function tocarApitoJuiz() {
         try {
             prepararAudio();
@@ -1778,7 +1778,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Resultado do sorteio (painel): um card por time, nível médio e goleiro em destaque
-    const CORES_TIMES = ['#2da762', '#e3b341', '#4f8fe0', '#ef6b6b', '#a66be0', '#e08a3c', '#3cc4c4', '#c9cfd3'];
+    const CORES_TIMES = ['#14b551', '#f6b90c', '#4f8fe0', '#ef6b6b', '#a66be0', '#e08a3c', '#3cc4c4', '#c9cfd3'];
     function exibirTimesSorteados() {
         const container = document.getElementById('times-sorteados-container');
         if (!container) return;
@@ -1793,6 +1793,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sorteioAtual.forEach((t, i) => {
             const card = document.createElement('div');
             card.className = 'time-card';
+            if (card.style && card.style.setProperty) card.style.setProperty('--cor', CORES_TIMES[i % CORES_TIMES.length]);   // cor da camisa no cartão
             const linhas = t.jogadores.map(j => `<li>
                     <span class="tc-pos">${j.isGoleiro ? ic('glove', 'i-sm') : ''}</span>
                     <span class="tc-nome">${escapeHtml(j.nome)}</span>
