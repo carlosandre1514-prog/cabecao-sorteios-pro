@@ -8,8 +8,8 @@
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0f1214">
     <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="css/style.css?v=34ce8e8f0f">
-    <link rel="stylesheet" href="css/base.css?v=34ce8e8f0f">
+    <link rel="stylesheet" href="css/style.css?v=e55f32d8db">
+    <link rel="stylesheet" href="css/base.css?v=e55f32d8db">
 </head>
 <body data-aba="tab-jogadores">
     <!-- ÍCONES (um traço só, 24px). Uso: <svg class="i"><use href="#i-nome"/></svg> -->
@@ -54,13 +54,19 @@
         <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4.5 19.5l1-4.2L16 4.8a2.1 2.1 0 0 1 3 3L8.6 18.4z"/><path d="M14 6.8l3 3"/></symbol>
         <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="15" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></symbol>
         <symbol id="i-qr" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5zM14 18.5V20M20 14v1"/></symbol>
+        <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M4.5 7.5l7.5 5.5 7.5-5.5"/></symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+        <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+        <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3.5 3.5l17 17M10 6a9.6 9.6 0 0 1 2-.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-2.6 3.4M6.6 6.7A16.6 16.6 0 0 0 2.5 12S6 18.5 12 18.5a9 9 0 0 0 4.4-1.1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
         <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r="1" fill="currentColor" stroke="none"/><circle cx="4.8" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4.8" cy="17.5" r="1" fill="currentColor" stroke="none"/></symbol>
     </svg>
     <!-- Projeto: Cabeção Sorteios Pro | Desenvolvedor: Carlos Andre | 2026 -->
 
     <!-- ABERTURA: fica até o Firebase dizer se você já está logado (evita piscar a tela de login) -->
     <div id="splash" class="splash">
+        <div id="splash-3d" class="splash-3d" aria-hidden="true"></div>
         <img src="img/icon-192.png" alt="">
+        <p class="splash-nome">Cabeção <span>Sorteios</span> Pro</p>
         <div class="spinner"></div>
     </div>
 
@@ -73,29 +79,44 @@
         <span id="carregando-texto">Carregando seus dados...</span>
     </div>
 
-    <!-- LOGIN / CADASTRO -->
+    <!-- LOGIN / CADASTRO: estádio 3D ao fundo (js/futebol3d.js) e o cartão com as abas -->
     <div id="auth-screen" class="auth-screen hidden">
+        <div id="auth-fundo" class="auth-fundo" aria-hidden="true"></div>
+        <div class="auth-topo">
+            <img src="img/icon-192.png" alt="" class="auth-logo">
+            <h1 class="auth-marca">Cabeção <span>Sorteios</span> Pro</h1>
+            <p class="auth-slogan">O racha organizado do convite ao apito final.</p>
+        </div>
         <div class="auth-card">
-            <img src="img/icon-192.png" alt="Logo" class="auth-logo">
-            <h2>Cabeção <span>Sorteios</span></h2>
-            <p id="auth-subtitle" class="subtext">Entre para continuar</p>
+            <div class="auth-abas" role="tablist" aria-label="Entrar ou criar conta">
+                <button type="button" role="tab" id="aba-entrar" class="ativa" aria-selected="true">Entrar</button>
+                <button type="button" role="tab" id="aba-criar" aria-selected="false">Criar conta</button>
+                <span class="auth-abas-marcador" aria-hidden="true"></span>
+            </div>
+            <p id="auth-subtitle" class="auth-sub">Bem-vindo de volta. Bora pro racha?</p>
 
             <form id="auth-form" class="auth-form" novalidate>
-                <input type="email" id="auth-email" placeholder="Seu e-mail" autocomplete="email" inputmode="email" autocapitalize="none">
-                <div class="senha-wrap">
-                    <input type="password" id="auth-password" placeholder="Sua senha (mínimo 6 caracteres)" autocomplete="current-password">
-                    <button type="button" id="btn-ver-senha" class="btn-olho" aria-label="Mostrar senha">Mostrar</button>
-                </div>
+                <label class="campo-auth">
+                    <svg class="i" aria-hidden="true"><use href="#i-mail"/></svg>
+                    <input type="email" id="auth-email" placeholder="Seu e-mail" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" aria-label="E-mail">
+                </label>
+                <label class="campo-auth senha-wrap">
+                    <svg class="i" aria-hidden="true"><use href="#i-lock"/></svg>
+                    <input type="password" id="auth-password" placeholder="Sua senha" autocomplete="current-password" aria-label="Senha">
+                    <button type="button" id="btn-ver-senha" class="btn-olho" aria-label="Mostrar senha"><svg class="i"><use href="#i-eye"/></svg></button>
+                </label>
+                <div id="forca-senha" class="forca-senha hidden" aria-live="polite"><i></i><i></i><i></i><span></span></div>
                 <button type="button" id="btn-esqueci-senha" class="link-discreto">Esqueci minha senha</button>
 
                 <div id="auth-aviso" class="auth-aviso hidden" role="alert"></div>
 
-                <button type="submit" id="btn-auth-action" class="btn btn-primary">Entrar</button>
+                <button type="submit" id="btn-auth-action" class="btn btn-primary btn-auth">Entrar</button>
                 <div class="auth-divisor">ou</div>
-                <button type="button" id="btn-google-auth" class="btn btn-google"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.19v3.15C3.17 21.32 7.23 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.19C.43 8.1 0 9.8 0 12s.43 3.9 1.19 5.42l4.09-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.17 2.68 1.19 6.58l4.09 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg> Entrar com o Google</button>
-                <button type="button" id="btn-auth-switch" class="btn btn-secondary">Não tem conta? Cadastre-se</button>
+                <button type="button" id="btn-google-auth" class="btn btn-google"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.170z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.080 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.050 1.16-3.12 0-5.77-2.1-6.72-4.930H1.19v3.150C3.17 21.32 7.23 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.19C.43 8.1 0 9.8 0 12s.43 3.9 1.19 5.42l4.09-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.17 2.68 1.19 6.58l4.09 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg> Continuar com o Google</button>
+                <p id="auth-termos" class="auth-termos hidden">Ao criar a conta você aceita os <a href="termos-uso.html">Termos de uso</a> e a <a href="politica-privacidade.html">Política de Privacidade</a>.</p>
+                <button type="button" id="btn-auth-switch" class="hidden" tabindex="-1" aria-hidden="true">Trocar</button>
             </form>
-            <p class="auth-rodape"><a href="politica-privacidade.html">Política de Privacidade</a></p>
+            <p class="auth-rodape"><a href="conheca.html">Conheça o app</a> · <a href="politica-privacidade.html">Privacidade</a></p>
         </div>
     </div>
 
@@ -683,16 +704,18 @@
         window.dispatchEvent(new Event('firebase-ready'));
     </script>
     <!-- ordem importa: logica -> remoto -> auth -> app -> monetizacao -->
-    <script src="js/painel.js?v=34ce8e8f0f"></script>
-    <script src="js/logica.js?v=34ce8e8f0f"></script>
-    <script src="js/ui.js?v=34ce8e8f0f"></script>
-    <script src="js/apito.js?v=34ce8e8f0f"></script>
-    <script src="js/remoto.js?v=34ce8e8f0f"></script>
-    <script src="js/auth.js?v=34ce8e8f0f"></script>
-    <script src="js/app.js?v=34ce8e8f0f"></script>
-    <script src="js/monetizacao.js?v=34ce8e8f0f"></script>
-    <script src="js/metricas.js?v=34ce8e8f0f"></script>
-    <script src="js/imagem-times.js?v=34ce8e8f0f"></script>
+    <link rel="modulepreload" href="js/vendor/three.module.min.js">
+    <script type="module" src="js/futebol3d.js?v=e55f32d8db"></script>
+    <script src="js/painel.js?v=e55f32d8db"></script>
+    <script src="js/logica.js?v=e55f32d8db"></script>
+    <script src="js/ui.js?v=e55f32d8db"></script>
+    <script src="js/apito.js?v=e55f32d8db"></script>
+    <script src="js/remoto.js?v=e55f32d8db"></script>
+    <script src="js/auth.js?v=e55f32d8db"></script>
+    <script src="js/app.js?v=e55f32d8db"></script>
+    <script src="js/monetizacao.js?v=e55f32d8db"></script>
+    <script src="js/metricas.js?v=e55f32d8db"></script>
+    <script src="js/imagem-times.js?v=e55f32d8db"></script>
     <script>
         // Funciona sem internet: guarda o app no aparelho (sw.js)
         if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {

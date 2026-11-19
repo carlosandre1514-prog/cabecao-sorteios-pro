@@ -120,6 +120,13 @@
             if (window.Metricas) Metricas.evento('sorteio', false, { times: qtdTimes, por_time: porTime, jogadores: presentes.length });
             const resultado = Logica.sortearTimes(presentes, qtdTimes, porTime);
             sorteioAtual = resultado.times;
+            const resSheet = document.getElementById('resultado-sorteio');
+            const jaAberto = resSheet && !resSheet.classList.contains('hidden');
+            if (window.Futebol3D && !jaAberto) {
+                btnSortear.disabled = true;
+                try { await window.Futebol3D.sorteio(sorteioAtual.map(t => ({ nome: t.nome, jogadores: t.jogadores.map(j => j.nome) }))); } catch (e) { /* segue sem animação */ }
+                btnSortear.disabled = false;
+            }
             exibirTimesSorteados();
         });
     }

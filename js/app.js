@@ -46,8 +46,15 @@ function toast(mensagem, tipo = 'ok') {
 function esconderSplash() {
     const sp = document.getElementById('splash');
     if (!sp || sp.classList.contains('saindo')) return;
+    // a bola 3D da abertura termina o quique antes de sair (no máximo 1,6 s a mais)
+    const bola = window.__abertura3d;
+    if (bola && !sp.__esperou) {
+        sp.__esperou = true;
+        Promise.race([bola, new Promise(r => setTimeout(r, 1600))]).then(esconderSplash, esconderSplash);
+        return;
+    }
     sp.classList.add('saindo');
-    setTimeout(() => sp.remove(), 350);
+    setTimeout(() => { const el = document.getElementById('splash-3d'); if (el && el.__parar3d) el.__parar3d(); sp.remove(); }, 350);
 }
 function mostrarCarregando(on, texto) {
     const el = document.getElementById('carregando-dados');
@@ -1759,6 +1766,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.Metricas) Metricas.evento('sorteio', false, { times: qtdTimes, por_time: porTime, jogadores: presentes.length });
             const resultado = Logica.sortearTimes(presentes, qtdTimes, porTime);
             sorteioAtual = resultado.times;
+            const resSheet = document.getElementById('resultado-sorteio');
+            const jaAberto = resSheet && !resSheet.classList.contains('hidden');
+            if (window.Futebol3D && !jaAberto) {
+                btnSortear.disabled = true;
+                try { await window.Futebol3D.sorteio(sorteioAtual.map(t => ({ nome: t.nome, jogadores: t.jogadores.map(j => j.nome) }))); } catch (e) { /* segue sem animação */ }
+                btnSortear.disabled = false;
+            }
             exibirTimesSorteados();
         });
     }
@@ -2677,6 +2691,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     modo: modoJogoAtual, times: (timesSorteados || []).length, partidas: jogos.length,
                     gols: jogos.reduce((s, p) => s + (Number(p.golsA) || 0) + (Number(p.golsB) || 0), 0)
                 });
+            }
+            if (window.Futebol3D) {
+                try {
+                    const r = Logica.resumoCampeonato(edicaoHistorico);
+                    const c = r && r.classificacao && r.classificacao[0];
+                    if (r && r.campeao) window.Futebol3D.campeao(r.campeao, c ? `${c.p} pontos · ${c.v} vitória${c.v === 1 ? '' : 's'}` : '').catch(() => {});
+                } catch (e) { /* sem comemoração */ }
             }
 
             // o campeonato terminou: sai do "em andamento" no Firebase

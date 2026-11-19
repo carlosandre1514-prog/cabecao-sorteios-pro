@@ -8,7 +8,7 @@
 //
 // AO LANÇAR VERSÃO NOVA: troque VERSAO abaixo pelo mesmo ?v= usado no index.html.
 // =====================================================================
-const VERSAO = '34ce8e8f0f';
+const VERSAO = 'e55f32d8db';
 const CACHE = 'cabecao-' + VERSAO;
 const FIREBASE = 'https://www.gstatic.com/firebasejs/11.0.0/';
 
@@ -20,6 +20,7 @@ const PRECACHE = [
     ...['painel', 'logica', 'ui', 'apito', 'remoto', 'auth', 'app', 'monetizacao', 'metricas', 'imagem-times']
         .map(n => 'js/' + n + '.js?v=' + VERSAO),
     'js/vendor/qrcode.js?v=' + VERSAO,
+    'js/futebol3d.js?v=' + VERSAO, 'js/vendor/three.module.min.js',   // animações 3D (também sem internet)
     FIREBASE + 'firebase-app.js', FIREBASE + 'firebase-auth.js', FIREBASE + 'firebase-database.js'
 ];
 

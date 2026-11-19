@@ -1,14 +1,14 @@
 // =====================================================================
 // conheca-3d.js — cenas 3D da página de apresentação (Three.js)
 //
-//   1) Abertura: bola rolando no gramado; vira para o lado do dedo/mouse.
+//   1) Abertura: bola rolando no gramado (futebol3d.js → bolaNoGramado).
 //   2) Sorteio: 12 fichas de jogador que se juntam e se separam em 3 times.
 //
 // Cuidados: só desenha quando a cena está na tela e a aba está aberta (bateria);
 // "reduzir movimento" no aparelho = imagem parada; sem WebGL ou sem internet para
 // baixar o Three.js, a página segue com a imagem do ícone (classe sem-3d).
 // =====================================================================
-const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { carregar, bolaNoGramado } from './futebol3d.js';   // a bola e o Three.js (js/vendor) ficam no módulo do app
 const raiz = document.documentElement;
 const parado = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -54,153 +54,6 @@ function novoRenderer(THREE, el) {
     r.setClearColor(0x000000, 0);
     el.appendChild(r.domElement);
     return r;
-}
-
-// ---------------------------------------------------------------
-// Bola: os gomos são calculados no shader. Os 12 pentágonos ficam nos vértices de um
-// icosaedro e os 20 hexágonos no centro das faces; cada ponto da esfera pega a cor do
-// centro mais próximo, e onde dois centros "empatam" vira costura.
-// ---------------------------------------------------------------
-function materialBola(THREE) {
-    const ico = new THREE.IcosahedronGeometry(1, 0);
-    const pos = ico.attributes.position;
-    const vistos = [];
-    for (let i = 0; i < pos.count; i++) {
-        const v = new THREE.Vector3().fromBufferAttribute(pos, i).normalize();
-        if (!vistos.some(w => w.distanceTo(v) < 1e-4)) vistos.push(v);
-    }
-    const faces = [];
-    for (let i = 0; i < pos.count; i += 3) {
-        const a = new THREE.Vector3().fromBufferAttribute(pos, i), b = new THREE.Vector3().fromBufferAttribute(pos, i + 1), c = new THREE.Vector3().fromBufferAttribute(pos, i + 2);
-        faces.push(a.add(b).add(c).normalize());
-    }
-    ico.dispose();
-    return new THREE.ShaderMaterial({
-        uniforms: {
-            uPent: { value: vistos },          // 12
-            uHex: { value: faces },            // 20
-            uLuz: { value: new THREE.Vector3(0.45, 0.8, 0.55).normalize() },
-            uBranco: { value: new THREE.Color(0xeef1f3) },
-            uEscuro: { value: new THREE.Color(0x1a1f22) },
-            uBorda: { value: new THREE.Color(0x2da762) }
-        },
-        vertexShader: `
-            varying vec3 vObj; varying vec3 vN; varying vec3 vVista;
-            void main() {
-                vObj = normalize(position);
-                vN = normalize(normalMatrix * normal);
-                vec4 mv = modelViewMatrix * vec4(position, 1.0);
-                vVista = -mv.xyz;
-                gl_Position = projectionMatrix * mv;
-            }`,
-        fragmentShader: `
-            uniform vec3 uPent[12]; uniform vec3 uHex[20];
-            uniform vec3 uLuz; uniform vec3 uBranco; uniform vec3 uEscuro; uniform vec3 uBorda;
-            varying vec3 vObj; varying vec3 vN; varying vec3 vVista;
-            void main() {
-                vec3 p = normalize(vObj);
-                float m1 = -2.0, m2 = -2.0; float ehPent = 0.0;
-                for (int i = 0; i < 12; i++) {
-                    float d = dot(p, uPent[i]) + 0.035;   // pentágono um pouco maior, como na bola real
-                    if (d > m1) { m2 = m1; m1 = d; ehPent = 1.0; } else if (d > m2) { m2 = d; }
-                }
-                for (int i = 0; i < 20; i++) {
-                    float d = dot(p, uHex[i]);
-                    if (d > m1) { m2 = m1; m1 = d; ehPent = 0.0; } else if (d > m2) { m2 = d; }
-                }
-                vec3 base = mix(uBranco, uEscuro, ehPent);
-                float costura = 1.0 - smoothstep(0.004, 0.012, m1 - m2);
-                base = mix(base, vec3(0.13, 0.15, 0.16), costura * (1.0 - ehPent) * 0.85);
-
-                vec3 N = normalize(vN); vec3 V = normalize(vVista); vec3 L = normalize(uLuz);
-                float dif = max(dot(N, L), 0.0);
-                vec3 H = normalize(L + V);
-                float brilho = pow(max(dot(N, H), 0.0), 40.0) * (1.0 - ehPent * 0.5);
-                float borda = pow(1.0 - max(dot(N, V), 0.0), 3.0);
-                vec3 cor = base * (0.28 + 0.82 * dif) + vec3(brilho * 0.35) + uBorda * borda * 0.35;
-                gl_FragColor = vec4(cor, 1.0);
-                #include <colorspace_fragment>
-            }`
-    });
-}
-
-function texturaGramado(THREE) {
-    const c = document.createElement('canvas'); c.width = 64; c.height = 512;
-    const g = c.getContext('2d');
-    const faixas = 8;
-    for (let i = 0; i < faixas; i++) {
-        g.fillStyle = i % 2 ? '#1c4a31' : '#205538';
-        g.fillRect(0, i * c.height / faixas, c.width, c.height / faixas);
-    }
-    const t = new THREE.CanvasTexture(c);
-    t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.anisotropy = 4;
-    return t;
-}
-
-function texturaSombra(THREE) {
-    const c = document.createElement('canvas'); c.width = c.height = 128;
-    const g = c.getContext('2d');
-    const gr = g.createRadialGradient(64, 64, 4, 64, 64, 62);
-    gr.addColorStop(0, 'rgba(0,0,0,0.6)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
-    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
-    return new THREE.CanvasTexture(c);
-}
-
-function cenaBola(THREE, el) {
-    const renderer = novoRenderer(THREE, el);
-    const cena = new THREE.Scene();
-    cena.fog = new THREE.Fog(0x0f1214, 5.5, 13);
-    const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
-    const alvo = new THREE.Vector3(0, 0.55, 0);
-
-    cena.add(new THREE.HemisphereLight(0xcfe9d8, 0x0f1214, 0.9));
-    const sol = new THREE.DirectionalLight(0xffffff, 1.4); sol.position.set(3, 6, 4); cena.add(sol);
-
-    // gramado (as faixas andam na direção da câmera = a bola rolando para frente)
-    const grama = texturaGramado(THREE);
-    const TAM = 30, REP = 6;   // 6 repetições de 8 faixas em 30 m
-    grama.repeat.set(1, REP);
-    const chao = new THREE.Mesh(new THREE.PlaneGeometry(TAM, TAM), new THREE.MeshLambertMaterial({ map: grama }));
-    chao.rotation.x = -Math.PI / 2; chao.position.z = -6;
-    cena.add(chao);
-
-    const sombra = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), new THREE.MeshBasicMaterial({ map: texturaSombra(THREE), transparent: true, depthWrite: false }));
-    sombra.rotation.x = -Math.PI / 2; sombra.position.y = 0.01;
-    cena.add(sombra);
-
-    const R = 0.55;
-    const giro = new THREE.Group(); giro.position.y = R; cena.add(giro);   // vira para o dedo
-    const bola = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), materialBola(THREE));
-    giro.add(bola);
-
-    // dedo / mouse: a bola e a câmera acompanham um pouco
-    let mx = 0, my = 0, ax = 0, ay = 0;
-    const mover = (x, y) => {
-        const r = el.getBoundingClientRect();
-        mx = Math.max(-1, Math.min(1, ((x - r.left) / r.width) * 2 - 1));
-        my = Math.max(-1, Math.min(1, ((y - r.top) / r.height) * 2 - 1));
-    };
-    addEventListener('pointermove', e => mover(e.clientX, e.clientY), { passive: true });
-
-    let largo = false;
-    ajustarTamanho(el, renderer, camera, (w) => { largo = w > 560; });
-
-    const VEL = 1.15;   // m/s
-    const { primeiro } = laco(el, renderer, (dt, t) => {
-        ax += (mx - ax) * Math.min(1, dt * 3); ay += (my - ay) * Math.min(1, dt * 3);
-        // rola: a bola gira em x e o gramado anda junto (sem escorregar)
-        bola.rotation.x += (VEL / R) * dt;
-        grama.offset.y -= VEL * dt * REP / TAM;
-        giro.rotation.y = ax * 0.6;
-        giro.position.y = R + Math.abs(Math.sin(t * 2.2)) * 0.035;   // quiquezinho do gramado
-        sombra.scale.setScalar(1 - (giro.position.y - R) * 2.2);
-        camera.position.set(ax * 0.5, 1.15 - ay * 0.18, largo ? 4.2 : 4.6);
-        camera.lookAt(alvo);
-        renderer.render(cena, camera);
-    });
-    primeiro();
 }
 
 // ---------------------------------------------------------------
@@ -335,12 +188,12 @@ function cenaSorteio(THREE, el) {
 
 (async () => {
     if (!temWebGL()) { raiz.classList.add('sem-3d'); return; }
-    let THREE;
-    try { THREE = await import(THREE_URL); } catch (e) { raiz.classList.add('sem-3d'); return; }
+    const THREE = await carregar();
+    if (!THREE) { raiz.classList.add('sem-3d'); return; }
     try {
         await (document.fonts && document.fonts.ready);   // a letra das fichas usa a Inter
         const bola = document.getElementById('palco-bola');
-        if (bola) cenaBola(THREE, bola);
+        if (bola) await bolaNoGramado(bola);
         const sorteio = document.getElementById('palco-sorteio');
         if (sorteio) cenaSorteio(THREE, sorteio);
         raiz.classList.add('com-3d');
