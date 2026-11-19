@@ -226,6 +226,16 @@
         ['auth-email', 'auth-password'].forEach(id => $(id)?.addEventListener('input', () => { const c = $(id).closest && $(id).closest('.campo-auth'); if (c) c.classList.remove('erro'); }));
         $('auth-email')?.addEventListener('blur', () => { const v = $('auth-email').value.trim(); if (v && !emailValido(v)) marcarErro('auth-email', false); });
         ligarEstadio();
+        // No APK (WebView) o Google não deixa entrar com a conta Google: esconde o botão e explica
+        if (/CabecaoApp\//.test(navigator.userAgent || '')) {
+            const g = $('btn-google-auth'), div = document.querySelector('.auth-divisor');
+            if (g) g.classList.add('hidden');
+            if (div) div.classList.add('hidden');
+            const nota = document.createElement('p');
+            nota.className = 'auth-termos';
+            nota.textContent = 'No app, entre com e-mail e senha. Criou a conta pelo Google? Digite o mesmo e-mail e toque em "Esqueci minha senha" para criar uma senha.';
+            const form = $('auth-form'); if (form) form.appendChild(nota);
+        }
         $('btn-google-auth').addEventListener('click', loginGoogle);
         $('btn-esqueci-senha').addEventListener('click', esqueciSenha);
         $('btn-ver-senha').addEventListener('click', () => {
