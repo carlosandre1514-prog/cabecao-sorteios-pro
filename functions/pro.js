@@ -5,7 +5,7 @@
 const crypto = require('crypto');
 
 const DIA = 24 * 60 * 60 * 1000;
-const DIAS_PLANO = { mensal: 31, anual: 366 };   // um dia de folga para o pagamento cair
+const DIAS_PLANO = { mensal: 31, trimestral: 92, anual: 366 };   // um dia de folga para o pagamento cair
 
 // novo vencimento: soma o período a partir de hoje, ou a partir do vencimento atual se ainda estiver valendo
 function novoVencimento(ateAtual, agora, plano) {
@@ -26,7 +26,8 @@ function lerReferencia(ref) {
 // preço do plano (configuracoes/monetizacao): anual | mensal
 function precoPlano(config, plano) {
     const c = config || {};
-    const v = Number(plano === 'anual' ? (c.preco_anual != null ? c.preco_anual : 59.9) : (c.preco_mensal != null ? c.preco_mensal : 9.9));
+    const padrao = { mensal: 9.9, trimestral: 24.9, anual: 59.9 };
+    const v = Number(c['preco_' + plano] != null ? c['preco_' + plano] : padrao[plano]);
     return Math.round(v * 100) / 100;
 }
 

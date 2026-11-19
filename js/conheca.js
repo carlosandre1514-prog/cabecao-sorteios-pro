@@ -16,7 +16,7 @@
         .then(r => (r.ok ? r.json() : null))
         .then(m => {
             if (!m || typeof m !== 'object') return;
-            const precos = { mensal: m.preco_mensal, anual: m.preco_anual };
+            const precos = { mensal: m.preco_mensal, trimestral: m.preco_trimestral, anual: m.preco_anual };
             document.querySelectorAll('[data-preco]').forEach(el => {
                 const v = Number(precos[el.dataset.preco]);
                 if (isFinite(v) && v > 0) el.textContent = reais(v);

@@ -814,3 +814,10 @@ body {
 .pagador .dica { margin: var(--e-3) 0 var(--e-4); }
 .pagador-erro { margin: var(--e-3) 0 0 !important; padding: 10px 12px; border-radius: var(--r-md); font-size: var(--t-sm);
     background: rgba(239, 107, 107, 0.1); border: 1px solid rgba(239, 107, 107, 0.35); color: #f3a0a0; }
+
+/* três planos lado a lado (anual, trimestral, mensal) */
+.planos.planos-3 { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.planos-3 .plano-opcao { padding: 18px 4px 10px; }
+.planos-3 .plano-preco { font-size: 1.05rem; }
+.planos-3 .plano-selo { font-size: 0.6rem; padding: 2px 7px; white-space: nowrap; }
+.planos-3 .plano-opcao small { font-size: 0.64rem; }

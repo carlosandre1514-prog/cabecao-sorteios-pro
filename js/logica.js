@@ -629,10 +629,12 @@
         return (n < 0 ? '−' : '') + 'R$ ' + int.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + dec;
     }
     // quanto o anual economiza em relação a 12 mensalidades (em %)
-    function economiaAnual(mensal, anual) {
-        mensal = Number(mensal) || 0; anual = Number(anual) || 0;
-        return mensal > 0 && anual > 0 ? Math.max(0, Math.round((1 - anual / (mensal * 12)) * 100)) : 0;
+    // quanto o plano de "meses" sai mais barato que pagar o mensal (em %, arredondado)
+    function economiaPlano(mensal, total, meses) {
+        mensal = Number(mensal) || 0; total = Number(total) || 0; meses = Number(meses) || 0;
+        return mensal > 0 && total > 0 && meses > 0 ? Math.max(0, Math.round((1 - total / (mensal * meses)) * 100)) : 0;
     }
+    function economiaAnual(mensal, anual) { return economiaPlano(mensal, anual, 12); }
 
     // ---------- Controle de caixa do racha ----------
     // caixa = { config: { mensalidade, diaria, vencimento (dia do mês) }, mensalistas: { idJogador: true },
@@ -705,7 +707,7 @@
         gravarNoCaminho, lerDoCaminho, diaISO, ultimosDias, resumirMetricas,
         nomeDaChave, resumoCampeonato, textoResumo, proximoTurno, resumirPresenca,
         normalizarNome, acharPorNome, CORES_RACHA, corRacha, hexParaRgb, textoListaWhatsApp,
-        crc16Pix, normalizarChavePix, montarPix, statusPlano, reais, economiaAnual,
+        crc16Pix, normalizarChavePix, montarPix, statusPlano, reais, economiaAnual, economiaPlano,
         mesISO, nomeMes, somarMes, resumoCaixa, textoCobrancaGrupo, textoCobrancaIndividual
     };
 });

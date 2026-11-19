@@ -3013,6 +3013,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const virgula = v => Number(v).toFixed(2).replace('.', ',');
             $('adm-mensal').value = virgula(m.preco_mensal != null ? m.preco_mensal : 9.9);
             $('adm-anual').value = virgula(m.preco_anual != null ? m.preco_anual : 59.9);
+            if ($('adm-trimestral')) $('adm-trimestral').value = virgula(m.preco_trimestral != null ? m.preco_trimestral : 24.9);
             $('adm-teste').value = m.dias_teste != null ? m.dias_teste : 7;
             $('adm-lim-jog').value = m.limite_jogadores_gratis != null ? m.limite_jogadores_gratis : 25;
             $('adm-lim-hist').value = m.limite_historico_gratis != null ? m.limite_historico_gratis : 3;
@@ -3038,6 +3039,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const mon = {
                 ativo: $('adm-ativo').checked,
                 preco_mensal: num('adm-mensal', 9.9), preco_anual: num('adm-anual', 59.9),
+                preco_trimestral: $('adm-trimestral') ? num('adm-trimestral', 24.9) : undefined,
                 dias_teste: Math.round(num('adm-teste', 7)),
                 limite_jogadores_gratis: Math.max(1, Math.round(num('adm-lim-jog', 25))),
                 limite_historico_gratis: Math.round(num('adm-lim-hist', 3)),
@@ -3083,7 +3085,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // renovação soma ao que ainda falta, igual ao pagamento automático
             const base = Math.max(Date.now(), atual && atual.ativo && atual.ate ? Number(atual.ate) : 0);
             const dados = { ativo: true, plano, origem: 'manual' };
-            if (plano !== 'vitalicio') dados.ate = base + (plano === 'anual' ? 366 : 31) * DIA_MS;
+            if (plano !== 'vitalicio') dados.ate = base + ({ anual: 366, trimestral: 92 }[plano] || 31) * DIA_MS;
             const ok = await mostrarConfirmacao(`O usuário ${uid.slice(0, 8)}… fica Pro ${dados.ate ? 'até ' + new Date(dados.ate).toLocaleDateString('pt-BR') : 'sem prazo'}.`, 'Liberar o Pro?', { ok: 'Liberar' });
             if (!ok) return;
             try {
@@ -3092,7 +3094,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 toast('Pro liberado. Aparece na hora para a pessoa.');
                 // painel de métricas: assinatura confirmada (o valor é o preço do plano salvo aqui no painel)
                 if (window.Painel) {
-                    const valor = plano === 'mensal' ? num('adm-mensal', 9.9) : num('adm-anual', 59.9);
+                    const valor = plano === 'mensal' ? num('adm-mensal', 9.9) : plano === 'trimestral' ? num('adm-trimestral', 24.9) : num('adm-anual', 59.9);
                     const renovou = !!(atual && atual.ativo && (!atual.ate || Number(atual.ate) > Date.now()));
                     Painel.ev('assinatura', { plano, valor, status: renovou ? 'renovada' : 'ativa', origem: 'manual',
                         expira_em: dados.ate ? new Date(dados.ate).toISOString() : undefined }, { usuario: uid });

@@ -26,7 +26,8 @@ const BANCO = 'https://studio-7737408264-35a36-default-rtdb.firebaseio.com';
 const PAINEL_URL = 'https://pxtxcbqqbjtmsmwbcise.supabase.co/rest/v1/rpc/painel_enviar';
 const PAINEL_APIKEY = 'sb_publishable_URNeHmQn-EuIyqXbkbMSag_gWTtX2rf';
 const DIA = 24 * 60 * 60 * 1000;
-const DIAS_PLANO = { mensal: 31, anual: 366 };   // um dia de folga para o pagamento cair
+const DIAS_PLANO = { mensal: 31, trimestral: 92, anual: 366 };   // um dia de folga para o pagamento cair
+const PRECO_PADRAO = { mensal: 9.9, trimestral: 24.9, anual: 59.9 };
 const PAGO = new Set(['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH']);
 
 // ---------------------------------------------------------------- regras (puras)
@@ -37,7 +38,7 @@ export function novoVencimento(ateAtual, agora, plano) {
 }
 export function precoPlano(config, plano) {
     const c = config || {};
-    const v = Number(plano === 'anual' ? (c.preco_anual != null ? c.preco_anual : 59.9) : (c.preco_mensal != null ? c.preco_mensal : 9.9));
+    const v = Number(c['preco_' + plano] != null ? c['preco_' + plano] : PRECO_PADRAO[plano]);
     return Math.round(v * 100) / 100;
 }
 export function lerReferencia(ref) {
@@ -152,7 +153,7 @@ async function checkout(req, env, buscar) {
     const uid = await uidDoToken(token, PROJETO, Date.now(), buscar);
     if (!uid) return json({ erro: 'Entre na sua conta de novo.' }, 401, CORS);
     const corpo = await req.json().catch(() => ({}));
-    const plano = corpo.plano === 'anual' ? 'anual' : corpo.plano === 'mensal' ? 'mensal' : null;
+    const plano = DIAS_PLANO[corpo.plano] ? String(corpo.plano) : null;
     if (!plano) return json({ erro: 'plano inválido' }, 400, CORS);
 
     const config = await (await buscar(`${BANCO}/configuracoes/monetizacao.json`)).json().catch(() => ({})) || {};

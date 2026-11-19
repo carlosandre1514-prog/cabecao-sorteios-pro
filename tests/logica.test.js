@@ -363,6 +363,8 @@ t('plano Pro: assinatura, teste grátis de 7 dias e economia do anual', () => {
     assert.ok(!L.statusPlano({ ativo: true, ate: agora - 1 }, null, agora, 7).pro);  // assinatura vencida
     assert.ok(L.statusPlano({ ativo: true }, null, agora, 7).pro);                    // vitalício
     assert.strictEqual(L.economiaAnual(9.9, 59.9), 50);
+    assert.strictEqual(L.economiaPlano(9.9, 24.9, 3), 16);   // trimestral: 3 x 9,90 = 29,70
+    assert.strictEqual(L.economiaPlano(0, 24.9, 3), 0);
     assert.strictEqual(L.reais(59.9), 'R$ 59,90');
 });
 
