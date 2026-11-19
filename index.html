@@ -8,8 +8,8 @@
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0f1214">
     <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="css/style.css?v=be2eb97135">
-    <link rel="stylesheet" href="css/base.css?v=be2eb97135">
+    <link rel="stylesheet" href="css/style.css?v=00ed66bcfb">
+    <link rel="stylesheet" href="css/base.css?v=00ed66bcfb">
 </head>
 <body data-aba="tab-jogadores">
     <!-- ÍCONES (um traço só, 24px). Uso: <svg class="i"><use href="#i-nome"/></svg> -->
@@ -295,10 +295,10 @@
                     <div class="campo"><label for="adm-url">Endereço público do app</label><input type="text" id="adm-url" inputmode="url"><span class="dica">Os links da lista de presença e do placar ao vivo usam este endereço.</span></div>
                     <div class="campo"><label for="adm-link">Botão "Criar meu racha grátis"</label><input type="text" id="adm-link" inputmode="url" placeholder="Link da Play Store"><span class="dica">Aparece para quem abre a lista ou o placar ao vivo.</span></div>
                     <p class="lista-rotulo" style="margin-top:16px;">Dados do responsável (aparecem nos Termos e na Privacidade)</p>
-                    <p class="dica">A lei do comércio eletrônico (Decreto 7.962/2013) pede o nome, o CPF ou CNPJ, o endereço e um contato de quem vende. Com MEI, use o CNPJ e o endereço do MEI e não exponha o seu CPF.</p>
+                    <p class="dica">A lei do comércio eletrônico (Decreto 7.962/2013) pede o nome, o CPF ou CNPJ, o endereço e um contato de quem vende. Sem empresa ainda? Preencha o nome, a cidade/UF no campo do nome e o e-mail; quando abrir a empresa, coloque o CNPJ e o endereço comercial.</p>
                     <div class="campo"><label for="adm-legal-nome">Nome ou razão social</label><input type="text" id="adm-legal-nome" maxlength="120" autocomplete="off"></div>
-                    <div class="campo"><label for="adm-legal-doc">CNPJ (ou CPF)</label><input type="text" id="adm-legal-doc" maxlength="20" inputmode="numeric" autocomplete="off"></div>
-                    <div class="campo"><label for="adm-legal-end">Endereço</label><input type="text" id="adm-legal-end" maxlength="200" autocomplete="off" placeholder="Rua, número, cidade/UF, CEP"></div>
+                    <div class="campo"><label for="adm-legal-doc">CNPJ (deixe em branco se ainda não tem empresa)</label><input type="text" id="adm-legal-doc" maxlength="20" inputmode="numeric" autocomplete="off"></div>
+                    <div class="campo"><label for="adm-legal-end">Endereço (deixe em branco se ainda não tem empresa)</label><input type="text" id="adm-legal-end" maxlength="200" autocomplete="off" placeholder="Rua, número, cidade/UF, CEP"></div>
                     <div class="campo"><label for="adm-legal-email">E-mail de contato e de privacidade</label><input type="email" id="adm-legal-email" maxlength="120" autocomplete="off"><span class="dica">Pode ser um e-mail só do app (ex.: contato.cabecao@...). Ele fica público nas páginas legais.</span></div>
                 </div>
                 <button type="submit" class="btn btn-primary" id="adm-salvar">Salvar configurações</button>
@@ -726,17 +726,17 @@
     </script>
     <!-- ordem importa: logica -> remoto -> auth -> app -> monetizacao -->
     <link rel="modulepreload" href="js/vendor/three.module.min.js">
-    <script type="module" src="js/futebol3d.js?v=be2eb97135"></script>
-    <script src="js/painel.js?v=be2eb97135"></script>
-    <script src="js/logica.js?v=be2eb97135"></script>
-    <script src="js/ui.js?v=be2eb97135"></script>
-    <script src="js/apito.js?v=be2eb97135"></script>
-    <script src="js/remoto.js?v=be2eb97135"></script>
-    <script src="js/auth.js?v=be2eb97135"></script>
-    <script src="js/app.js?v=be2eb97135"></script>
-    <script src="js/monetizacao.js?v=be2eb97135"></script>
-    <script src="js/metricas.js?v=be2eb97135"></script>
-    <script src="js/imagem-times.js?v=be2eb97135"></script>
+    <script type="module" src="js/futebol3d.js?v=00ed66bcfb"></script>
+    <script src="js/painel.js?v=00ed66bcfb"></script>
+    <script src="js/logica.js?v=00ed66bcfb"></script>
+    <script src="js/ui.js?v=00ed66bcfb"></script>
+    <script src="js/apito.js?v=00ed66bcfb"></script>
+    <script src="js/remoto.js?v=00ed66bcfb"></script>
+    <script src="js/auth.js?v=00ed66bcfb"></script>
+    <script src="js/app.js?v=00ed66bcfb"></script>
+    <script src="js/monetizacao.js?v=00ed66bcfb"></script>
+    <script src="js/metricas.js?v=00ed66bcfb"></script>
+    <script src="js/imagem-times.js?v=00ed66bcfb"></script>
     <script>
         // Funciona sem internet: guarda o app no aparelho (sw.js)
         if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {

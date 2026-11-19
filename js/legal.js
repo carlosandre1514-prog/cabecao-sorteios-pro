@@ -3,7 +3,12 @@
 (function () {
     const BANCO = 'https://studio-7737408264-35a36-default-rtdb.firebaseio.com';
     const campos = document.querySelectorAll('[data-legal]');
-    const pendente = (el) => { if (!el.textContent.trim()) { el.textContent = '(a preencher pelo responsável)'; el.classList.add('vazio-legal'); } };
+    // CNPJ e endereço são opcionais enquanto o app é vendido como pessoa física: em branco, a linha some
+    const pendente = (el) => {
+        const op = el.closest('[data-legal-opcional]');
+        if (op) { op.hidden = true; return; }
+        if (!el.textContent.trim()) { el.textContent = '(a preencher pelo responsável)'; el.classList.add('vazio-legal'); }
+    };
     fetch(BANCO + '/configuracoes/legal.json')
         .then((r) => (r.ok ? r.json() : null))
         .then((l) => {
