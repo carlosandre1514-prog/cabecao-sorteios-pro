@@ -280,7 +280,7 @@
             if (temCompra) {
                 h += htmlPlanos();
                 h += `<button class="btn ${podeTestar() ? 'btn-secondary' : 'btn-primary'}" data-acao-pro="assinar">Assinar plano ${planoEscolhido}</button>
-                    <p class="pro-sem-cartao">${urlSegura(config.checkout_api) ? 'Pix ou cartão de crédito, em página segura. O Pro libera sozinho quando o pagamento entra.' : 'Pix ou cartão. Depois do pagamento o Pro é liberado.'}</p>`;
+                    <p class="pro-sem-cartao">${urlSegura(config.checkout_api) ? 'Pix ou cartão de crédito, em página segura. O Pro libera sozinho quando o pagamento entra. Pagamento único por período, sem renovação automática. Desistiu em até 7 dias? Devolvemos tudo.' : 'Pix ou cartão. Depois do pagamento o Pro é liberado. Sem renovação automática; desistiu em até 7 dias, devolvemos tudo.'}</p>`;
             }
             if (config.chave_pix && !urlSegura(config.checkout_api)) {
                 h += `<details class="pro-pix-det"><summary>Prefere Pix direto?</summary><div class="pro-pix">
