@@ -132,7 +132,7 @@
     }
 
     // Resultado do sorteio (painel): um card por time, nível médio e goleiro em destaque
-    const CORES_TIMES = ['#2da762', '#e3b341', '#4f8fe0', '#ef6b6b', '#a66be0', '#e08a3c', '#3cc4c4', '#c9cfd3'];
+    const CORES_TIMES = ['#14b551', '#f6b90c', '#4f8fe0', '#ef6b6b', '#a66be0', '#e08a3c', '#3cc4c4', '#c9cfd3'];
     function exibirTimesSorteados() {
         const container = document.getElementById('times-sorteados-container');
         if (!container) return;

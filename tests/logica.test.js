@@ -310,7 +310,7 @@ t('pagamento: jogador diz "já paguei" -> a confirmar (não conta como atrasado)
 
 t('cara do racha: cores e mensagem da lista para o WhatsApp', () => {
     assert.strictEqual(L.corRacha('azul').b, '#2f6fd6');
-    assert.strictEqual(L.corRacha('inexistente').b, '#2da762');
+    assert.strictEqual(L.corRacha('inexistente').b, '#14b551');
     assert.strictEqual(L.hexParaRgb('#2da762'), '45, 167, 98');
     const js = [{ id: '1', nome: 'Ana' }, { id: '2', nome: 'Bia', g: true }, { id: '3', nome: 'Caio' }, { id: '4', nome: 'Duda' }];
     const d = { visual: { nome: 'Pelada do Zé' }, quando: 'Sexta 20h', times: 2, porTime: 1, limite: 2, vagasGoleiro: 2, pagamento: 'R$ 15 no Pix', prazo: 1,

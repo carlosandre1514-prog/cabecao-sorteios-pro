@@ -507,7 +507,7 @@
     // ---------- Cara do racha (🎨 Personalizar): cores ----------
     // a = cor de destaque (textos/realces), b = cor forte (botões). A chave é o que fica salvo.
     const CORES_RACHA = {
-        verde: { nome: 'Verde', a: '#93d54b', b: '#2da762' },
+        verde: { nome: 'Verde', a: '#7fe04a', b: '#14b551' },
         azul: { nome: 'Azul', a: '#6cb8ff', b: '#2f6fd6' },
         vermelho: { nome: 'Vermelho', a: '#ff7a7a', b: '#d13b47' },
         laranja: { nome: 'Laranja', a: '#ffb057', b: '#e0702a' },

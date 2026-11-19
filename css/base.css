@@ -27,7 +27,7 @@
     --c-texto-3: #6e777d;
 
     /* status (a cor de destaque é a do racha: --neon / --verde) */
-    --c-ouro: #e3b341;
+    --c-ouro: #f6b90c;
     --c-perigo: #ef6b6b;
     --c-destaque: var(--neon);
     --c-destaque-forte: var(--verde);
@@ -308,7 +308,7 @@ body.com-sheet .barra-acao { display: none !important; }
 .lp-pag .vencido { color: var(--c-perigo); }
 .aviso-faixa { display: flex; align-items: center; justify-content: space-between; gap: var(--e-2); flex-wrap: wrap; margin-top: var(--e-3); padding: 10px 12px; border-radius: var(--r-md); font-size: var(--t-sm); line-height: 1.4; }
 .aviso-faixa.perigo { background: rgba(239, 107, 107, 0.08); border: 1px solid rgba(239, 107, 107, 0.3); color: #f3a0a0; }
-.aviso-faixa.ouro { background: rgba(227, 179, 65, 0.08); border: 1px solid rgba(227, 179, 65, 0.3); color: #e9c76d; }
+.aviso-faixa.ouro { background: rgba(246, 185, 12, 0.08); border: 1px solid rgba(246, 185, 12, 0.3); color: #e9c76d; }
 .aviso-faixa .btn-texto { padding: 0; }
 .link-linha input { margin-top: var(--e-3); font-size: var(--t-sm); color: var(--c-texto-2); }
 .presenca-numeros > div { background: var(--c-sup-2); border-color: var(--c-linha); border-radius: var(--r-md); }
@@ -319,9 +319,9 @@ body.com-sheet .barra-acao { display: none !important; }
 .presenca-gestao summary span { color: var(--c-texto-3); }
 .btn-pag { background: var(--c-sup-3); color: var(--c-texto-2); border-color: var(--c-linha); }
 .btn-pag.pago { background: rgba(var(--verde-rgb), 0.14); border-color: rgba(var(--verde-rgb), 0.45); color: var(--c-destaque); }
-.btn-pag.aconfirmar { background: rgba(227, 179, 65, 0.12); border-color: rgba(227, 179, 65, 0.5); color: var(--c-ouro); }
+.btn-pag.aconfirmar { background: rgba(246, 185, 12, 0.12); border-color: rgba(246, 185, 12, 0.5); color: var(--c-ouro); }
 .btn-tirar { width: 30px; height: 30px; border-color: var(--c-linha); }
-.presenca-pedidos { border-color: rgba(227, 179, 65, 0.35); border-radius: var(--r-md); }
+.presenca-pedidos { border-color: rgba(246, 185, 12, 0.35); border-radius: var(--r-md); }
 .bc-valor { white-space: nowrap; }
 
 /* ---------- Jogo ---------- */
@@ -357,7 +357,7 @@ body.com-sheet .barra-acao { display: none !important; }
 .step-btn { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; background: var(--c-sup-3); border: 1px solid var(--c-linha); color: var(--c-texto); padding: 0; }
 .step-mais { background: var(--c-destaque-forte); border-color: transparent; color: #fff; box-shadow: none; }
 .step-btn .i { width: 16px; height: 16px; }
-.penaltis-box { background: rgba(227, 179, 65, 0.06); border: 1px solid rgba(227, 179, 65, 0.3); border-radius: var(--r-md); padding: var(--e-3); margin-bottom: var(--e-3); }
+.penaltis-box { background: rgba(246, 185, 12, 0.06); border: 1px solid rgba(246, 185, 12, 0.3); border-radius: var(--r-md); padding: var(--e-3); margin-bottom: var(--e-3); }
 .penaltis-box .rotulo { color: var(--c-ouro); margin-bottom: var(--e-2); display: block; }
 .penaltis-linha { display: grid; grid-template-columns: 1fr 56px auto 56px 1fr; gap: 6px; align-items: center; }
 .penaltis-linha label { font-size: var(--t-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -410,34 +410,34 @@ body.com-sheet .barra-acao { display: none !important; }
 .pro-modal { position: relative; max-width: 560px; width: 100%; max-height: 92vh; border: 1px solid var(--c-linha-forte); border-bottom: 0; border-radius: var(--r-xl) var(--r-xl) 0 0;
     background: var(--c-sup-1); box-shadow: var(--sombra-painel); padding: var(--e-6) var(--e-5) calc(var(--e-6) + env(safe-area-inset-bottom)); animation: sobe .26s cubic-bezier(.2, .8, .2, 1); text-align: center; }
 .pro-close { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 50%; background: var(--c-sup-2); border: 0; color: var(--c-texto); }
-.pro-badge-topo { background: linear-gradient(135deg, #f0d27a, var(--c-ouro)); color: #231b05; font-size: var(--t-xs); font-weight: 800; letter-spacing: 1px; padding: 4px 12px; box-shadow: none; }
+.pro-badge-topo { background: linear-gradient(135deg, #ffd45a, var(--c-ouro)); color: #231b05; font-size: var(--t-xs); font-weight: 800; letter-spacing: 1px; padding: 4px 12px; box-shadow: none; }
 .pro-modal h2 { font-size: var(--t-xl); font-weight: 700; letter-spacing: -0.4px; justify-content: center; margin-top: var(--e-2); }
 .pro-beneficios { gap: 0; margin: var(--e-4) 0 var(--e-5); background: var(--c-sup-2); border: 1px solid var(--c-linha); border-radius: var(--r-md); }
 .pro-beneficios li { display: flex; gap: var(--e-3); align-items: flex-start; background: none; border: 0; border-bottom: 1px solid var(--c-linha); border-radius: 0; padding: 11px var(--e-3); font-size: var(--t-sm); color: var(--c-texto-2); }
 .pro-beneficios li:last-child { border-bottom: 0; }
 .pro-beneficios li .i { color: var(--c-ouro); margin-top: 1px; }
 .pro-beneficios strong { color: var(--c-texto); }
-.btn-teste { background: linear-gradient(135deg, #f0d27a, var(--c-ouro)); color: #231b05; }
+.btn-teste { background: linear-gradient(135deg, #ffd45a, var(--c-ouro)); color: #231b05; }
 .plano-opcao { background: var(--c-sup-2); border: 1.5px solid var(--c-linha); }
-.plano-opcao.on { border-color: var(--c-ouro); background: rgba(227, 179, 65, 0.06); }
+.plano-opcao.on { border-color: var(--c-ouro); background: rgba(246, 185, 12, 0.06); }
 .plano-selo { background: var(--c-ouro); color: #231b05; }
 .pro-ok, .pro-teste-ativo { background: var(--c-sup-2); border: 1px solid var(--c-linha); color: var(--c-texto-2); }
 .pro-pix { background: var(--c-sup-2); border-color: var(--c-linha); }
 .pro-pix code { color: var(--c-texto); }
 .plano-status { background: var(--c-sup-2) !important; border: 1px solid var(--c-linha) !important; color: var(--c-texto) !important; font-weight: 650; box-shadow: none !important; text-shadow: none !important; }
-.plano-pro { border-color: rgba(227, 179, 65, 0.5) !important; color: var(--c-ouro) !important; }
+.plano-pro { border-color: rgba(246, 185, 12, 0.5) !important; color: var(--c-ouro) !important; }
 
 /* ---------- Histórico, detalhe e ranking ---------- */
 #tab-historico, #tab-ranking, #tab-hist-detalhe, #conteudo-hist-detalhe { gap: var(--e-3); }
 #conteudo-hist-detalhe { display: flex; flex-direction: column; }
 #container-historico { display: flex; flex-direction: column; gap: var(--e-2); }
 .card-hist { margin: 0; background: var(--c-sup-1); }
-.hist-ic { background: rgba(227, 179, 65, 0.1); border-color: rgba(227, 179, 65, 0.25); color: var(--c-ouro); }
+.hist-ic { background: rgba(246, 185, 12, 0.1); border-color: rgba(246, 185, 12, 0.25); color: var(--c-ouro); }
 .hist-txt span { letter-spacing: 0.4px; }
 .hist-abrir { color: var(--c-texto-2); font-weight: 600; }
 .card-bloqueado { text-align: center; cursor: pointer; }
 .campeao-card { display: flex; align-items: center; gap: var(--e-4); }
-.campeao-ic { width: 52px; height: 52px; border-radius: var(--r-md); display: grid; place-items: center; flex: none; background: rgba(227, 179, 65, 0.12); color: var(--c-ouro); }
+.campeao-ic { width: 52px; height: 52px; border-radius: var(--r-md); display: grid; place-items: center; flex: none; background: rgba(246, 185, 12, 0.12); color: var(--c-ouro); }
 .campeao-ic .i { width: 26px; height: 26px; }
 .campeao-txt { display: flex; flex-direction: column; min-width: 0; }
 .campeao-txt .rotulo { color: var(--c-ouro); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.6px; }
@@ -515,12 +515,12 @@ body.com-sheet .barra-acao { display: none !important; }
    ========================================================= */
 
 /* ---------- Abertura ---------- */
-.splash { background: radial-gradient(70% 45% at 50% 42%, rgba(45, 167, 98, 0.16), transparent 70%), var(--c-fundo); }
+.splash { background: radial-gradient(70% 45% at 50% 42%, rgba(20, 181, 81, 0.16), transparent 70%), var(--c-fundo); }
 .splash-3d { display: none; width: min(78vw, 300px); height: min(62vw, 240px); margin-bottom: -18px; }
 .splash-3d canvas { width: 100% !important; height: 100% !important; display: block;
     -webkit-mask-image: radial-gradient(closest-side, #000 70%, transparent); mask-image: radial-gradient(closest-side, #000 70%, transparent); }
 .splash-nome { display: none; font-size: var(--t-xl); font-weight: 750; letter-spacing: -0.5px; color: var(--c-texto); }
-.splash-nome span { color: #2da762; }
+.splash-nome span { color: #14b551; }
 .splash.com-3d .splash-3d { display: block; }
 .splash.com-3d img { display: none; }
 .splash.com-3d .splash-nome { display: block; animation: f3dSobe 0.5s 0.9s ease both; }
@@ -545,7 +545,7 @@ body.com-sheet .barra-acao { display: none !important; }
     padding: max(28px, env(safe-area-inset-top)) var(--e-6) var(--e-4); animation: telaEntra 0.5s ease both; }
 .auth-screen .auth-logo { width: 58px; height: 58px; border-radius: 16px; margin: 0 0 10px; border: 0; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); }
 .auth-marca { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55); }
-.auth-marca span { color: #2da762; }
+.auth-marca span { color: #14b551; }
 .auth-slogan { margin-top: 6px; color: rgba(238, 241, 243, 0.78); font-size: var(--t-sm); text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6); }
 
 .auth-screen .auth-card {
@@ -565,7 +565,7 @@ body.com-sheet .barra-acao { display: none !important; }
 .auth-abas { position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--c-linha); }
 .auth-abas button { position: relative; z-index: 1; height: 40px; border: 0; background: none; color: var(--c-texto-2); font-weight: 650; font-size: var(--t-md); border-radius: 10px; cursor: pointer; transition: color .2s; }
 .auth-abas button.ativa { color: #08130d; }
-.auth-abas-marcador { position: absolute; z-index: 0; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 10px; background: #2da762; box-shadow: 0 4px 14px rgba(45, 167, 98, 0.35); transition: transform .3s cubic-bezier(.2, .8, .2, 1); }
+.auth-abas-marcador { position: absolute; z-index: 0; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 10px; background: #14b551; box-shadow: 0 4px 14px rgba(20, 181, 81, 0.35); transition: transform .3s cubic-bezier(.2, .8, .2, 1); }
 .modo-criar .auth-abas-marcador { transform: translateX(100%); }
 .auth-sub { margin: var(--e-4) 2px 0; color: var(--c-texto-2); font-size: var(--t-sm); }
 
@@ -574,8 +574,8 @@ body.com-sheet .barra-acao { display: none !important; }
     border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--c-linha-forte); transition: border-color .2s, background .2s, box-shadow .2s; }
 .campo-auth > .i { color: var(--c-texto-3); transition: color .2s; }
 .campo-auth input { flex: 1; min-width: 0; height: 100%; border: 0 !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; color: var(--c-texto); font-size: 16px; outline: none; }
-.campo-auth:focus-within { border-color: #2da762; background: rgba(45, 167, 98, 0.06); box-shadow: 0 0 0 3px rgba(45, 167, 98, 0.18); }
-.campo-auth:focus-within > .i { color: #2da762; }
+.campo-auth:focus-within { border-color: #14b551; background: rgba(20, 181, 81, 0.06); box-shadow: 0 0 0 3px rgba(20, 181, 81, 0.18); }
+.campo-auth:focus-within > .i { color: #14b551; }
 .campo-auth.erro { border-color: var(--c-perigo); box-shadow: 0 0 0 3px rgba(239, 107, 107, 0.16); animation: f3dTreme .35s; }
 @keyframes f3dTreme { 25% { transform: translateX(-5px); } 50% { transform: translateX(4px); } 75% { transform: translateX(-2px); } }
 .campo-auth .btn-olho { position: static; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; color: var(--c-texto-2); }
@@ -588,10 +588,10 @@ body.com-sheet .barra-acao { display: none !important; }
 .forca-senha[data-nivel="0"] i:nth-child(1) { background: var(--c-perigo); }
 .forca-senha[data-nivel="1"] i:nth-child(-n+1) { background: var(--c-ouro); }
 .forca-senha[data-nivel="2"] i:nth-child(-n+2) { background: #7cc58f; }
-.forca-senha[data-nivel="3"] i { background: #2da762; }
+.forca-senha[data-nivel="3"] i { background: #14b551; }
 
 .auth-screen .link-discreto { align-self: flex-end; text-decoration: none; color: var(--c-texto-2); font-size: var(--t-sm); padding: 2px; }
-.btn-auth { height: 52px; border-radius: 14px; font-size: var(--t-lg); font-weight: 700; background: #2da762; color: #08130d; box-shadow: 0 8px 24px rgba(45, 167, 98, 0.28); }
+.btn-auth { height: 52px; border-radius: 14px; font-size: var(--t-lg); font-weight: 700; background: #14b551; color: #08130d; box-shadow: 0 8px 24px rgba(20, 181, 81, 0.28); }
 .btn-auth[aria-busy="true"], .btn-google[aria-busy="true"] { color: transparent !important; position: relative; }
 .btn-auth[aria-busy="true"]::after, .btn-google[aria-busy="true"]::after {
     content: ''; position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%;
@@ -621,14 +621,14 @@ body.com-sheet .barra-acao { display: none !important; }
 .f3d-palco canvas { width: 100% !important; height: 100% !important; display: block; }
 .f3d-texto { position: absolute; left: 0; right: 0; bottom: max(14vh, 90px); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; pointer-events: none; padding: 0 var(--e-6); }
 .f3d-texto-alto { bottom: auto; top: max(9vh, 56px); }
-.f3d-texto b { font-size: clamp(44px, 15vw, 96px); font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #fff; text-shadow: 0 6px 40px rgba(45, 167, 98, 0.6); }
+.f3d-texto b { font-size: clamp(44px, 15vw, 96px); font-weight: 900; letter-spacing: -0.04em; line-height: 1; color: #fff; text-shadow: 0 6px 40px rgba(20, 181, 81, 0.6); }
 .f3d-texto span { font-size: var(--t-lg); color: rgba(238, 241, 243, 0.85); font-weight: 600; }
 .f3d-texto small { font-size: var(--t-sm); letter-spacing: 0.2em; font-weight: 750; color: var(--c-ouro); }
 .f3d-gol .f3d-texto { opacity: 0; transform: scale(0.6); }
 .f3d-gol.f3d-marcou .f3d-texto { animation: f3dGol .6s cubic-bezier(.2, 1.6, .4, 1) forwards; }
 @keyframes f3dGol { to { opacity: 1; transform: none; } }
 .f3d-campeao .f3d-texto { bottom: max(10vh, 70px); animation: f3dSobe .6s .5s ease both; }
-.f3d-campeao .f3d-texto b { font-size: clamp(34px, 10vw, 64px); text-shadow: 0 6px 40px rgba(227, 179, 65, 0.5); }
+.f3d-campeao .f3d-texto b { font-size: clamp(34px, 10vw, 64px); text-shadow: 0 6px 40px rgba(246, 185, 12, 0.5); }
 .f3d-sorteio .f3d-texto span { font-size: var(--t-md); color: var(--c-texto-2); }
 .f3d-pular { position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px; height: 36px; padding: 0 14px; border-radius: 99px;
     border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(0, 0, 0, 0.35); color: var(--c-texto); font-weight: 600; font-size: var(--t-sm); cursor: pointer; }
@@ -639,7 +639,7 @@ body.com-sheet .barra-acao { display: none !important; }
    então a personalização de cor do organizador vale aqui também.
    ========================================================= */
 :root {
-    --ouro-claro: #f3d27a;
+    --ouro-claro: #ffd45a;
     --gramado-1: rgba(var(--verde-rgb), 0.10);
     --vidro: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
     --borda-vidro: rgba(255, 255, 255, 0.075);
@@ -689,14 +689,14 @@ body {
         linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0.10));
     color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
     border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 8px 20px rgba(var(--verde-rgb), 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    box-shadow: 0 8px 22px rgba(var(--verde-rgb), 0.45), 0 0 0 1px rgba(var(--verde-rgb), 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 .btn-primary:active, .btn-success:active, .fab:active { box-shadow: 0 3px 10px rgba(var(--verde-rgb), 0.3), inset 0 2px 6px rgba(0, 0, 0, 0.25); filter: brightness(0.96); }
 .btn-secondary { background: var(--vidro), var(--c-sup-2); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05); }
 .btn-secondary:active { background: var(--c-sup-3); }
 .btn-danger { border-style: dashed; }
 .icon-btn { background: var(--vidro), var(--c-sup-1); border-color: rgba(255, 255, 255, 0.09); border-radius: 12px; }
-.btn-teste, .btn-pix { background: linear-gradient(180deg, var(--ouro-claro), var(--c-ouro)); color: #231b05; box-shadow: 0 8px 20px rgba(227, 179, 65, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.45); border: 0; }
+.btn-teste, .btn-pix { background: linear-gradient(180deg, var(--ouro-claro), var(--c-ouro)); color: #231b05; box-shadow: 0 8px 20px rgba(246, 185, 12, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.45); border: 0; }
 
 /* botão flutuante com brilho pulsando de leve */
 .fab { border-radius: 99px; height: 54px; padding: 0 22px 0 18px; }
@@ -714,7 +714,13 @@ body {
 .lista-item:active { background: rgba(var(--verde-rgb), 0.07); }
 .lista-item:active::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: var(--c-destaque); }
 .av { box-shadow: 0 0 0 2px var(--c-sup-1), 0 0 0 3px rgba(255, 255, 255, 0.12), 0 4px 10px rgba(0, 0, 0, 0.3); }
-.nivel { padding: 3px 9px 3px 7px; border-radius: 99px; background: rgba(227, 179, 65, 0.1); border: 1px solid rgba(227, 179, 65, 0.22); color: var(--ouro-claro); }
+/* nível do jogador: selo dourado translúcido; a estrela e o número em dourado puro */
+.nivel { padding: 3px 10px 3px 8px; border-radius: 99px; font-weight: 750;
+    background: linear-gradient(180deg, rgba(246, 185, 12, 0.24), rgba(246, 185, 12, 0.12));
+    border: 1px solid rgba(246, 185, 12, 0.55); color: var(--c-ouro); box-shadow: 0 0 12px rgba(246, 185, 12, 0.15); }
+.nivel .i, .nivel-txt .i, .stepper .valor .i { color: var(--c-ouro); fill: currentColor; }
+.nivel-txt { color: var(--c-ouro); font-weight: 650; }
+.tc-nivel { color: var(--c-ouro); font-weight: 650; }
 .switch { background: rgba(255, 255, 255, 0.1); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4); }
 .switch::after { background: radial-gradient(circle at 35% 30%, #fff, #dfe4e7); }
 .chk-presenca:checked + .lbl-presenca .switch { background: linear-gradient(180deg, var(--c-destaque), var(--c-destaque-forte)); box-shadow: 0 0 12px rgba(var(--verde-rgb), 0.45); }
@@ -775,8 +781,8 @@ body {
 .step-mais { border-radius: 50%; }
 .time-placar select { background: var(--vidro), var(--c-sup-3); border-color: rgba(255, 255, 255, 0.1); border-radius: 12px; }
 .jogo-placar { background: #0b0e10; border: 1px solid rgba(255, 255, 255, 0.08); color: #fff; }
-.tabela-classificacao tbody tr:first-child { background: linear-gradient(90deg, rgba(227, 179, 65, 0.12), transparent 70%); }
-.art-linha:first-child .art-gols { color: var(--ouro-claro); text-shadow: 0 0 12px rgba(227, 179, 65, 0.4); }
+.tabela-classificacao tbody tr:first-child { background: linear-gradient(90deg, rgba(246, 185, 12, 0.12), transparent 70%); }
+.art-linha:first-child .art-gols { color: var(--ouro-claro); text-shadow: 0 0 12px rgba(246, 185, 12, 0.4); }
 
 /* ---------- Caixa: saldo como ingresso de jogo ---------- */
 .caixa-saldo { position: relative; border-radius: 16px; padding: 16px 14px 14px;
@@ -791,8 +797,8 @@ body {
 .sheet-painel { background: radial-gradient(100% 40% at 50% 0%, rgba(var(--verde-rgb), 0.1), transparent 70%), var(--c-sup-1); border-color: rgba(255, 255, 255, 0.08); }
 .sheet-alca { background: rgba(var(--verde-rgb), 0.55); width: 42px; }
 .toast { border-radius: 14px; border-left: 3px solid var(--c-destaque); background: rgba(30, 35, 38, 0.96); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
-.hist-ic, .campeao-ic { background: linear-gradient(145deg, rgba(227, 179, 65, 0.3), rgba(227, 179, 65, 0.08)); border: 1px solid rgba(227, 179, 65, 0.35); box-shadow: 0 0 18px rgba(227, 179, 65, 0.15); }
-.campeao-card { background: linear-gradient(120deg, rgba(227, 179, 65, 0.14), transparent 60%), var(--c-sup-1); border-color: rgba(227, 179, 65, 0.3); }
+.hist-ic, .campeao-ic { background: linear-gradient(145deg, rgba(246, 185, 12, 0.3), rgba(246, 185, 12, 0.08)); border: 1px solid rgba(246, 185, 12, 0.35); box-shadow: 0 0 18px rgba(246, 185, 12, 0.15); }
+.campeao-card { background: linear-gradient(120deg, rgba(246, 185, 12, 0.14), transparent 60%), var(--c-sup-1); border-color: rgba(246, 185, 12, 0.3); }
 .barra-rank span { background: linear-gradient(90deg, var(--c-destaque-forte), var(--c-destaque)); box-shadow: 0 0 10px rgba(var(--verde-rgb), 0.5); }
 .dialogo { background: radial-gradient(100% 50% at 50% 0%, rgba(var(--verde-rgb), 0.1), transparent 70%), var(--c-sup-2); border-radius: 22px; }
 

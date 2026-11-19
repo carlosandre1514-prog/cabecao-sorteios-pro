@@ -117,7 +117,7 @@ function sombraTex() {
 // os 20 hexágonos no centro das faces; cada ponto pega a cor do centro mais próximo, e onde
 // dois centros "empatam" vira costura. Fica redonda e nítida em qualquer tamanho.
 let centrosBola = null;
-function materialBola(borda = 0x2da762) {
+function materialBola(borda = 0x14b551) {
     if (!centrosBola) {
         const ico = new THREE.IcosahedronGeometry(1, 0), pos = ico.attributes.position;
         const pent = [], hex = [];
@@ -390,7 +390,7 @@ export async function gol(texto = 'Bem-vindo ao time!') {
     sombra.rotation.x = -Math.PI / 2; sombra.position.y = 0.01; cena.add(sombra);
     // papel picado verde e ouro
     const N = 160, conf = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.12, 0.07), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }), N);
-    const cores = [0x2da762, 0xe3b341, 0xeef1f3], m4 = new THREE.Matrix4(), dados = [];
+    const cores = [0x14b551, 0xf6b90c, 0xeef1f3], m4 = new THREE.Matrix4(), dados = [];
     for (let i = 0; i < N; i++) {
         conf.setColorAt(i, new THREE.Color(cores[i % 3]));
         dados.push({ p: new THREE.Vector3((Math.random() - 0.5) * 7, 2 + Math.random() * 3, -8 + Math.random() * 3), v: new THREE.Vector3((Math.random() - 0.5) * 4, 3 + Math.random() * 4, 2 + Math.random() * 3), r: Math.random() * 6 });
@@ -437,7 +437,7 @@ export async function gol(texto = 'Bem-vindo ao time!') {
 
 // ---------------------------------------------------------------- 4) sorteio
 // times: [{ nome, jogadores: ['Ana', ...] }]; resolve quando as fichas chegaram (~1,5 s)
-export const CORES_TIMES = ['#2da762', '#e3b341', '#4f8fe0', '#ef6b6b', '#a66be0', '#e08a3c', '#3cc4c4', '#c9cfd3'];
+export const CORES_TIMES = ['#14b551', '#f6b90c', '#4f8fe0', '#ef6b6b', '#a66be0', '#e08a3c', '#3cc4c4', '#c9cfd3'];
 function fichaTex(letra, fundo, tinta) {
     const t = canvas(128, 128, (g) => {
         g.fillStyle = fundo; g.beginPath(); g.arc(64, 64, 64, 0, Math.PI * 2); g.fill();
@@ -515,9 +515,9 @@ export async function campeao(nome, sub) {
     cena.add(new THREE.HemisphereLight(0xfff4d6, 0x101418, 0.7));
     const k1 = new THREE.DirectionalLight(0xffffff, 2.2); k1.position.set(3, 5, 4); cena.add(k1);
     const k2 = new THREE.DirectionalLight(0xfff0c0, 1.2); k2.position.set(-4, 2, -3); cena.add(k2);
-    const k3 = new THREE.PointLight(0x2da762, 6, 10); k3.position.set(0, 1, 2.5); cena.add(k3);
+    const k3 = new THREE.PointLight(0x14b551, 6, 10); k3.position.set(0, 1, 2.5); cena.add(k3);
     // taça: perfil girado (LatheGeometry) + alças + base escura
-    const ouro = new THREE.MeshStandardMaterial({ color: 0xe3b341, metalness: 0.85, roughness: 0.28 });
+    const ouro = new THREE.MeshStandardMaterial({ color: 0xf6b90c, metalness: 0.85, roughness: 0.28 });
     const perfil = [[0, 0], [0.62, 0], [0.62, 0.12], [0.42, 0.18], [0.18, 0.3], [0.12, 0.62], [0.14, 0.8], [0.32, 0.92], [0.55, 1.15], [0.68, 1.5], [0.72, 1.86], [0.66, 1.88], [0.6, 1.55], [0.48, 1.2], [0, 1.05]]
         .map(([x, y]) => new THREE.Vector2(x, y));
     const taca = new THREE.Group();
@@ -533,7 +533,7 @@ export async function campeao(nome, sub) {
     aura.scale.set(5, 5, 1); aura.position.set(0, 0.2, -1); cena.add(aura);
     // papel picado caindo sem parar
     const N = 220, conf = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.09, 0.05), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }), N);
-    const cores = [0x2da762, 0xe3b341, 0xeef1f3], m4 = new THREE.Matrix4(), e3 = new THREE.Euler(), d = [];
+    const cores = [0x14b551, 0xf6b90c, 0xeef1f3], m4 = new THREE.Matrix4(), e3 = new THREE.Euler(), d = [];
     for (let i = 0; i < N; i++) { conf.setColorAt(i, new THREE.Color(cores[i % 3])); d.push({ x: (Math.random() - 0.5) * 6, y: Math.random() * 6, z: (Math.random() - 0.5) * 3, v: 0.6 + Math.random() * 0.8, r: Math.random() * 6, w: (Math.random() - 0.5) * 2 }); }
     cena.add(conf);
     camera.position.set(0, 0.2, 6.8); camera.lookAt(0, -0.55, 0);
