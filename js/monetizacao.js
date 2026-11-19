@@ -17,7 +17,8 @@
 //
 //     preco_mensal: 9.9 / preco_anual: 59.9   -> preços dos dois planos (o anual aparece em destaque)
 //     dias_teste: 7                            -> teste grátis (0 desliga); 1 por conta, em testes/{uid}
-//     checkout_api: "https://...criarCheckout"  -> Mercado Pago automático (functions/); sem ele usa os links:
+//     checkout_api: "https://.../checkout"  -> checkout automático Asaas (Pix e cartão, checkout/worker.js no Cloudflare)
+//                                                 ou o antigo do Mercado Pago (functions/); sem ele usa os links:
 //     link_checkout_mensal / link_checkout_anual (ou link_checkout)
 //
 //  planos/{uid}  (somente VOCÊ ou a função do Mercado Pago cria/edita)
@@ -103,25 +104,72 @@
     }
 
     // ---------- Assinar ----------
+    // Primeira compra no checkout Asaas: o banco exige nome e CPF de quem paga para emitir a cobrança.
+    // Vão só para o pagamento (não ficam salvos no app). Devolve { nome, cpf } ou null se cancelar.
+    function pedirDadosPagador(erro) {
+        return new Promise((resolver) => {
+            const m = document.createElement('div');
+            m.className = 'modal pagador-modal';
+            m.style.zIndex = '100001';
+            m.innerHTML = `<form class="dialogo pagador" novalidate>
+                <h2>Dados para o pagamento</h2>
+                <p>O banco pede o nome e o CPF de quem paga para emitir a cobrança (Pix ou cartão). É só desta vez.</p>
+                <div class="campo"><label for="pg-nome">Nome completo</label><input type="text" id="pg-nome" autocomplete="name" maxlength="80" required></div>
+                <div class="campo"><label for="pg-cpf">CPF</label><input type="text" id="pg-cpf" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="000.000.000-00" required></div>
+                <p class="pagador-erro ${erro ? '' : 'hidden'}" role="alert">${esc(erro || '')}</p>
+                <p class="dica">Usados só pelo Asaas, que processa o pagamento. Não ficam salvos no app.</p>
+                <div class="dialogo-botoes"><button type="button" class="btn btn-secondary" data-pg="cancelar">Cancelar</button><button type="submit" class="btn btn-primary">Continuar</button></div>
+            </form>`;
+            document.body.appendChild(m);
+            const cpf = m.querySelector('#pg-cpf'), nome = m.querySelector('#pg-nome');
+            cpf.addEventListener('input', () => {   // 000.000.000-00 enquanto digita
+                const d = cpf.value.replace(/\D/g, '').slice(0, 11);
+                cpf.value = d.replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2');
+            });
+            const fechar = (v) => { m.remove(); resolver(v); };
+            m.querySelector('[data-pg="cancelar"]').addEventListener('click', () => fechar(null));
+            m.querySelector('form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const n = nome.value.trim(), c = cpf.value.replace(/\D/g, '');
+                const aviso = m.querySelector('.pagador-erro');
+                if (n.split(/\s+/).length < 2) { aviso.textContent = 'Escreva o nome e o sobrenome.'; aviso.classList.remove('hidden'); nome.focus(); return; }
+                if (c.length !== 11) { aviso.textContent = 'O CPF tem 11 números.'; aviso.classList.remove('hidden'); cpf.focus(); return; }
+                fechar({ nome: n, cpf: c });
+            });
+            setTimeout(() => nome.focus(), 50);
+        });
+    }
+
     async function assinar(qual, botao) {
         if (window.Metricas) Metricas.evento('pro_assinar_' + qual);
         if (window.Metricas) Metricas.evento('pro_assinar');
         const api = urlSegura(config.checkout_api);
         if (api && usuario) {
-            // Mercado Pago automático: a função cria o pagamento e, quando ele é aprovado, libera o Pro sozinha
+            // checkout automático: o robô cria a cobrança (Pix ou cartão) e, quando o pagamento entra,
+            // libera o Pro sozinho (o app está "escutando" planos/<uid>)
             if (botao) { botao.disabled = true; botao.setAttribute('aria-busy', 'true'); }
             try {
                 const token = await window.firebaseAuth.currentUser.getIdToken();
                 const volta = location.href.split('#')[0].split('?')[0];
-                const r = await fetch(api, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-                    body: JSON.stringify({ plano: qual, voltar: volta })
-                });
-                const j = await r.json().catch(() => ({}));
-                if (!r.ok || !urlSegura(j.url)) throw new Error(j.erro || ('HTTP ' + r.status));
-                location.href = j.url;
-                return;
+                let extra = {};
+                for (let tentativa = 0; tentativa < 3; tentativa++) {
+                    const r = await fetch(api, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                        body: JSON.stringify({ plano: qual, voltar: volta, ...extra })
+                    });
+                    const j = await r.json().catch(() => ({}));
+                    if (j.precisaCpf) {   // primeira compra: pede nome e CPF e tenta de novo
+                        const dados = await pedirDadosPagador(j.erro);
+                        if (!dados) return;
+                        extra = dados;
+                        continue;
+                    }
+                    if (!r.ok || !urlSegura(j.url)) throw new Error(j.erro || ('HTTP ' + r.status));
+                    if (window.Painel) { Painel.ev('checkout_aberto', { plano: qual }); Painel.enviar(); }
+                    location.href = j.url;
+                    return;
+                }
             } catch (e) {
                 console.error('Checkout:', e);
                 avisar('Não consegui abrir o pagamento. Tente de novo em instantes.', 'erro');
@@ -228,7 +276,7 @@
             if (temCompra) {
                 h += htmlPlanos();
                 h += `<button class="btn ${podeTestar() ? 'btn-secondary' : 'btn-primary'}" data-acao-pro="assinar">Assinar plano ${planoEscolhido}</button>
-                    <p class="pro-sem-cartao">Pix ou cartão pelo Mercado Pago. O Pro libera sozinho quando o pagamento é aprovado.</p>`;
+                    <p class="pro-sem-cartao">${urlSegura(config.checkout_api) ? 'Pix ou cartão de crédito, em página segura. O Pro libera sozinho quando o pagamento entra.' : 'Pix ou cartão. Depois do pagamento o Pro é liberado.'}</p>`;
             }
             if (config.chave_pix && !urlSegura(config.checkout_api)) {
                 h += `<details class="pro-pix-det"><summary>Prefere Pix direto?</summary><div class="pro-pix">
@@ -355,7 +403,7 @@
         });
     }
 
-    // plano e teste ficam "escutados": quando o Mercado Pago aprova, o Pro aparece na hora
+    // plano e teste ficam "escutados": quando o pagamento entra, o Pro aparece na hora
     function escutarPlano(uid) {
         pararEscutas.forEach(f => { try { f(); } catch (e) { /* ignora */ } });
         pararEscutas = [];
@@ -375,7 +423,7 @@
         escuta('testes/' + uid, v => { teste = v; guardar('cabecao_teste_' + uid, teste); });
     }
 
-    // volta do Mercado Pago: index.html?pro=ok|pendente|erro
+    // volta da página de pagamento: index.html?pro=ok|pendente|erro
     function verificarRetornoPagamento() {
         const r = retornoPagamento;
         if (!r) return;

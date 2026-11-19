@@ -805,3 +805,12 @@ body {
 @media (prefers-reduced-motion: reduce) {
     .fab::after, .relogio.fim .timer-display { animation: none; }
 }
+
+/* ---------- Dados de quem paga (primeira compra no checkout) ---------- */
+.pagador-modal { display: flex; align-items: center; justify-content: center; padding: var(--e-4); }
+.pagador { width: 100%; max-width: 380px; text-align: left; }
+.pagador p { margin-bottom: var(--e-4); }
+.pagador .campo + .campo { margin-top: var(--e-3); }
+.pagador .dica { margin: var(--e-3) 0 var(--e-4); }
+.pagador-erro { margin: var(--e-3) 0 0 !important; padding: 10px 12px; border-radius: var(--r-md); font-size: var(--t-sm);
+    background: rgba(239, 107, 107, 0.1); border: 1px solid rgba(239, 107, 107, 0.35); color: #f3a0a0; }

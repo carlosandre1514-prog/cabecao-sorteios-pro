@@ -8,8 +8,8 @@
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0f1214">
     <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="css/style.css?v=fa4a006e59">
-    <link rel="stylesheet" href="css/base.css?v=fa4a006e59">
+    <link rel="stylesheet" href="css/style.css?v=67a7a0310c">
+    <link rel="stylesheet" href="css/base.css?v=67a7a0310c">
 </head>
 <body data-aba="tab-jogadores">
     <!-- ÍCONES (um traço só, 24px). Uso: <svg class="i"><use href="#i-nome"/></svg> -->
@@ -285,7 +285,8 @@
                     <div class="campo"><label for="adm-pix">Sua chave Pix (para receber o Pro)</label><input type="text" id="adm-pix" autocomplete="off"></div>
                     <div class="campo"><label for="adm-pix-nome">Nome que aparece no Pix</label><input type="text" id="adm-pix-nome" maxlength="40"></div>
                     <div class="campo"><label for="adm-zap">WhatsApp do suporte</label><input type="text" id="adm-zap" inputmode="numeric" placeholder="5511999999999"><span class="dica">Só números, com 55 e o DDD. É para onde vai o "Já paguei, enviar comprovante".</span></div>
-                    <div class="campo"><label for="adm-checkout">Link de pagamento (opcional)</label><input type="text" id="adm-checkout" inputmode="url" placeholder="https://"><span class="dica">Ex.: link do Mercado Pago. Sem ele, o Pro é pago no Pix e você libera aqui embaixo.</span></div>
+                    <div class="campo"><label for="adm-checkout-api">Checkout automático (Pix e cartão)</label><input type="text" id="adm-checkout-api" inputmode="url" placeholder="https://...workers.dev/checkout"><span class="dica">Endereço do robô do Asaas no Cloudflare, terminando em /checkout (docs/CHECKOUT-ASAAS.md). Com ele, o Pro libera sozinho.</span></div>
+                    <div class="campo"><label for="adm-checkout">Link de pagamento (opcional)</label><input type="text" id="adm-checkout" inputmode="url" placeholder="https://"><span class="dica">Usado só se o checkout automático estiver vazio. Sem nenhum dos dois, o Pro é pago no Pix e você libera aqui embaixo.</span></div>
                 </div>
                 <p class="lista-rotulo">Links</p>
                 <div class="card">
@@ -705,17 +706,17 @@
     </script>
     <!-- ordem importa: logica -> remoto -> auth -> app -> monetizacao -->
     <link rel="modulepreload" href="js/vendor/three.module.min.js">
-    <script type="module" src="js/futebol3d.js?v=fa4a006e59"></script>
-    <script src="js/painel.js?v=fa4a006e59"></script>
-    <script src="js/logica.js?v=fa4a006e59"></script>
-    <script src="js/ui.js?v=fa4a006e59"></script>
-    <script src="js/apito.js?v=fa4a006e59"></script>
-    <script src="js/remoto.js?v=fa4a006e59"></script>
-    <script src="js/auth.js?v=fa4a006e59"></script>
-    <script src="js/app.js?v=fa4a006e59"></script>
-    <script src="js/monetizacao.js?v=fa4a006e59"></script>
-    <script src="js/metricas.js?v=fa4a006e59"></script>
-    <script src="js/imagem-times.js?v=fa4a006e59"></script>
+    <script type="module" src="js/futebol3d.js?v=67a7a0310c"></script>
+    <script src="js/painel.js?v=67a7a0310c"></script>
+    <script src="js/logica.js?v=67a7a0310c"></script>
+    <script src="js/ui.js?v=67a7a0310c"></script>
+    <script src="js/apito.js?v=67a7a0310c"></script>
+    <script src="js/remoto.js?v=67a7a0310c"></script>
+    <script src="js/auth.js?v=67a7a0310c"></script>
+    <script src="js/app.js?v=67a7a0310c"></script>
+    <script src="js/monetizacao.js?v=67a7a0310c"></script>
+    <script src="js/metricas.js?v=67a7a0310c"></script>
+    <script src="js/imagem-times.js?v=67a7a0310c"></script>
     <script>
         // Funciona sem internet: guarda o app no aparelho (sw.js)
         if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
