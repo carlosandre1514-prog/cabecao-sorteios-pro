@@ -684,11 +684,12 @@
         const L = ['💰 *MENSALIDADE DE ' + nomeMes(mes).toUpperCase() + '*' + (nomeRacha ? ' — ' + nomeRacha : '')];
         if (r.config.mensalidade) L.push('Valor: ' + reais(r.config.mensalidade) + (r.config.vencimento ? ' · vence dia ' + r.config.vencimento : ''));
         if (!r.devedores.length) { L.push('', '✅ Todo mundo pagou! Valeu, galera 🙌'); return L.join('\n'); }
-        L.push('', '⏳ *Ainda não pagaram (' + r.devedores.length + '):*');
-        r.devedores.forEach((d, i) => L.push((i + 1) + '. ' + d.nome));
-        if (r.pagaram) L.push('', '✅ Já pagaram: ' + r.pagaram);
+        // sem nomes: expor no grupo quem está devendo pode constranger (e dar processo); o lembrete
+        // de cada um vai no privado (textoCobrancaIndividual)
+        L.push('', '✅ Já pagaram: ' + r.pagaram + ' de ' + r.mensalistas.length);
+        L.push('⏳ Ainda faltam ' + r.devedores.length + (r.devedores.length === 1 ? ' pagamento' : ' pagamentos') + '. Se for o seu caso, é só acertar quando puder 🙏');
         if (pix && pix.chave) L.push('', '💠 Pix: ' + pix.chave + (pix.nome ? ' (' + pix.nome + ')' : ''));
-        L.push('', 'Pagou? Me avisa aqui 👍');
+        L.push('', 'Pagou? Me avisa no privado 👍');
         return L.join('\n');
     }
     function textoCobrancaIndividual(nome, r, mes, nomeRacha, pix) {

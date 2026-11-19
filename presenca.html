@@ -10,8 +10,8 @@
     <link rel="icon" type="image/png" href="img/icon-192.png">
     <meta name="theme-color" content="#0f1214">
     <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="css/style.css?v=c60c6efa16">
-    <link rel="stylesheet" href="css/base.css?v=c60c6efa16">
+    <link rel="stylesheet" href="css/style.css?v=e179e67302">
+    <link rel="stylesheet" href="css/base.css?v=e179e67302">
     <style>
         .app-container { padding-bottom: 32px; }
         body { background-image: radial-gradient(ellipse 90% 30% at 50% -10%, rgba(var(--verde-rgb), 0.14), transparent 70%); }
@@ -121,9 +121,9 @@
         <p class="subtext" style="text-align:center;">Feito com Cabeção Sorteios Pro · <a href="termos-uso.html">Termos</a> · <a href="politica-privacidade.html">Privacidade</a></p>
     </div>
 
-    <script src="js/logica.js?v=c60c6efa16"></script>
-    <script src="js/vendor/qrcode.js?v=c60c6efa16"></script>
-    <script src="js/painel.js?v=c60c6efa16"></script>
+    <script src="js/logica.js?v=e179e67302"></script>
+    <script src="js/vendor/qrcode.js?v=e179e67302"></script>
+    <script src="js/painel.js?v=e179e67302"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
         import { getDatabase, ref, onValue, get, set, increment } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
@@ -362,7 +362,7 @@
             const tagPag = p => p.pago === undefined || !temPag ? (p.convidado ? '<span class="tag">convidado</span>' : '')
                 : p.pago ? '<span class="tag pago">pago</span>'
                 : p.aConfirmar ? '<span class="tag aguardando">🕐 pagou (a confirmar)</span>'
-                : `<span class="tag ${p.atrasado ? 'atrasado' : ''}">${p.atrasado ? '⚠️ não pagou' : '⏳ a pagar'}</span>`;
+                : '<span class="tag">⏳ a pagar</span>';   // neutro: a lista é pública, não expõe quem está atrasado
             const linha = (p, i) => `<div class="linha-pessoa ${p.id === eu ? 'sou-eu' : ''}"><span class="pos">${i + 1}</span>${avatar(p.nome)}<span class="nm">${p.goleiro ? '🧤 ' : ''}${esc(p.nome)}</span>${tagPag(p)}</div>`;
             const vazia = i => `<div class="linha-pessoa vazia"><span class="pos">${i + 1}</span><span class="av"></span><span class="nm">vaga aberta</span></div>`;
             const doLinha = r.confirmados.filter(c => !c.goleiro), doGol = r.confirmados.filter(c => c.goleiro);
